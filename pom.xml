@@ -141,8 +141,24 @@
         </dependency>
         <dependency>
             <groupId>org.gradoop</groupId>
+            <artifactId>gradoop-common</artifactId>
+            <version>0.7.0-SNAPSHOT</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.gradoop</groupId>
             <artifactId>gradoop-flink</artifactId>
             <version>0.7.0-SNAPSHOT</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.gradoop</groupId>
+            <artifactId>gradoop-temporal</artifactId>
+            <version>0.7.0-SNAPSHOT</version>
+            <type>test-jar</type>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
