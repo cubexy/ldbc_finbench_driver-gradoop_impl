@@ -19,6 +19,8 @@
         <commons.io.version>2.7</commons.io.version>
         <org.javatuples.version>1.2</org.javatuples.version>
         <log4j.version>2.19.0</log4j.version>
+        <dep.gradoop.version>0.7.0-SNAPSHOT</dep.gradoop.version>
+        <dep.flink.version>1.9.3</dep.flink.version>
         <!--        <commmons.collections.version>4.4</commmons.collections.version>-->
         <common.math.version>3.2</common.math.version>
         <guava.version>24.1.1-jre</guava.version>
@@ -33,12 +35,61 @@
         <agrona-version>1.16.0</agrona-version>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>oss.sonatype.org-snapshot</id>
+            <url>http://oss.sonatype.org/content/repositories/snapshots</url>
+            <releases><enabled>false</enabled></releases>
+            <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+    </repositories>
+
     <dependencies>
         <!--        <dependency>-->
         <!--            <groupId>org.apache.commons</groupId>-->
         <!--            <artifactId>commons-collections4</artifactId>-->
         <!--            <version>${commmons.collections.version}</version>-->
         <!--        </dependency>-->
+        <!-- Gradoop dependencies-->
+        <dependency>
+            <groupId>org.gradoop</groupId>
+            <artifactId>gradoop-common</artifactId>
+            <version>${dep.gradoop.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.gradoop</groupId>
+            <artifactId>gradoop-flink</artifactId>
+            <version>${dep.gradoop.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.gradoop</groupId>
+            <artifactId>gradoop-temporal</artifactId>
+            <version>${dep.gradoop.version}</version>
+        </dependency>
+
+        <!-- Apache Flink dependencies -->
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-java</artifactId>
+            <version>${dep.flink.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-clients_2.11</artifactId>
+            <version>${dep.flink.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-gelly_2.11</artifactId>
+            <version>${dep.flink.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
@@ -140,27 +191,6 @@
             <version>${agrona-version}</version>
         </dependency>
         <dependency>
-            <groupId>org.gradoop</groupId>
-            <artifactId>gradoop-common</artifactId>
-            <version>0.7.0-SNAPSHOT</version>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.gradoop</groupId>
-            <artifactId>gradoop-flink</artifactId>
-            <version>0.7.0-SNAPSHOT</version>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.gradoop</groupId>
-            <artifactId>gradoop-temporal</artifactId>
-            <version>0.7.0-SNAPSHOT</version>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-java</artifactId>
             <version>1.9.3</version>
@@ -171,15 +201,6 @@
             <version>1.9.3</version>
         </dependency>
     </dependencies>
-
-    <repositories>
-        <repository>
-            <id>oss.sonatype.org-snapshot</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-            <releases><enabled>false</enabled></releases>
-            <snapshots><enabled>true</enabled></snapshots>
-        </repository>
-    </repositories>
 
     <build>
         <plugins>
@@ -198,7 +219,6 @@
                     <target>8</target>
                 </configuration>
             </plugin>
-            <!-- code style check, use google style -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
@@ -258,8 +278,6 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
                     <filters>
                         <filter>
                             <artifact>*:*</artifact>
