@@ -21,7 +21,6 @@
         <log4j.version>2.19.0</log4j.version>
         <dep.gradoop.version>0.7.0-SNAPSHOT</dep.gradoop.version>
         <dep.flink.version>1.9.3</dep.flink.version>
-        <!--        <commmons.collections.version>4.4</commmons.collections.version>-->
         <common.math.version>3.2</common.math.version>
         <guava.version>24.1.1-jre</guava.version>
         <stormpot.version>2.4</stormpot.version>
