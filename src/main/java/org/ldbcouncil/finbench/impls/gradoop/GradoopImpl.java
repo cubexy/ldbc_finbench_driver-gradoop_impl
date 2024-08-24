@@ -63,7 +63,7 @@ public class GradoopImpl extends Db {
                 dataSource = new TemporalParquetProtobufDataSource(gradoopGraphDataPath, this.config);
                 break;
             default:
-                throw new DbException("Unrecognized mode: " + mode);
+                throw new DbException("Unsupported import mode: " + mode);
         }
 
         TemporalGraph tg;
