@@ -17,11 +17,14 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 
 import java.io.IOException;
 import java.util.Map;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead1;
+import org.ldbcouncil.finbench.impls.gradoop.queries.read.complex.*;
+import org.ldbcouncil.finbench.impls.gradoop.queries.read.simple.*;
 
 public class GradoopImpl extends Db {
     public static Logger logger = LogManager.getLogger("GradoopImpl");
-    private ExecutionEnvironment env;
     private TemporalGradoopConfig config;
+    private GradoopFinbenchBaseGraphState graph;
 
     @Override
     protected void onInit(Map<String, String> properties, LoggingService loggingService) throws DbException {
@@ -34,15 +37,14 @@ public class GradoopImpl extends Db {
             throw new DbException("gradoop_import_path or gradoop_import_mode not set in properties file");
         }
 
-        this.env = ExecutionEnvironment.getExecutionEnvironment();
-        this.config = TemporalGradoopConfig.createConfig(this.env);
+        ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+        this.config = TemporalGradoopConfig.createConfig(env);
 
         TemporalGraph tg = getTemporalGraph(mode, gradoopGraphDataPath);
-
-        System.out.println(tg);
+        this.graph = new GradoopFinbenchBaseGraphState(tg);
 
         //complex reads go here
-
+        registerOperationHandler(ComplexRead1.class, ComplexRead1Handler.class);
         //simple reads go here
 
     }
@@ -82,6 +84,6 @@ public class GradoopImpl extends Db {
 
     @Override
     protected DbConnectionState getConnectionState() throws DbException {
-        return null;
+        return graph;
     }
 }
