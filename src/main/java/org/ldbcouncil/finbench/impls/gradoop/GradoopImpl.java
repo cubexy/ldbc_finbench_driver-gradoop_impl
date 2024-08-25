@@ -40,6 +40,7 @@ public class GradoopImpl extends Db {
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         this.config = TemporalGradoopConfig.createConfig(env);
 
+
         TemporalGraph tg = getTemporalGraph(mode, gradoopGraphDataPath);
         this.graph = new GradoopFinbenchBaseGraphState(tg);
 
@@ -79,7 +80,7 @@ public class GradoopImpl extends Db {
 
     @Override
     protected void onClose() throws IOException {
-        logger.info("Closing Gradoop");
+        logger.info("Waiting for all tasks to finish...");
     }
 
     @Override
