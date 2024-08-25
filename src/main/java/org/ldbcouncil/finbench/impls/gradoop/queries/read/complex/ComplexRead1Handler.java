@@ -31,7 +31,7 @@ public class ComplexRead1Handler implements OperationHandler<ComplexRead1, Grado
         DataSet<Tuple4<Long, Integer, Long, String>> cr1Result = complexRead1GradoopOperator.execute(graph.getGraph());
         List<ComplexRead1Result> complexRead1Results = new ArrayList<>();
         try {
-            cr1Result.collect().forEach(tuple4 -> complexRead1Results.add(new ComplexRead1Result(tuple4.f0, tuple4.f1, tuple4.f2, tuple4.f3)));
+            cr1Result.collect().forEach(tuple -> complexRead1Results.add(new ComplexRead1Result(tuple.f0, tuple.f1, tuple.f2, tuple.f3)));
         } catch (Exception e) {
             throw new DbException("Error while collecting results for complex read 1: " + e);
         }
@@ -82,28 +82,31 @@ class ComplexRead1GradoopOperator implements
 
         DataSet<Tuple4<Long, Integer, Long, String>> result =
             gtxLength1.union(gtxLength2).union(gtxLength3)
-                .map((MapFunction<GraphTransaction, Tuple4<Long, Integer, Long, String>>) graphTransaction -> {
+                .map(new MapFunction<GraphTransaction, Tuple4<Long, Integer, Long, String>>() {
+                    @Override
+                    public Tuple4<Long, Integer, Long, String> map(GraphTransaction graphTransaction) throws Exception {
 
-                    Map<String, GradoopId> m = new HashMap<>();
+                        Map<String, GradoopId> m = new HashMap<>();
 
-                    Map<PropertyValue, PropertyValue> variable_mapping =
-                        graphTransaction.getGraphHead().getPropertyValue("__variable_mapping").getMap();
+                        Map<PropertyValue, PropertyValue> variable_mapping =
+                            graphTransaction.getGraphHead().getPropertyValue("__variable_mapping").getMap();
 
-                    variable_mapping.forEach((k, v) -> m.put(k.getString(), v.getGradoopId()));
+                        variable_mapping.forEach((k, v) -> m.put(k.getString(), v.getGradoopId()));
 
-                    GradoopId otherGradoopId = m.get("other");
-                    GradoopId mediumGradoopId = m.get("m");
+                        GradoopId otherGradoopId = m.get("other");
+                        GradoopId mediumGradoopId = m.get("m");
 
-                    String otherId =
-                        graphTransaction.getVertexById(otherGradoopId).getPropertyValue("ID").getString();
-                    int accountDistance = graphTransaction.getEdges().size() - 1;
-                    String mediumId =
-                        graphTransaction.getVertexById(mediumGradoopId).getPropertyValue("ID").getString();
-                    String mediumType =
-                        graphTransaction.getVertexById(mediumGradoopId).getPropertyValue("MediumType").getString();
-                    return new Tuple4<>(Long.parseLong(otherId), accountDistance, Long.parseLong(mediumId),
-                        mediumType);
-                }).distinct(0, 1, 2, 3);
+                        String otherId =
+                            graphTransaction.getVertexById(otherGradoopId).getPropertyValue("id").getString();
+                        int accountDistance = graphTransaction.getEdges().size()-1;
+                        String mediumId =
+                            graphTransaction.getVertexById(mediumGradoopId).getPropertyValue("id").getString();
+                        String mediumType =
+                            graphTransaction.getVertexById(mediumGradoopId).getPropertyValue("mediumType").getString();
+                        return new Tuple4<>(Long.parseLong(otherId), accountDistance, Long.parseLong(mediumId),
+                            mediumType);
+                    }
+                }).distinct(0,1,2,3);
 
         result = result
             .sortPartition(1, Order.ASCENDING)
