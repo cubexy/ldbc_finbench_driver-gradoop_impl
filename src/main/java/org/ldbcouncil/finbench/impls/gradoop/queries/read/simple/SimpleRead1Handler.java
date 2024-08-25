@@ -1,5 +1,9 @@
 package org.ldbcouncil.finbench.impls.gradoop.queries.read.simple;
 
+import org.apache.flink.api.java.DataSet;
+import org.apache.flink.api.java.tuple.Tuple3;
+import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
+import org.gradoop.temporal.model.impl.TemporalGraph;
 import org.ldbcouncil.finbench.driver.DbException;
 import org.ldbcouncil.finbench.driver.OperationHandler;
 import org.ldbcouncil.finbench.driver.ResultReporter;
@@ -20,5 +24,15 @@ public class SimpleRead1Handler implements OperationHandler<SimpleRead1, Gradoop
         List<SimpleRead1Result> simpleRead1Results = new ArrayList<>();
         simpleRead1Results.add(new SimpleRead1Result(new Date(1), true, "a"));
         resultReporter.report(1, simpleRead1Results, sr1);
+    }
+}
+
+class SimpleRead1GradoopOperator implements UnaryBaseGraphToValueOperator<TemporalGraph, DataSet<Tuple3<Long, Boolean, String>>> {
+    public SimpleRead1GradoopOperator(SimpleRead1 simpleRead1) {
+    }
+
+    @Override
+    public DataSet<Tuple3<Long, Boolean, String>> execute(TemporalGraph temporalGraph) {
+        return null;
     }
 }
