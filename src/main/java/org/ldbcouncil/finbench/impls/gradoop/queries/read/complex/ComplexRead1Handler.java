@@ -62,21 +62,21 @@ class ComplexRead1GradoopOperator implements
             .temporalQuery("MATCH (a:Account)-[t1:Transfer]->(:Account)-[t2:Transfer]->(:Account)" +
                 "-[t3:Transfer]->" +
                 "(other:Account)<-[s:SignIn]-(m:Medium)" +
-                " WHERE a.ID = '" + id + "' AND  t1.val_from.before(t2.val_from) AND t2.val_from.before(t3" +
-                ".val_from) AND m.IsBlocked = 'true' ")
+                " WHERE a.id = '" + id + "' AND  t1.val_from.before(t2.val_from) AND t2.val_from.before(t3" +
+                ".val_from) AND m.isBlocked = 'true' ")
             .toGraphCollection()
             .getGraphTransactions();
 
         DataSet<GraphTransaction> gtxLength2 = windowedGraph
             .temporalQuery(
                 "MATCH (a:Account)-[t1:Transfer]->(:Account)-[t2:Transfer]->(other:Account)<-[s:SignIn]-(m:Medium)" +
-                    " WHERE a.ID = '" + id + "' AND  t1.val_from.before(t2.val_from) AND m.IsBlocked = 'true' ")
+                    " WHERE a.id = '" + id + "' AND  t1.val_from.before(t2.val_from) AND m.isBlocked = 'true' ")
             .toGraphCollection()
             .getGraphTransactions();
 
         DataSet<GraphTransaction> gtxLength1 = windowedGraph
             .temporalQuery("MATCH (a:Account)-[t1:Transfer]->(other:Account)<-[s:SignIn]-(m:Medium)" +
-                " WHERE a.ID = '" + id + "' AND m.IsBlocked = 'true' ")
+                " WHERE a.id = '" + id + "' AND m.isBlocked = 'true' ")
             .toGraphCollection()
             .getGraphTransactions();
 
