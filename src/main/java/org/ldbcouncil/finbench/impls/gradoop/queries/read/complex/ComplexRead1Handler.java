@@ -55,28 +55,28 @@ class ComplexRead1GradoopOperator implements
     @Override
     public DataSet<Tuple4<Long, Integer, Long, String>> execute(TemporalGraph temporalGraph) {
         TemporalGraph windowedGraph = temporalGraph
-            .subgraph(new LabelIsIn<>("Account", "Medium"), new LabelIsIn<>("Transfer", "SignIn"))
+            .subgraph(new LabelIsIn<>("Account", "Medium"), new LabelIsIn<>("transfer", "signIn"))
             .fromTo(startTime, endTime);
 
         DataSet<GraphTransaction> gtxLength3 = windowedGraph
-            .temporalQuery("MATCH (a:Account)-[t1:Transfer]->(:Account)-[t2:Transfer]->(:Account)" +
-                "-[t3:Transfer]->" +
-                "(other:Account)<-[s:SignIn]-(m:Medium)" +
-                " WHERE a.id = '" + id + "' AND  t1.val_from.before(t2.val_from) AND t2.val_from.before(t3" +
-                ".val_from) AND m.isBlocked = 'true' ")
+            .temporalQuery("MATCH (a:Account)-[t1:transfer]->(:Account)-[t2:transfer]->(:Account)" +
+                "-[t3:transfer]->" +
+                "(other:Account)<-[s:signIn]-(m:Medium)" +
+                " WHERE a.id = " + id + "L AND  t1.val_from.before(t2.val_from) AND t2.val_from.before(t3" +
+                ".val_from) AND m.isBlocked = true")
             .toGraphCollection()
             .getGraphTransactions();
 
         DataSet<GraphTransaction> gtxLength2 = windowedGraph
             .temporalQuery(
-                "MATCH (a:Account)-[t1:Transfer]->(:Account)-[t2:Transfer]->(other:Account)<-[s:SignIn]-(m:Medium)" +
-                    " WHERE a.id = '" + id + "' AND  t1.val_from.before(t2.val_from) AND m.isBlocked = 'true' ")
+                "MATCH (a:Account)-[t1:transfer]->(:Account)-[t2:transfer]->(other:Account)<-[s:signIn]-(m:Medium)" +
+                    " WHERE a.id = " + id + "L AND  t1.val_from.before(t2.val_from) AND m.isBlocked = true")
             .toGraphCollection()
             .getGraphTransactions();
 
         DataSet<GraphTransaction> gtxLength1 = windowedGraph
-            .temporalQuery("MATCH (a:Account)-[t1:Transfer]->(other:Account)<-[s:SignIn]-(m:Medium)" +
-                " WHERE a.id = '" + id + "' AND m.isBlocked = 'true' ")
+            .temporalQuery("MATCH (a:Account)-[t1:transfer]->(other:Account)<-[s:signIn]-(m:Medium)" +
+                " WHERE a.id = " + id + "L AND m.isBlocked = true")
             .toGraphCollection()
             .getGraphTransactions();
 
@@ -96,14 +96,14 @@ class ComplexRead1GradoopOperator implements
                         GradoopId otherGradoopId = m.get("other");
                         GradoopId mediumGradoopId = m.get("m");
 
-                        String otherId =
-                            graphTransaction.getVertexById(otherGradoopId).getPropertyValue("id").getString();
+                        Long otherId =
+                            graphTransaction.getVertexById(otherGradoopId).getPropertyValue("id").getLong();
                         int accountDistance = graphTransaction.getEdges().size()-1;
-                        String mediumId =
-                            graphTransaction.getVertexById(mediumGradoopId).getPropertyValue("id").getString();
+                        Long mediumId =
+                            graphTransaction.getVertexById(mediumGradoopId).getPropertyValue("id").getLong();
                         String mediumType =
-                            graphTransaction.getVertexById(mediumGradoopId).getPropertyValue("mediumType").getString();
-                        return new Tuple4<>(Long.parseLong(otherId), accountDistance, Long.parseLong(mediumId),
+                            graphTransaction.getVertexById(mediumGradoopId).getPropertyValue("type").getString();
+                        return new Tuple4<>(otherId, accountDistance, mediumId,
                             mediumType);
                     }
                 }).distinct(0,1,2,3);
