@@ -17,7 +17,7 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 
 import java.io.IOException;
 import java.util.Map;
-import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead1;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.*;
 import org.ldbcouncil.finbench.impls.gradoop.queries.read.complex.*;
 import org.ldbcouncil.finbench.impls.gradoop.queries.read.simple.*;
 
@@ -47,6 +47,7 @@ public class GradoopImpl extends Db {
         //complex reads go here
         registerOperationHandler(ComplexRead1.class, ComplexRead1Handler.class);
         //simple reads go here
+        registerOperationHandler(SimpleRead1.class, SimpleRead1Handler.class);
 
     }
 
