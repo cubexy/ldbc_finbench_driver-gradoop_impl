@@ -1,7 +1,6 @@
 package org.ldbcouncil.finbench.impls.gradoop.queries.read.complex;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.flink.api.common.functions.MapFunction;
@@ -9,7 +8,6 @@ import org.apache.flink.api.common.operators.Order;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.gradoop.common.model.impl.id.GradoopId;
-import org.gradoop.common.model.impl.properties.PropertyValue;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
 import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
 import org.gradoop.flink.model.impl.layouts.transactional.tuples.GraphTransaction;
@@ -19,6 +17,7 @@ import org.ldbcouncil.finbench.driver.OperationHandler;
 import org.ldbcouncil.finbench.driver.ResultReporter;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead1;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead1Result;
+import org.ldbcouncil.finbench.impls.gradoop.CommonUtils;
 import org.ldbcouncil.finbench.impls.gradoop.GradoopFinbenchBaseGraphState;
 import org.ldbcouncil.finbench.impls.gradoop.GradoopImpl;
 
@@ -31,7 +30,8 @@ public class ComplexRead1Handler implements OperationHandler<ComplexRead1, Grado
         DataSet<Tuple4<Long, Integer, Long, String>> cr1Result = complexRead1GradoopOperator.execute(graph.getGraph());
         List<ComplexRead1Result> complexRead1Results = new ArrayList<>();
         try {
-            cr1Result.collect().forEach(tuple -> complexRead1Results.add(new ComplexRead1Result(tuple.f0, tuple.f1, tuple.f2, tuple.f3)));
+            cr1Result.collect().forEach(
+                tuple -> complexRead1Results.add(new ComplexRead1Result(tuple.f0, tuple.f1, tuple.f2, tuple.f3)));
         } catch (Exception e) {
             throw new DbException("Error while collecting results for complex read 1: " + e);
         }
@@ -85,20 +85,14 @@ class ComplexRead1GradoopOperator implements
                 .map(new MapFunction<GraphTransaction, Tuple4<Long, Integer, Long, String>>() {
                     @Override
                     public Tuple4<Long, Integer, Long, String> map(GraphTransaction graphTransaction) throws Exception {
-
-                        Map<String, GradoopId> m = new HashMap<>();
-
-                        Map<PropertyValue, PropertyValue> variable_mapping =
-                            graphTransaction.getGraphHead().getPropertyValue("__variable_mapping").getMap();
-
-                        variable_mapping.forEach((k, v) -> m.put(k.getString(), v.getGradoopId()));
+                        Map<String, GradoopId> m = CommonUtils.getVariableMapping(graphTransaction);
 
                         GradoopId otherGradoopId = m.get("other");
                         GradoopId mediumGradoopId = m.get("m");
 
                         Long otherId =
                             graphTransaction.getVertexById(otherGradoopId).getPropertyValue("id").getLong();
-                        int accountDistance = graphTransaction.getEdges().size()-1;
+                        int accountDistance = graphTransaction.getEdges().size() - 1;
                         Long mediumId =
                             graphTransaction.getVertexById(mediumGradoopId).getPropertyValue("id").getLong();
                         String mediumType =
@@ -106,7 +100,7 @@ class ComplexRead1GradoopOperator implements
                         return new Tuple4<>(otherId, accountDistance, mediumId,
                             mediumType);
                     }
-                }).distinct(0,1,2,3);
+                }).distinct(0, 1, 2, 3);
 
         result = result
             .sortPartition(1, Order.ASCENDING)
