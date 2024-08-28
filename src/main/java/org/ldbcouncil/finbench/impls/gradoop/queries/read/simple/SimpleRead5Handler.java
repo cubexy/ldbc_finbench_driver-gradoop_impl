@@ -29,7 +29,7 @@ public class SimpleRead5Handler implements OperationHandler<SimpleRead5, Gradoop
             simpleRead5Result.collect().forEach(
                 tuple -> simpleRead5Results.add(new SimpleRead5Result(tuple.f0, tuple.f1, tuple.f2)));
         } catch (Exception e) {
-            throw new DbException("Error while collecting results for simple read 1: " + e);
+            throw new DbException("Error while collecting results for simple read 5: " + e);
         }
         resultReporter.report(simpleRead5Results.size(), simpleRead5Results, sr5);
     }

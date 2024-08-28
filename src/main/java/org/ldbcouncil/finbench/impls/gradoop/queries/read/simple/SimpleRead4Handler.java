@@ -29,7 +29,7 @@ public class SimpleRead4Handler implements OperationHandler<SimpleRead4, Gradoop
             simpleRead4Result.collect().forEach(
                 tuple -> simpleRead4Results.add(new SimpleRead4Result(tuple.f0, tuple.f1, tuple.f2)));
         } catch (Exception e) {
-            throw new DbException("Error while collecting results for simple read 1: " + e);
+            throw new DbException("Error while collecting results for simple read 4: " + e);
         }
         resultReporter.report(simpleRead4Results.size(), simpleRead4Results, sr4);
     }

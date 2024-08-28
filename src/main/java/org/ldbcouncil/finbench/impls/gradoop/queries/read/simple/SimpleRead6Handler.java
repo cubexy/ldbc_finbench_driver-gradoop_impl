@@ -29,7 +29,7 @@ public class SimpleRead6Handler implements OperationHandler<SimpleRead6, Gradoop
             simpleRead6Result.collect().forEach(
                 tuple -> simpleRead6Results.add(new SimpleRead6Result(tuple.f0)));
         } catch (Exception e) {
-            throw new DbException("Error while collecting results for simple read 1: " + e);
+            throw new DbException("Error while collecting results for simple read 6: " + e);
         }
         resultReporter.report(simpleRead6Results.size(), simpleRead6Results, sr6);
     }
