@@ -56,12 +56,6 @@ class SimpleRead1GradoopOperator implements UnaryBaseGraphToValueOperator<Tempor
             .toGraphCollection()
             .getGraphTransactions();
 
-        List<GraphTransaction> result = new ArrayList<>();
-        try {
-            result = accounts.collect();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
         return accounts
             .map(new MapFunction<GraphTransaction, Tuple3<Date, Boolean, String>>() {
                 @Override
