@@ -56,13 +56,13 @@ class ComplexRead1GradoopOperator implements
     public DataSet<Tuple4<Long, Integer, Long, String>> execute(TemporalGraph temporalGraph) {
         TemporalGraph windowedGraph = temporalGraph
             .subgraph(new LabelIsIn<>("Account", "Medium"), new LabelIsIn<>("transfer", "signIn"))
-            .fromTo(startTime, endTime);
+            .fromTo(this.startTime, this.endTime);
 
         DataSet<GraphTransaction> gtxLength3 = windowedGraph
             .temporalQuery("MATCH (a:Account)-[t1:transfer]->(:Account)-[t2:transfer]->(:Account)" +
                 "-[t3:transfer]->" +
                 "(other:Account)<-[s:signIn]-(m:Medium)" +
-                " WHERE a.id = " + id + "L AND  t1.val_from.before(t2.val_from) AND t2.val_from.before(t3" +
+                " WHERE a.id = " + this.id + "L AND  t1.val_from.before(t2.val_from) AND t2.val_from.before(t3" +
                 ".val_from) AND m.isBlocked = true")
             .toGraphCollection()
             .getGraphTransactions();
@@ -70,13 +70,13 @@ class ComplexRead1GradoopOperator implements
         DataSet<GraphTransaction> gtxLength2 = windowedGraph
             .temporalQuery(
                 "MATCH (a:Account)-[t1:transfer]->(:Account)-[t2:transfer]->(other:Account)<-[s:signIn]-(m:Medium)" +
-                    " WHERE a.id = " + id + "L AND  t1.val_from.before(t2.val_from) AND m.isBlocked = true")
+                    " WHERE a.id = " + this.id + "L AND  t1.val_from.before(t2.val_from) AND m.isBlocked = true")
             .toGraphCollection()
             .getGraphTransactions();
 
         DataSet<GraphTransaction> gtxLength1 = windowedGraph
             .temporalQuery("MATCH (a:Account)-[t1:transfer]->(other:Account)<-[s:signIn]-(m:Medium)" +
-                " WHERE a.id = " + id + "L AND m.isBlocked = true")
+                " WHERE a.id = " + this.id + "L AND m.isBlocked = true")
             .toGraphCollection()
             .getGraphTransactions();
 
