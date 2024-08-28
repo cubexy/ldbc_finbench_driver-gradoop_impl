@@ -37,8 +37,8 @@ public class SimpleRead3Handler implements OperationHandler<SimpleRead3, Gradoop
 
 class SimpleRead3GradoopOperator implements UnaryBaseGraphToValueOperator<TemporalGraph, DataSet<Tuple1<Float>>> {
 
-    private final long id;
-    private final double threshold;
+    private final Long id;
+    private final Double threshold;
     private final Date startTime;
     private final Date endTime;
 

@@ -37,10 +37,10 @@ public class SimpleRead5Handler implements OperationHandler<SimpleRead5, Gradoop
 
 class SimpleRead5GradoopOperator implements UnaryBaseGraphToValueOperator<TemporalGraph, DataSet<Tuple3<Long, Integer, Float>>> {
 
-    private final long id;
+    private final Long id;
     private final Date startTime;
     private final Date endTime;
-    private final double threshold;
+    private final Double threshold;
 
     public SimpleRead5GradoopOperator(SimpleRead5 sr5) {
         this.id = sr5.getId();

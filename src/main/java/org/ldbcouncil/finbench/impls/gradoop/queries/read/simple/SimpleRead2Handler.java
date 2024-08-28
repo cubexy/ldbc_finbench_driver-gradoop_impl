@@ -48,7 +48,7 @@ public class SimpleRead2Handler implements OperationHandler<SimpleRead2, Gradoop
 class SimpleRead2GradoopOperator implements
     UnaryBaseGraphToValueOperator<TemporalGraph, Tuple6<Float, Float, Long, Float, Float, Long>> {
 
-    private final long id;
+    private final Long id;
     private final Date startTime;
     private final Date endTime;
 
