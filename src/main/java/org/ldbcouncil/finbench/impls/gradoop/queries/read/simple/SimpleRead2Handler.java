@@ -40,7 +40,6 @@ public class SimpleRead2Handler implements OperationHandler<SimpleRead2, Gradoop
                     sr2Result.f5));
             resultReporter.report(simpleRead2Results.size(), simpleRead2Results, sr2);
         } catch (Exception e) {
-            e.printStackTrace();
             throw new DbException("Error while collecting results for simple read 2: " + e);
         }
     }
