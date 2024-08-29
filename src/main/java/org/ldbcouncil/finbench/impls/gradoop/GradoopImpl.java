@@ -50,6 +50,7 @@ public class GradoopImpl extends Db {
         registerOperationHandler(SimpleRead1.class, SimpleRead1Handler.class);
         registerOperationHandler(SimpleRead2.class, SimpleRead2Handler.class);
         registerOperationHandler(SimpleRead3.class, SimpleRead3Handler.class);
+        registerOperationHandler(SimpleRead4.class, SimpleRead4Handler.class);
 
     }
 

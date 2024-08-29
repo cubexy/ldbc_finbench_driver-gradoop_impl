@@ -5,19 +5,25 @@ import static org.ldbcouncil.finbench.impls.gradoop.CommonUtils.roundToDecimalPl
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.flink.api.java.DataSet;
-import org.apache.flink.api.java.tuple.Tuple1;
 import org.apache.flink.api.java.tuple.Tuple3;
+import org.gradoop.common.model.impl.id.GradoopId;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
 import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
 import org.gradoop.flink.model.impl.operators.aggregation.functions.count.Count;
+import org.gradoop.flink.model.impl.operators.aggregation.functions.sum.SumProperty;
 import org.gradoop.flink.model.impl.operators.combination.ReduceCombination;
 import org.gradoop.flink.model.impl.operators.keyedgrouping.GroupingKeys;
 import org.gradoop.flink.model.impl.operators.keyedgrouping.KeyedGrouping;
 import org.gradoop.temporal.model.impl.TemporalGraph;
+import org.gradoop.temporal.model.impl.pojo.TemporalEdge;
 import org.gradoop.temporal.model.impl.pojo.TemporalVertex;
 import org.ldbcouncil.finbench.driver.DbException;
 import org.ldbcouncil.finbench.driver.OperationHandler;
@@ -34,10 +40,10 @@ public class SimpleRead4Handler implements OperationHandler<SimpleRead4, Gradoop
     public void executeOperation(SimpleRead4 sr4, GradoopFinbenchBaseGraphState connectionState,
                                  ResultReporter resultReporter) throws DbException {
         GradoopImpl.logger.info(sr4.toString());
-        DataSet<Tuple3<Long, Integer, Double>> simpleRead4Result = new SimpleRead4GradoopOperator(sr4).execute(connectionState.getGraph());
+        List<Tuple3<Long, Integer, Double>> simpleRead4Result = new SimpleRead4GradoopOperator(sr4).execute(connectionState.getGraph());
         List<SimpleRead4Result> simpleRead4Results = new ArrayList<>();
         try {
-            simpleRead4Result.collect().forEach(
+            simpleRead4Result.forEach(
                 tuple -> simpleRead4Results.add(new SimpleRead4Result(tuple.f0, tuple.f1, tuple.f2)));
         } catch (Exception e) {
             throw new DbException("Error while collecting results for simple read 4: " + e);
@@ -46,7 +52,7 @@ public class SimpleRead4Handler implements OperationHandler<SimpleRead4, Gradoop
     }
 }
 
-class SimpleRead4GradoopOperator implements UnaryBaseGraphToValueOperator<TemporalGraph, DataSet<Tuple3<Long, Integer, Double>>> {
+class SimpleRead4GradoopOperator implements UnaryBaseGraphToValueOperator<TemporalGraph, List<Tuple3<Long, Integer, Double>>> {
 
     private final Long id;
     private final Date startTime;
@@ -61,67 +67,53 @@ class SimpleRead4GradoopOperator implements UnaryBaseGraphToValueOperator<Tempor
     }
 
     @Override
-    public DataSet<Tuple3<Long, Integer, Double>> execute(TemporalGraph temporalGraph) {
+    public List<Tuple3<Long, Integer, Double>> execute(TemporalGraph temporalGraph) {
         TemporalGraph windowedGraph = temporalGraph
             .subgraph(new LabelIsIn<>("Account"), new LabelIsIn<>("transfer"))
             .fromTo(this.startTime.getTime(), this.endTime.getTime());
 
         try {
             final long id_serializable = this.id; // this is neccessary because this.id is not serializable, which is needed for the transformVertices function
-            List<TemporalVertex> accounts = windowedGraph.query(
+            TemporalGraph transfers = windowedGraph.query(
                     "MATCH (src:Account)-[transferOut:transfer]->(dst:Account) WHERE src <> dst AND src.id =" +
                         id_serializable +
                         "L AND transferOut.amount > " + this.threshold)
                 .reduce(new ReduceCombination<>())
                 .transformVertices((currentVertex, transformedVertex) -> {
-                    System.out.println("test");
                     if (currentVertex.hasProperty("id") &&
                         Objects.equals(currentVertex.getPropertyValue("id").getLong(), id_serializable)) {
-                        currentVertex.removeProperty("isBlocked");
+                        currentVertex.removeProperty("id");
                     }
                     return currentVertex;
                 }).callForGraph(
-                    new KeyedGrouping<>(Arrays.asList(GroupingKeys.label(), GroupingKeys.property("isBlocked")),
-                        Collections.singletonList(new Count("count")), null,
-                        null)
-                )
-                .getVertices()
-                .collect();
+                    new KeyedGrouping<>(Arrays.asList(GroupingKeys.label(), GroupingKeys.property("id")),
+                        null, null,
+                        Arrays.asList(new Count("count"), new SumProperty("amount")))
+                );
 
-            TemporalVertex blockedVertexes = null;
-            TemporalVertex nonBlockedVertexes = null;
+            // Sorting is not yet supported in Gradoop, so we have to do it here
 
-            for (TemporalVertex vertex : accounts) {
-                if (!vertex.hasProperty("isBlocked")) {
-                    throw new RuntimeException("List error");
-                }
-                if (vertex.getPropertyValue("isBlocked").getType() == null) {
-                    continue;
-                }
-                final boolean isBlocked = vertex.getPropertyValue("isBlocked").getBoolean();
-                if (isBlocked) {
-                    blockedVertexes = vertex;
-                } else {
-                    nonBlockedVertexes = vertex;
-                }
+            List<TemporalEdge> edges = transfers.getEdges().collect();
+            List<TemporalVertex> vertices = transfers.getVertices().collect();
+
+            if (edges.isEmpty()) {
+                return Collections.emptyList();
             }
 
-            if (blockedVertexes == null && nonBlockedVertexes == null) {
-                return new Tuple1<>(-1.0f);
-            }
+            Map<GradoopId, TemporalVertex> vertexMap = vertices.stream().collect(
+                Collectors.toMap(TemporalVertex::getId, v -> v));
 
-            if (blockedVertexes == null) {
-                return new Tuple1<>(0.0f);
-            }
+            return edges.stream().map(e -> {
+                TemporalVertex dst = vertexMap.get(e.getTargetId());
 
-            if (nonBlockedVertexes == null) {
-                return new Tuple1<>(1.0f);
-            }
+                long dstId = dst.getPropertyValue("id").getLong(); //error here
+                int numEdges = (int) e.getPropertyValue("count").getLong();
+                double sumAmount = roundToDecimalPlaces(e.getPropertyValue("sum_amount").getDouble(), 3);
 
-            final long blockedAccounts = blockedVertexes.getPropertyValue("count").getLong();
-            final long allAccounts = blockedAccounts + nonBlockedVertexes.getPropertyValue("count").getLong();
+                return new Tuple3<>(dstId, numEdges, sumAmount);
+            }).sorted(Comparator.comparing((Tuple3<Long, Integer, Double> tuple) -> tuple.f2).reversed()
+                .thenComparing(tuple -> tuple.f0)).collect(Collectors.toList());
 
-            return new Tuple1<>(roundToDecimalPlaces((float) blockedAccounts / (float) allAccounts, 3));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
