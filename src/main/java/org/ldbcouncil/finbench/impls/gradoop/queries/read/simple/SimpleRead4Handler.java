@@ -91,8 +91,6 @@ class SimpleRead4GradoopOperator implements UnaryBaseGraphToValueOperator<Tempor
                         Arrays.asList(new Count("count"), new SumProperty("amount")))
                 );
 
-            // Sorting is not yet supported in Gradoop, so we have to do it here
-
             List<TemporalEdge> edges = transfers.getEdges().collect();
             List<TemporalVertex> vertices = transfers.getVertices().collect();
 
@@ -111,6 +109,7 @@ class SimpleRead4GradoopOperator implements UnaryBaseGraphToValueOperator<Tempor
                 double sumAmount = roundToDecimalPlaces(e.getPropertyValue("sum_amount").getDouble(), 3);
 
                 return new Tuple3<>(dstId, numEdges, sumAmount);
+                // Sorting is not yet supported in Gradoop, so we have to do it here
             }).sorted(Comparator.comparing((Tuple3<Long, Integer, Double> tuple) -> tuple.f2).reversed()
                 .thenComparing(tuple -> tuple.f0)).collect(Collectors.toList());
 
