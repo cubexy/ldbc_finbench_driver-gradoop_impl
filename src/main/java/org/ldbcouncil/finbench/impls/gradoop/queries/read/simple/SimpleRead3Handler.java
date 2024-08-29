@@ -65,9 +65,9 @@ class SimpleRead3GradoopOperator implements UnaryBaseGraphToValueOperator<Tempor
         try {
             final long id_serializable = this.id; // this is neccessary because this.id is not serializable, which is needed for the transformVertices function
             List<TemporalVertex> accounts = windowedGraph.query(
-                    "MATCH (dst2:Account)-[edge2:transfer]->(src:Account) WHERE src <> dst2 AND src.id =" +
+                    "MATCH (src:Account)-[transferIn:transfer]->(dst:Account) WHERE src <> person AND dst.id =" +
                         id_serializable +
-                        "L AND edge2.amount > " + this.threshold)
+                        "L AND transferIn.amount > " + this.threshold)
                 .reduce(new ReduceCombination<>())
                 .transformVertices((currentVertex, transformedVertex) -> {
                     System.out.println("test");
