@@ -70,7 +70,6 @@ class SimpleRead3GradoopOperator implements UnaryBaseGraphToValueOperator<Tempor
                         "L AND transferIn.amount > " + this.threshold)
                 .reduce(new ReduceCombination<>())
                 .transformVertices((currentVertex, transformedVertex) -> {
-                    System.out.println("test");
                     if (currentVertex.hasProperty("id") &&
                         Objects.equals(currentVertex.getPropertyValue("id").getLong(), id_serializable)) {
                         currentVertex.removeProperty("isBlocked");
