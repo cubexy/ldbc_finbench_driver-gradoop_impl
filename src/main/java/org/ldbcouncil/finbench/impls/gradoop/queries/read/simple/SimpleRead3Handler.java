@@ -60,7 +60,7 @@ class SimpleRead3GradoopOperator implements UnaryBaseGraphToValueOperator<Tempor
     public Tuple1<Float> execute(TemporalGraph temporalGraph) {
         TemporalGraph windowedGraph = temporalGraph
             .subgraph(new LabelIsIn<>("Account"), new LabelIsIn<>("transfer"))
-            .fromTo(this.startTime.getTime(), this.endTime.getTime()); // Get all transfers between start and end time
+            .fromTo(this.startTime.getTime(), this.endTime.getTime());
 
         try {
             final long id_serializable = this.id; // this is neccessary because this.id is not serializable, which is needed for the transformVertices function
