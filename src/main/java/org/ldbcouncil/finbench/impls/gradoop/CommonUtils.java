@@ -34,19 +34,9 @@ public class CommonUtils {
         return df.parse(time);
     }
 
-    public static Float getDataSetSum(DataSet<Tuple1<Double>> dataSet, int decimalPlaces) {
+    public static Double roundToDecimalPlaces(Double num, int decimalPlaces) {
         try {
-            double sum = dataSet.sum(0).collect().iterator().next().f0;
-            return BigDecimal.valueOf(sum).setScale(decimalPlaces, RoundingMode.HALF_UP).floatValue();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static Float getDataSetMax(DataSet<Tuple1<Double>> dataSet, int decimalPlaces) {
-        try {
-            double max = dataSet.max(0).collect().iterator().next().f0;
-            return BigDecimal.valueOf(max).setScale(decimalPlaces, RoundingMode.HALF_UP).floatValue();
+            return new BigDecimal(num).setScale(decimalPlaces, RoundingMode.HALF_UP).doubleValue();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
