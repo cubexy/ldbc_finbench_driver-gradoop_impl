@@ -41,4 +41,12 @@ public class CommonUtils {
             throw new RuntimeException(e);
         }
     }
+
+    public static Float roundToDecimalPlaces(Float num, int decimalPlaces) {
+        try {
+            return new BigDecimal(num).setScale(decimalPlaces, RoundingMode.HALF_UP).floatValue();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
