@@ -13,10 +13,13 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.flink.api.java.DataSet;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.gradoop.common.model.impl.id.GradoopId;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
+import org.gradoop.flink.model.impl.functions.epgm.Id;
 import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
+import org.gradoop.flink.model.impl.functions.epgm.TargetId;
 import org.gradoop.flink.model.impl.operators.aggregation.functions.count.Count;
 import org.gradoop.flink.model.impl.operators.aggregation.functions.sum.SumProperty;
 import org.gradoop.flink.model.impl.operators.combination.ReduceCombination;
@@ -91,22 +94,20 @@ class SimpleRead4GradoopOperator implements UnaryBaseGraphToValueOperator<Tempor
                         Arrays.asList(new Count("count"), new SumProperty("amount")))
                 );
 
-            List<TemporalEdge> edges = transfers.getEdges().collect();
-            List<TemporalVertex> vertices = transfers.getVertices().collect();
+            List<Tuple2<TemporalEdge, TemporalVertex>>
+                edges = transfers.getEdges().join(transfers.getVertices()).where(new TargetId<>()).equalTo(new Id<>()).collect();
 
             if (edges.isEmpty()) {
                 return Collections.emptyList();
             }
 
-            Map<GradoopId, TemporalVertex> vertexMap = vertices.stream().collect(
-                Collectors.toMap(TemporalVertex::getId, v -> v));
-
             return edges.stream().map(e -> {
-                TemporalVertex dst = vertexMap.get(e.getTargetId());
+                TemporalEdge edge = e.f0;
+                TemporalVertex dst = e.f1;
 
                 long dstId = dst.getPropertyValue("id").getLong(); //error here
-                int numEdges = (int) e.getPropertyValue("count").getLong();
-                double sumAmount = roundToDecimalPlaces(e.getPropertyValue("sum_amount").getDouble(), 3);
+                int numEdges = (int) edge.getPropertyValue("count").getLong();
+                double sumAmount = roundToDecimalPlaces(edge.getPropertyValue("sum_amount").getDouble(), 3);
 
                 return new Tuple3<>(dstId, numEdges, sumAmount);
                 // Sorting is not yet supported in Gradoop, so we have to do it here
