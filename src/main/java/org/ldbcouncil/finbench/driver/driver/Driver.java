@@ -22,7 +22,7 @@ public class Driver {
     public static void main(String[] args) {
         ControlService controlService = null;
         boolean detailedStatus = false;
-        // Initial logging service
+        // Initial loggin service
         LoggingServiceFactory loggingServiceFactory = new Log4jLoggingServiceFactory(detailedStatus);
         LoggingService loggingService = loggingServiceFactory.loggingServiceFor(Driver.class.getSimpleName());
 
