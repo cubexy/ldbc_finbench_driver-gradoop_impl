@@ -13,7 +13,7 @@ import org.gradoop.temporal.model.impl.TemporalGraph;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead1;
 import org.ldbcouncil.finbench.impls.gradoop.CommonUtils;
 
-class SimpleRead1GradoopOperator implements
+public class SimpleRead1GradoopOperator implements
     UnaryBaseGraphToValueOperator<TemporalGraph, DataSet<Tuple3<Date, Boolean, String>>> {
     private final long id;
 

@@ -19,8 +19,6 @@ import java.io.IOException;
 import java.util.Map;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.*;
 import org.ldbcouncil.finbench.impls.gradoop.queries.complex.read1.ComplexRead1Handler;
-import org.ldbcouncil.finbench.impls.gradoop.queries.read.complex.*;
-import org.ldbcouncil.finbench.impls.gradoop.queries.read.simple.*;
 import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read1.SimpleRead1Handler;
 import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read2.SimpleRead2Handler;
 import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read3.SimpleRead3Handler;
