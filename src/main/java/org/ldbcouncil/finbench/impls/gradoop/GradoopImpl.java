@@ -26,7 +26,6 @@ import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read4.SimpleRead4Han
 
 public class GradoopImpl extends Db {
     public static Logger logger = LogManager.getLogger("GradoopImpl");
-    private TemporalGradoopConfig config;
     private GradoopFinbenchBaseGraphState graph;
 
     @Override
@@ -41,10 +40,10 @@ public class GradoopImpl extends Db {
         }
 
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-        this.config = TemporalGradoopConfig.createConfig(env);
+        TemporalGradoopConfig config = TemporalGradoopConfig.createConfig(env);
 
 
-        TemporalGraph tg = getTemporalGraph(mode, gradoopGraphDataPath);
+        TemporalGraph tg = getTemporalGraph(mode, gradoopGraphDataPath, config);
         this.graph = new GradoopFinbenchBaseGraphState(tg);
 
         //complex reads go here
@@ -57,20 +56,20 @@ public class GradoopImpl extends Db {
 
     }
 
-    protected TemporalGraph getTemporalGraph(String mode, String gradoopGraphDataPath) throws DbException {
+    protected static TemporalGraph getTemporalGraph(String mode, String gradoopGraphDataPath, TemporalGradoopConfig config) throws DbException {
         final TemporalDataSource dataSource;
         switch (mode) {
             case "csv":
-                dataSource = new TemporalCSVDataSource(gradoopGraphDataPath, this.config);
+                dataSource = new TemporalCSVDataSource(gradoopGraphDataPath, config);
                 break;
             case "indexed-csv":
-                dataSource = new TemporalIndexedCSVDataSource(gradoopGraphDataPath, this.config);
+                dataSource = new TemporalIndexedCSVDataSource(gradoopGraphDataPath, config);
                 break;
             case "parquet":
-                dataSource = new TemporalParquetDataSource(gradoopGraphDataPath, this.config);
+                dataSource = new TemporalParquetDataSource(gradoopGraphDataPath, config);
                 break;
             case "parquet-protobuf":
-                dataSource = new TemporalParquetProtobufDataSource(gradoopGraphDataPath, this.config);
+                dataSource = new TemporalParquetProtobufDataSource(gradoopGraphDataPath, config);
                 break;
             default:
                 throw new DbException("Unsupported import mode: " + mode);
