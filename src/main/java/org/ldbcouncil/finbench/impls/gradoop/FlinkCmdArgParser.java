@@ -20,11 +20,20 @@ public class FlinkCmdArgParser {
     private CommandLine cmd;
     private final Options options = initCLIOptions();
 
+    /**
+     * Parses the command line arguments and initializes the database.
+     * @param args command line arguments
+     * @param logger logger
+     */
     public FlinkCmdArgParser(String[] args, Logger logger) {
         this.args = args;
         this.logger = logger;
     }
 
+    /**
+     * Parses the command line arguments and initializes the database.
+     * @throws DbException error while initializing the database
+     */
     public void parse() throws DbException {
         logger.info("Initializing FlinkCmdArgParser...");
         init();
@@ -35,6 +44,9 @@ public class FlinkCmdArgParser {
         final GradoopFinbenchBaseGraphState graph = initDatabase(inputArgs.getDataPath(), inputArgs.getMode());
     }
 
+    /**
+     * Initializes the command line parser.
+     */
     private void init() {
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
@@ -47,6 +59,10 @@ public class FlinkCmdArgParser {
         }
     }
 
+    /**
+     * Parses the command line arguments.
+     * @return available input arguments
+     */
     private Options initCLIOptions() {
         Options options = new Options();
         options.addOption("q", "query", true, "Query to execute (simple_read_1..6 | complex_read_1..12)");
