@@ -22,6 +22,10 @@ public class FlinkCmdArg {
     private int truncationLimit;
     private int truncationOrder;
 
+    /**
+     * Initializes the input arguments from the command line arguments.
+     * @param cmd command line arguments
+     */
     public FlinkCmdArg(CommandLine cmd) {
         try {
             initializeFromArgs(cmd);
@@ -30,6 +34,10 @@ public class FlinkCmdArg {
         }
     }
 
+    /**
+     * Initializes the input arguments from the command line arguments.
+     * @param cmd command line arguments
+     */
     private void initializeFromArgs(CommandLine cmd) {
         if (!cmd.hasOption("d") || !cmd.hasOption("q") || !cmd.hasOption("m")) {
             throw new RuntimeException("Missing required arguments");
