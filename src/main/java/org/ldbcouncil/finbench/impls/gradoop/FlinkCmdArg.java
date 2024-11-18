@@ -200,6 +200,7 @@ public class FlinkCmdArg {
     }
 
     public void setTruncationOrder(String truncationOrder) {
+        // TODO: this is enum
         this.truncationOrder = Integer.parseInt(truncationOrder);
     }
 

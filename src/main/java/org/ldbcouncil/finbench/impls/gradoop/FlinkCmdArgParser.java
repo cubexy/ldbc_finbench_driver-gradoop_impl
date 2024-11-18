@@ -13,12 +13,23 @@ import org.apache.logging.log4j.Logger;
 import org.gradoop.temporal.model.impl.TemporalGraph;
 import org.gradoop.temporal.util.TemporalGradoopConfig;
 import org.ldbcouncil.finbench.driver.DbException;
+import org.ldbcouncil.finbench.driver.ResultReporter;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead1;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead1;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead2;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead3;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead4;
+import org.ldbcouncil.finbench.impls.gradoop.queries.complex.read1.ComplexRead1Handler;
+import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read1.SimpleRead1Handler;
+import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read2.SimpleRead2Handler;
+import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read3.SimpleRead3Handler;
+import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read4.SimpleRead4Handler;
 
 public class FlinkCmdArgParser {
     private final Logger logger;
     private final String[] args;
     private CommandLine cmd;
-    private final Options options = initCLIOptions();
+    private final Options options;
 
     /**
      * Parses the command line arguments and initializes the database.
@@ -28,6 +39,7 @@ public class FlinkCmdArgParser {
     public FlinkCmdArgParser(String[] args, Logger logger) {
         this.args = args;
         this.logger = logger;
+        this.options = initCLIOptions();
     }
 
     /**
@@ -40,9 +52,16 @@ public class FlinkCmdArgParser {
         logger.info("Reading command line arguments...");
         final FlinkCmdArg inputArgs = new FlinkCmdArg(cmd);
         logger.info("FlinkCmdArgParser initialized.");
+
         logger.info("Initializing temporal graph...");
         final GradoopFinbenchBaseGraphState graph = initDatabase(inputArgs.getDataPath(), inputArgs.getMode());
+        logger.info("FlinkCmdArgParser graph initialized.");
+
+        logger.info("Executing query...");
+        executeQuery(inputArgs, graph);
+        logger.info("FlinkCmdArgParser query executed.");
     }
+
 
     /**
      * Initializes the command line parser.
@@ -94,5 +113,26 @@ public class FlinkCmdArgParser {
 
         TemporalGraph tg = getTemporalGraph(mode, gradoopDataPath, config);
         return new GradoopFinbenchBaseGraphState(tg);
+    }
+
+    /**
+     * Executes the query.
+     * @param inputArgs input arguments
+     * @param graph database
+     */
+    private void executeQuery(FlinkCmdArg inputArgs, GradoopFinbenchBaseGraphState graph) throws DbException {
+        //noinspection SwitchStatementWithTooFewBranches
+        switch (inputArgs.getQueryName()) {
+            case "simple_read_1":
+                new SimpleRead1Handler().executeOperation(new SimpleRead1(inputArgs.getId(), inputArgs.getStartTime(), inputArgs.getEndTime()), graph,
+                    null);
+                break;
+            /*case "complex_read_1":
+                new ComplexRead1Handler().executeOperation(new ComplexRead1(inputArgs.getId(), inputArgs.getStartTime(), inputArgs.getEndTime(), inputArgs.getTruncationLimit(), inputArgs.getTruncationOrder()), graph,
+                    null);
+                break;*/
+            default:
+                throw new RuntimeException("Query not implemented: " + inputArgs.getQueryName());
+        }
     }
 }

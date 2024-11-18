@@ -12,7 +12,8 @@ public class FlinkQueryExecutor {
         FlinkCmdArgParser parser = new FlinkCmdArgParser(args, logger); // initialize parser
         try {
             parser.parse(); // parse query arguments and initialize database
-        } catch (DbException e) {
+        } catch (Exception e) {
+            logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
     }
