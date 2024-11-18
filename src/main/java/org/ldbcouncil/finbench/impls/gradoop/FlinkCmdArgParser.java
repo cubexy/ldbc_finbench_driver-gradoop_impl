@@ -33,12 +33,12 @@ public class FlinkCmdArgParser {
         "complex_read_6", "complex_read_7", "complex_read_8", "complex_read_9", "complex_read_10",
         "complex_read_11", "complex_read_12");
 
-    public FlinkCmdArgParser(String[] args) {
+    protected FlinkCmdArgParser(String[] args) {
         this.args = args;
         this.options = initCLIOptions();
     }
 
-    public void init() {
+    protected void init() {
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
         try {
@@ -50,7 +50,7 @@ public class FlinkCmdArgParser {
         }
     }
 
-    public void parse() {
+    protected void parse() {
         final String queryName = this.cmd.getOptionValue("q");
         if (queryName == null) {
             throw new RuntimeException("Query name not set");
@@ -115,5 +115,9 @@ public class FlinkCmdArgParser {
         options.addOption("q_tl", "truncation_limit", true, "[query arg] truncation limit");
         options.addOption("q_to", "truncation_order", true, "[query arg] truncation order");
         return options;
+    }
+
+    private void initDatabase() {
+        return;
     }
 }

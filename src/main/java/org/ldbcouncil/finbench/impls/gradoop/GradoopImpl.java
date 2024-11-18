@@ -57,7 +57,7 @@ public class GradoopImpl extends Db {
 
     }
 
-    private TemporalGraph getTemporalGraph(String mode, String gradoopGraphDataPath) throws DbException {
+    protected TemporalGraph getTemporalGraph(String mode, String gradoopGraphDataPath) throws DbException {
         final TemporalDataSource dataSource;
         switch (mode) {
             case "csv":
