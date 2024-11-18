@@ -2,7 +2,6 @@ package org.ldbcouncil.finbench.impls.gradoop;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.ldbcouncil.finbench.driver.DbException;
 
 public class FlinkQueryExecutor {
 

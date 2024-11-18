@@ -13,17 +13,8 @@ import org.apache.logging.log4j.Logger;
 import org.gradoop.temporal.model.impl.TemporalGraph;
 import org.gradoop.temporal.util.TemporalGradoopConfig;
 import org.ldbcouncil.finbench.driver.DbException;
-import org.ldbcouncil.finbench.driver.ResultReporter;
-import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead1;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead1;
-import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead2;
-import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead3;
-import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead4;
-import org.ldbcouncil.finbench.impls.gradoop.queries.complex.read1.ComplexRead1Handler;
 import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read1.SimpleRead1Handler;
-import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read2.SimpleRead2Handler;
-import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read3.SimpleRead3Handler;
-import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read4.SimpleRead4Handler;
 
 public class FlinkCmdArgParser {
     private final Logger logger;
