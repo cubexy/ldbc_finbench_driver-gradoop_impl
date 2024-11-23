@@ -10,6 +10,7 @@ import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
 import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
 import org.gradoop.flink.model.impl.layouts.transactional.tuples.GraphTransaction;
 import org.gradoop.temporal.model.impl.TemporalGraph;
+import org.ldbcouncil.finbench.driver.truncation.TruncationOrder;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead1;
 import org.ldbcouncil.finbench.impls.gradoop.CommonUtils;
 
@@ -19,11 +20,15 @@ class ComplexRead1GradoopOperator implements
     private final long id;
     private final long startTime;
     private final long endTime;
+    private final int truncationLimit;
+    private final TruncationOrder truncationOrder;
 
     public ComplexRead1GradoopOperator(ComplexRead1 complexRead1) {
         this.id = complexRead1.getId();
         this.startTime = complexRead1.getStartTime().getTime();
         this.endTime = complexRead1.getEndTime().getTime();
+        this.truncationLimit = complexRead1.getTruncationLimit();
+        this.truncationOrder = complexRead1.getTruncationOrder();
     }
 
     @Override
@@ -36,7 +41,7 @@ class ComplexRead1GradoopOperator implements
             .temporalQuery("MATCH (a:Account)-[t1:transfer]->(:Account)-[t2:transfer]->(:Account)" +
                 "-[t3:transfer]->" +
                 "(other:Account)<-[s:signIn]-(m:Medium)" +
-                " WHERE a.id = " + this.id + "L AND  t1.val_from.before(t2.val_from) AND t2.val_from.before(t3" +
+                " WHERE a.id = " + this.id + "L AND t1.val_from.before(t2.val_from) AND t2.val_from.before(t3" +
                 ".val_from) AND m.isBlocked = true")
             .toGraphCollection()
             .getGraphTransactions();
@@ -44,7 +49,7 @@ class ComplexRead1GradoopOperator implements
         DataSet<GraphTransaction> gtxLength2 = windowedGraph
             .temporalQuery(
                 "MATCH (a:Account)-[t1:transfer]->(:Account)-[t2:transfer]->(other:Account)<-[s:signIn]-(m:Medium)" +
-                    " WHERE a.id = " + this.id + "L AND  t1.val_from.before(t2.val_from) AND m.isBlocked = true")
+                    " WHERE a.id = " + this.id + "L AND t1.val_from.before(t2.val_from) AND m.isBlocked = true")
             .toGraphCollection()
             .getGraphTransactions();
 
