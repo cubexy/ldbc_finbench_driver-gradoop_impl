@@ -37,7 +37,7 @@ public class GradoopImpl extends Db {
 
         final String gradoopGraphDataPath = properties.get("gradoop_import_path");
         final String mode = properties.get("gradoop_import_mode");
-        final String execMode = properties.get("gradoop_execution_mode");
+        final String execMode = properties.get("gradoop_cluster_execution");
 
         if (gradoopGraphDataPath == null || mode == null || execMode == null || mode.isEmpty() ||
             gradoopGraphDataPath.isEmpty() || execMode.isEmpty()) {
@@ -48,9 +48,8 @@ public class GradoopImpl extends Db {
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         TemporalGradoopConfig config = TemporalGradoopConfig.createConfig(env);
 
-
         TemporalGraph tg = getTemporalGraph(mode, gradoopGraphDataPath, config);
-        this.graph = new GradoopFinbenchBaseGraphState(tg);
+        this.graph = new GradoopFinbenchBaseGraphState(tg, execMode.equals("true"));
 
         //complex reads go here
         registerOperationHandler(ComplexRead1.class, ComplexRead1Handler.class);
@@ -59,7 +58,6 @@ public class GradoopImpl extends Db {
         registerOperationHandler(SimpleRead2.class, SimpleRead2Handler.class);
         registerOperationHandler(SimpleRead3.class, SimpleRead3Handler.class);
         registerOperationHandler(SimpleRead4.class, SimpleRead4Handler.class);
-
     }
 
     protected static TemporalGraph getTemporalGraph(String mode, String gradoopGraphDataPath,
@@ -92,12 +90,12 @@ public class GradoopImpl extends Db {
     }
 
     @Override
-    protected void onClose() throws IOException {
+    protected void onClose() {
         logger.info("Waiting for all tasks to finish...");
     }
 
     @Override
-    protected DbConnectionState getConnectionState() throws DbException {
+    protected DbConnectionState getConnectionState() {
         return graph;
     }
 }

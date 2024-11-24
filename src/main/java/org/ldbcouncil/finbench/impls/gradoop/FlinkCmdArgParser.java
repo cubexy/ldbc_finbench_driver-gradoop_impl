@@ -14,7 +14,9 @@ import org.gradoop.temporal.model.impl.TemporalGraph;
 import org.gradoop.temporal.util.TemporalGradoopConfig;
 import org.ldbcouncil.finbench.driver.DbException;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead2;
+import org.ldbcouncil.finbench.impls.gradoop.queries.complex.read1.ComplexRead1CmdArgExecutor;
 import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read1.SimpleRead1CmdArgExecutor;
+import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read2.SimpleRead2CmdArgExecutor;
 import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read2.SimpleRead2GradoopOperator;
 
 public class FlinkCmdArgParser {
@@ -118,8 +120,11 @@ public class FlinkCmdArgParser {
                 SimpleRead1CmdArgExecutor.execute(inputArgs, graph, logger);
                 break;
             case "simple_read_2":
-                SimpleRead2 input2 = new SimpleRead2(inputArgs.getId(), inputArgs.getStartTime(), inputArgs.getEndTime());
-                SimpleRead2GradoopOperator operator2 = new SimpleRead2GradoopOperator(input2);
+                SimpleRead2CmdArgExecutor.execute(inputArgs, graph, logger);
+                break;
+            case "complex_read_1":
+                ComplexRead1CmdArgExecutor.execute(inputArgs, graph, logger);
+                break;
 
             default:
                 throw new RuntimeException("Query not implemented: " + inputArgs.getQueryName());
