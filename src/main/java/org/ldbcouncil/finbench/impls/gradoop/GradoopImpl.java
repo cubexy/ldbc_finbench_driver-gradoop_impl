@@ -1,5 +1,8 @@
 package org.ldbcouncil.finbench.impls.gradoop;
 
+import java.io.IOException;
+import java.util.Map;
+import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.gradoop.temporal.io.api.TemporalDataSource;
@@ -13,11 +16,11 @@ import org.ldbcouncil.finbench.driver.Db;
 import org.ldbcouncil.finbench.driver.DbConnectionState;
 import org.ldbcouncil.finbench.driver.DbException;
 import org.ldbcouncil.finbench.driver.log.LoggingService;
-import org.apache.flink.api.java.ExecutionEnvironment;
-
-import java.io.IOException;
-import java.util.Map;
-import org.ldbcouncil.finbench.driver.workloads.transaction.queries.*;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead1;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead1;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead2;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead3;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead4;
 import org.ldbcouncil.finbench.impls.gradoop.queries.complex.read1.ComplexRead1Handler;
 import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read1.SimpleRead1Handler;
 import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read2.SimpleRead2Handler;
@@ -34,9 +37,12 @@ public class GradoopImpl extends Db {
 
         final String gradoopGraphDataPath = properties.get("gradoop_import_path");
         final String mode = properties.get("gradoop_import_mode");
+        final String execMode = properties.get("gradoop_execution_mode");
 
-        if (gradoopGraphDataPath == null || mode == null || mode.isEmpty() || gradoopGraphDataPath.isEmpty()) {
-            throw new DbException("gradoop_import_path or gradoop_import_mode not set in properties file");
+        if (gradoopGraphDataPath == null || mode == null || execMode == null || mode.isEmpty() ||
+            gradoopGraphDataPath.isEmpty() || execMode.isEmpty()) {
+            throw new DbException(
+                "gradoop_import_path, gradoop_import_mode or gradoop_execution_mode not set in properties file");
         }
 
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
@@ -56,7 +62,8 @@ public class GradoopImpl extends Db {
 
     }
 
-    protected static TemporalGraph getTemporalGraph(String mode, String gradoopGraphDataPath, TemporalGradoopConfig config) throws DbException {
+    protected static TemporalGraph getTemporalGraph(String mode, String gradoopGraphDataPath,
+                                                    TemporalGradoopConfig config) throws DbException {
         final TemporalDataSource dataSource;
         switch (mode) {
             case "csv":

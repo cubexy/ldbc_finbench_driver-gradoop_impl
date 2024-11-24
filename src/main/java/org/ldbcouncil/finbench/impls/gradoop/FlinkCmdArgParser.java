@@ -13,8 +13,9 @@ import org.apache.logging.log4j.Logger;
 import org.gradoop.temporal.model.impl.TemporalGraph;
 import org.gradoop.temporal.util.TemporalGradoopConfig;
 import org.ldbcouncil.finbench.driver.DbException;
-import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead1;
-import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read1.SimpleRead1Handler;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead2;
+import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read1.SimpleRead1CmdArgExecutor;
+import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read2.SimpleRead2GradoopOperator;
 
 public class FlinkCmdArgParser {
     private final Logger logger;
@@ -112,16 +113,14 @@ public class FlinkCmdArgParser {
      * @param graph database
      */
     private void executeQuery(FlinkCmdArg inputArgs, GradoopFinbenchBaseGraphState graph) throws DbException {
-        //noinspection SwitchStatementWithTooFewBranches
         switch (inputArgs.getQueryName()) {
             case "simple_read_1":
-                new SimpleRead1Handler().executeOperation(new SimpleRead1(inputArgs.getId(), inputArgs.getStartTime(), inputArgs.getEndTime()), graph,
-                    null);
+                SimpleRead1CmdArgExecutor.execute(inputArgs, graph, logger);
                 break;
-            /*case "complex_read_1":
-                new ComplexRead1Handler().executeOperation(new ComplexRead1(inputArgs.getId(), inputArgs.getStartTime(), inputArgs.getEndTime(), inputArgs.getTruncationLimit(), inputArgs.getTruncationOrder()), graph,
-                    null);
-                break;*/
+            case "simple_read_2":
+                SimpleRead2 input2 = new SimpleRead2(inputArgs.getId(), inputArgs.getStartTime(), inputArgs.getEndTime());
+                SimpleRead2GradoopOperator operator2 = new SimpleRead2GradoopOperator(input2);
+
             default:
                 throw new RuntimeException("Query not implemented: " + inputArgs.getQueryName());
         }

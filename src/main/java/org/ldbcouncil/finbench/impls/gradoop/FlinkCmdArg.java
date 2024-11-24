@@ -5,6 +5,7 @@ import static org.ldbcouncil.finbench.impls.gradoop.CommonUtils.parseUnixTimeStr
 import java.text.ParseException;
 import java.util.Date;
 import org.apache.commons.cli.CommandLine;
+import org.ldbcouncil.finbench.driver.truncation.TruncationOrder;
 
 public class FlinkCmdArg {
 
@@ -20,7 +21,7 @@ public class FlinkCmdArg {
     private int threshold;
     private int threshold2;
     private int truncationLimit;
-    private int truncationOrder;
+    private TruncationOrder truncationOrder;
 
     /**
      * Initializes the input arguments from the command line arguments.
@@ -195,13 +196,13 @@ public class FlinkCmdArg {
         this.truncationLimit = Integer.parseInt(truncationLimit);
     }
 
-    public int getTruncationOrder() {
+    public TruncationOrder getTruncationOrder() {
         return truncationOrder;
     }
 
     public void setTruncationOrder(String truncationOrder) {
         // TODO: this is enum
-        this.truncationOrder = Integer.parseInt(truncationOrder);
+        this.truncationOrder = null;
     }
 
     public String getDataPath() {
