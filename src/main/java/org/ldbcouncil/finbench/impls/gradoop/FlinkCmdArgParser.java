@@ -13,11 +13,9 @@ import org.apache.logging.log4j.Logger;
 import org.gradoop.temporal.model.impl.TemporalGraph;
 import org.gradoop.temporal.util.TemporalGradoopConfig;
 import org.ldbcouncil.finbench.driver.DbException;
-import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead2;
 import org.ldbcouncil.finbench.impls.gradoop.queries.complex.read1.ComplexRead1CmdArgExecutor;
 import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read1.SimpleRead1CmdArgExecutor;
 import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read2.SimpleRead2CmdArgExecutor;
-import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read2.SimpleRead2GradoopOperator;
 
 public class FlinkCmdArgParser {
     private final Logger logger;
@@ -96,8 +94,9 @@ public class FlinkCmdArgParser {
 
     /**
      * Initializes the database.
+     *
      * @param gradoopDataPath path to the Gradoop data
-     * @param mode import mode (csv | indexed-csv | parquet | parquet-protobuf)
+     * @param mode            import mode (csv | indexed-csv | parquet | parquet-protobuf)
      * @return GradoopFinbenchBaseGraphState
      * @throws DbException error while initializing the database
      */
@@ -106,7 +105,7 @@ public class FlinkCmdArgParser {
         TemporalGradoopConfig config = TemporalGradoopConfig.createConfig(env);
 
         TemporalGraph tg = getTemporalGraph(mode, gradoopDataPath, config);
-        return new GradoopFinbenchBaseGraphState(tg);
+        return new GradoopFinbenchBaseGraphState(tg, false); // this command is being executed inside a cluster -> don't call another cluster
     }
 
     /**

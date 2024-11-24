@@ -111,7 +111,7 @@ public class FlinkCmdArg {
             !queryName.equals("complex_read_9") && !queryName.equals("complex_read_10") &&
             !queryName.equals("complex_read_11") && !queryName.equals("complex_read_12")) {
             throw new RuntimeException("Invalid query name: " + queryName);
-        } // TODO: refactor this
+        }
 
         this.queryName = queryName;
     }
