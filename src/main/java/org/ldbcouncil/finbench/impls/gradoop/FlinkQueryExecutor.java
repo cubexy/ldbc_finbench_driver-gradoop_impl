@@ -22,10 +22,8 @@ public class FlinkQueryExecutor {
      *            truncationOrder: truncation order of the query
      */
     public static void main(String[] args) {
-        Logger logger = LogManager.getLogger(); // initialize logger
-        logger.debug("Starting FlinkGradoopQueryExecutor...");
+        Logger logger = LogManager.getLogger("FlinkQueryExecutor");
 
-        /*
         FlinkCmdArgParser parser = new FlinkCmdArgParser(args, logger); // initialize parser
         try {
             parser.parse(); // parse query arguments and initialize database
@@ -33,6 +31,5 @@ public class FlinkQueryExecutor {
             logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
-         */
     }
 }
