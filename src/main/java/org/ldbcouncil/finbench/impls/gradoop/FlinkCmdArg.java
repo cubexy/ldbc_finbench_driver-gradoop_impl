@@ -153,11 +153,7 @@ public class FlinkCmdArg {
     }
 
     public void setStartTime(String startTime) {
-        try {
-            this.startTime = parseUnixTimeString(startTime);
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
+        this.startTime = new Date(Long.parseLong(startTime));
     }
 
     public Date getEndTime() {
@@ -165,11 +161,7 @@ public class FlinkCmdArg {
     }
 
     public void setEndTime(String endTime) {
-        try {
-            this.endTime = parseUnixTimeString(endTime);
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
+        this.endTime = new Date(Long.parseLong(endTime));
     }
 
     public int getThreshold() {
@@ -201,8 +193,7 @@ public class FlinkCmdArg {
     }
 
     public void setTruncationOrder(String truncationOrder) {
-        // TODO: this is enum
-        this.truncationOrder = null;
+        this.truncationOrder = TruncationOrder.valueOf(truncationOrder); // truncation order can be TIMESTAMP_DESCENDING or TIMESTAMP_ASCENDING
     }
 
     public String getDataPath() {

@@ -21,14 +21,15 @@ class ComplexRead1GradoopOperator implements
     private final long startTime;
     private final long endTime;
     private final int truncationLimit;
-    private final TruncationOrder truncationOrder;
+    private final boolean isTruncationOrderAscending;
 
     public ComplexRead1GradoopOperator(ComplexRead1 complexRead1) {
         this.id = complexRead1.getId();
         this.startTime = complexRead1.getStartTime().getTime();
         this.endTime = complexRead1.getEndTime().getTime();
         this.truncationLimit = complexRead1.getTruncationLimit();
-        this.truncationOrder = complexRead1.getTruncationOrder();
+        final TruncationOrder truncationOrder = complexRead1.getTruncationOrder();
+        this.isTruncationOrderAscending = truncationOrder == TruncationOrder.TIMESTAMP_ASCENDING;
     }
 
     @Override
@@ -44,6 +45,7 @@ class ComplexRead1GradoopOperator implements
                 " WHERE a.id = " + this.id + "L AND t1.val_from.before(t2.val_from) AND t2.val_from.before(t3" +
                 ".val_from) AND m.isBlocked = true")
             .toGraphCollection()
+            .limit(this.truncationLimit)
             .getGraphTransactions();
 
         DataSet<GraphTransaction> gtxLength2 = windowedGraph
@@ -51,12 +53,14 @@ class ComplexRead1GradoopOperator implements
                 "MATCH (a:Account)-[t1:transfer]->(:Account)-[t2:transfer]->(other:Account)<-[s:signIn]-(m:Medium)" +
                     " WHERE a.id = " + this.id + "L AND t1.val_from.before(t2.val_from) AND m.isBlocked = true")
             .toGraphCollection()
+            .limit(this.truncationLimit)
             .getGraphTransactions();
 
         DataSet<GraphTransaction> gtxLength1 = windowedGraph
             .temporalQuery("MATCH (a:Account)-[t1:transfer]->(other:Account)<-[s:signIn]-(m:Medium)" +
                 " WHERE a.id = " + this.id + "L AND m.isBlocked = true")
             .toGraphCollection()
+            .limit(this.truncationLimit)
             .getGraphTransactions();
 
         DataSet<Tuple4<Long, Integer, Long, String>> result =
