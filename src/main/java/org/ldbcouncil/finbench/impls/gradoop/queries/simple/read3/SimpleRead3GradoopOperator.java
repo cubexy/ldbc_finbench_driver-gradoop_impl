@@ -18,7 +18,7 @@ import org.gradoop.temporal.model.impl.TemporalGraph;
 import org.gradoop.temporal.model.impl.pojo.TemporalVertex;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead3;
 
-class SimpleRead3GradoopOperator implements UnaryBaseGraphToValueOperator<TemporalGraph, Tuple1<Float>> {
+public class SimpleRead3GradoopOperator implements UnaryBaseGraphToValueOperator<TemporalGraph, Tuple1<Float>> {
 
     private final Long id;
     private final Double threshold;
