@@ -44,12 +44,6 @@
     </repositories>
 
     <dependencies>
-        <!--        <dependency>-->
-        <!--            <groupId>org.apache.commons</groupId>-->
-        <!--            <artifactId>commons-collections4</artifactId>-->
-        <!--            <version>${commmons.collections.version}</version>-->
-        <!--        </dependency>-->
-        <!-- Gradoop dependencies-->
         <dependency>
             <groupId>org.gradoop</groupId>
             <artifactId>gradoop-common</artifactId>
@@ -66,21 +60,6 @@
             <groupId>org.gradoop</groupId>
             <artifactId>gradoop-temporal</artifactId>
             <version>${dep.gradoop.version}</version>
-        </dependency>
-
-        <!-- Apache Flink dependencies -->
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-java</artifactId>
-            <version>${dep.flink.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-clients_2.11</artifactId>
-            <version>${dep.flink.version}</version>
-            <scope>provided</scope>
         </dependency>
 
         <dependency>
