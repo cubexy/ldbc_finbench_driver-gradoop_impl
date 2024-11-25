@@ -1,7 +1,5 @@
 package org.ldbcouncil.finbench.impls.gradoop.queries.simple.read2;
 
-import static org.ldbcouncil.finbench.impls.gradoop.CommonUtils.roundToDecimalPlaces;
-
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.flink.api.java.tuple.Tuple6;
