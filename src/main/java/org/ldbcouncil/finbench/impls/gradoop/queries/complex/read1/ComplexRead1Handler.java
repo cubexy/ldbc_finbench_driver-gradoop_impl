@@ -18,14 +18,7 @@ public class ComplexRead1Handler implements OperationHandler<ComplexRead1, Grado
                                  ResultReporter resultReporter) throws DbException {
         GradoopImpl.logger.info(cr1.toString());
         ComplexRead1GradoopOperator complexRead1GradoopOperator = new ComplexRead1GradoopOperator(cr1);
-        DataSet<Tuple4<Long, Integer, Long, String>> cr1Result = complexRead1GradoopOperator.execute(graph.getGraph());
-        List<ComplexRead1Result> complexRead1Results = new ArrayList<>();
-        try {
-            cr1Result.collect().forEach(
-                tuple -> complexRead1Results.add(new ComplexRead1Result(tuple.f0, tuple.f1, tuple.f2, tuple.f3)));
-        } catch (Exception e) {
-            throw new DbException("Error while collecting results for complex read 1: " + e);
-        }
+        List<ComplexRead1Result> complexRead1Results = complexRead1GradoopOperator.execute(graph.getGraph());
         resultReporter.report(complexRead1Results.size(), complexRead1Results, cr1);
     }
 }

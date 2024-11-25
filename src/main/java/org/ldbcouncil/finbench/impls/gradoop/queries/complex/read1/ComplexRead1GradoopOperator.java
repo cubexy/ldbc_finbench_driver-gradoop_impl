@@ -1,5 +1,7 @@
 package org.ldbcouncil.finbench.impls.gradoop.queries.complex.read1;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.operators.Order;
@@ -10,12 +12,14 @@ import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
 import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
 import org.gradoop.flink.model.impl.layouts.transactional.tuples.GraphTransaction;
 import org.gradoop.temporal.model.impl.TemporalGraph;
+import org.ldbcouncil.finbench.driver.DbException;
 import org.ldbcouncil.finbench.driver.truncation.TruncationOrder;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead1;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead1Result;
 import org.ldbcouncil.finbench.impls.gradoop.CommonUtils;
 
 class ComplexRead1GradoopOperator implements
-    UnaryBaseGraphToValueOperator<TemporalGraph, DataSet<Tuple4<Long, Integer, Long, String>>> {
+    UnaryBaseGraphToValueOperator<TemporalGraph, List<ComplexRead1Result>> {
 
     private final long id;
     private final long startTime;
@@ -33,7 +37,7 @@ class ComplexRead1GradoopOperator implements
     }
 
     @Override
-    public DataSet<Tuple4<Long, Integer, Long, String>> execute(TemporalGraph temporalGraph) {
+    public List<ComplexRead1Result> execute(TemporalGraph temporalGraph) {
         TemporalGraph windowedGraph = temporalGraph
             .subgraph(new LabelIsIn<>("Account", "Medium"), new LabelIsIn<>("transfer", "signIn"))
             .fromTo(this.startTime, this.endTime);
@@ -45,22 +49,20 @@ class ComplexRead1GradoopOperator implements
                 " WHERE a.id = " + this.id + "L AND t1.val_from.before(t2.val_from) AND t2.val_from.before(t3" +
                 ".val_from) AND m.isBlocked = true")
             .toGraphCollection()
-            .limit(this.truncationLimit)
             .getGraphTransactions();
+        // sort with sortPartition and limit
 
         DataSet<GraphTransaction> gtxLength2 = windowedGraph
             .temporalQuery(
                 "MATCH (a:Account)-[t1:transfer]->(:Account)-[t2:transfer]->(other:Account)<-[s:signIn]-(m:Medium)" +
                     " WHERE a.id = " + this.id + "L AND t1.val_from.before(t2.val_from) AND m.isBlocked = true")
             .toGraphCollection()
-            .limit(this.truncationLimit)
             .getGraphTransactions();
 
         DataSet<GraphTransaction> gtxLength1 = windowedGraph
             .temporalQuery("MATCH (a:Account)-[t1:transfer]->(other:Account)<-[s:signIn]-(m:Medium)" +
                 " WHERE a.id = " + this.id + "L AND m.isBlocked = true")
             .toGraphCollection()
-            .limit(this.truncationLimit)
             .getGraphTransactions();
 
         DataSet<Tuple4<Long, Integer, Long, String>> result =
@@ -90,6 +92,15 @@ class ComplexRead1GradoopOperator implements
             .sortPartition(0, Order.ASCENDING)
             .sortPartition(3, Order.ASCENDING);
 
-        return result;
+        List<ComplexRead1Result> complexRead1Results = new ArrayList<>();
+
+        try {
+            result.collect().forEach(
+                tuple -> complexRead1Results.add(new ComplexRead1Result(tuple.f0, tuple.f1, tuple.f2, tuple.f3)));
+        } catch (Exception e) {
+            throw new RuntimeException("Error while collecting results for complex read 1: " + e);
+        }
+
+        return complexRead1Results;
     }
 }
