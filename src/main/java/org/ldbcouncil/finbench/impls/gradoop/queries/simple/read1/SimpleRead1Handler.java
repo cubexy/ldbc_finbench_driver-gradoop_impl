@@ -19,14 +19,7 @@ public class SimpleRead1Handler implements OperationHandler<SimpleRead1, Gradoop
     public void executeOperation(SimpleRead1 sr1, GradoopFinbenchBaseGraphState connectionState,
                                  ResultReporter resultReporter) throws DbException {
         GradoopImpl.logger.info(sr1.toString());
-        DataSet<Tuple3<Date, Boolean, String>> simpleRead1Result = new SimpleRead1GradoopOperator(sr1).execute(connectionState.getGraph());
-        List<SimpleRead1Result> simpleRead1Results = new ArrayList<>();
-        try {
-            simpleRead1Result.collect().forEach(
-                tuple -> simpleRead1Results.add(new SimpleRead1Result(tuple.f0, tuple.f1, tuple.f2)));
-        } catch (Exception e) {
-            throw new DbException("Error while collecting results for simple read 1: " + e);
-        }
+        List<SimpleRead1Result> simpleRead1Results = new SimpleRead1GradoopOperator(sr1).execute(connectionState.getGraph());
         resultReporter.report(simpleRead1Results.size(), simpleRead1Results, sr1);
     }
 }
