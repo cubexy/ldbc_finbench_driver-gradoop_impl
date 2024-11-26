@@ -2,6 +2,7 @@ package org.ldbcouncil.finbench.impls.gradoop.queries.simple.read3;
 
 import static org.ldbcouncil.finbench.impls.gradoop.CommonUtils.roundToDecimalPlaces;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -17,8 +18,9 @@ import org.gradoop.flink.model.impl.operators.keyedgrouping.KeyedGrouping;
 import org.gradoop.temporal.model.impl.TemporalGraph;
 import org.gradoop.temporal.model.impl.pojo.TemporalVertex;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead3;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead3Result;
 
-public class SimpleRead3GradoopOperator implements UnaryBaseGraphToValueOperator<TemporalGraph, Tuple1<Float>> {
+public class SimpleRead3GradoopOperator implements UnaryBaseGraphToValueOperator<TemporalGraph, List<SimpleRead3Result>> {
 
     private final Long id;
     private final Double threshold;
@@ -33,7 +35,7 @@ public class SimpleRead3GradoopOperator implements UnaryBaseGraphToValueOperator
     }
 
     @Override
-    public Tuple1<Float> execute(TemporalGraph temporalGraph) {
+    public List<SimpleRead3Result> execute(TemporalGraph temporalGraph) {
         TemporalGraph windowedGraph = temporalGraph
             .subgraph(new LabelIsIn<>("Account"), new LabelIsIn<>("transfer"))
             .fromTo(this.startTime.getTime(), this.endTime.getTime());
@@ -78,22 +80,27 @@ public class SimpleRead3GradoopOperator implements UnaryBaseGraphToValueOperator
                 }
             }
 
+            List<SimpleRead3Result> simpleRead3Results = new ArrayList<>();
             if (blockedVertexes == null && nonBlockedVertexes == null) {
-                return new Tuple1<>(-1.0f);
+                simpleRead3Results.add(new SimpleRead3Result(-1.0f));
+                return simpleRead3Results;
             }
 
             if (blockedVertexes == null) {
-                return new Tuple1<>(0.0f);
+                simpleRead3Results.add(new SimpleRead3Result(-0.0f));
+                return simpleRead3Results;
             }
 
             if (nonBlockedVertexes == null) {
-                return new Tuple1<>(1.0f);
+                simpleRead3Results.add(new SimpleRead3Result(1.0f));
+                return simpleRead3Results;
             }
 
             final long blockedAccounts = blockedVertexes.getPropertyValue("count").getLong();
             final long allAccounts = blockedAccounts + nonBlockedVertexes.getPropertyValue("count").getLong();
 
-            return new Tuple1<>(roundToDecimalPlaces((float) blockedAccounts / (float) allAccounts, 3));
+            simpleRead3Results.add(new SimpleRead3Result(roundToDecimalPlaces((float) blockedAccounts / (float) allAccounts, 3)));
+            return simpleRead3Results;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

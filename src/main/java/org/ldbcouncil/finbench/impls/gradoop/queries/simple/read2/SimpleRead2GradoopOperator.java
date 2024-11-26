@@ -2,6 +2,7 @@ package org.ldbcouncil.finbench.impls.gradoop.queries.simple.read2;
 
 import static org.ldbcouncil.finbench.impls.gradoop.CommonUtils.roundToDecimalPlaces;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -18,9 +19,10 @@ import org.gradoop.flink.model.impl.operators.keyedgrouping.KeyedGrouping;
 import org.gradoop.temporal.model.impl.TemporalGraph;
 import org.gradoop.temporal.model.impl.pojo.TemporalEdge;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead2;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead2Result;
 
 public class SimpleRead2GradoopOperator implements
-    UnaryBaseGraphToValueOperator<TemporalGraph, Tuple6<Double, Double, Long, Double, Double, Long>> {
+    UnaryBaseGraphToValueOperator<TemporalGraph, List<SimpleRead2Result>> {
 
     private final Long id;
     private final Date startTime;
@@ -33,7 +35,7 @@ public class SimpleRead2GradoopOperator implements
     }
 
     @Override
-    public Tuple6<Double, Double, Long, Double, Double, Long> execute(TemporalGraph temporalGraph) {
+    public List<SimpleRead2Result> execute(TemporalGraph temporalGraph) {
         TemporalGraph windowedGraph = temporalGraph
             .subgraph(new LabelIsIn<>("Account"), new LabelIsIn<>("transfer"))
             .fromTo(this.startTime.getTime(), this.endTime.getTime()); // Get all transfers between start and end time
@@ -79,13 +81,12 @@ public class SimpleRead2GradoopOperator implements
                 transferOutMax = -1.0f;
             }
 
-            return new Tuple6<>(
-                transferOutSum,
-                transferOutMax,
-                transferOutCount,
-                transferInSum,
-                transferInMax,
-                transferInCount);
+            List<SimpleRead2Result> simpleRead2Results = new ArrayList<>();
+            simpleRead2Results.add(
+                new SimpleRead2Result(transferOutSum, transferOutMax, transferOutCount, transferInSum, transferInMax,
+                    transferInCount));
+
+            return simpleRead2Results;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

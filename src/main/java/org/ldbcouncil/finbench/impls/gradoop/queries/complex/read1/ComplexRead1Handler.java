@@ -17,8 +17,7 @@ public class ComplexRead1Handler implements OperationHandler<ComplexRead1, Grado
     public void executeOperation(ComplexRead1 cr1, GradoopFinbenchBaseGraphState graph,
                                  ResultReporter resultReporter) throws DbException {
         GradoopImpl.logger.info(cr1.toString());
-        ComplexRead1GradoopOperator complexRead1GradoopOperator = new ComplexRead1GradoopOperator(cr1);
-        List<ComplexRead1Result> complexRead1Results = complexRead1GradoopOperator.execute(graph.getGraph());
+        List<ComplexRead1Result> complexRead1Results = new ComplexRead1GradoopOperator(cr1).execute(graph.getGraph());
         resultReporter.report(complexRead1Results.size(), complexRead1Results, cr1);
     }
 }

@@ -9,14 +9,30 @@ import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead1
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead1Result;
 import org.ldbcouncil.finbench.impls.gradoop.FlinkCmdArg;
 import org.ldbcouncil.finbench.impls.gradoop.GradoopFinbenchBaseGraphState;
+import org.ldbcouncil.finbench.impls.gradoop.queries.simple.AbstractCmdArgExecutor;
 
-public class ComplexRead1CmdArgExecutor {
-    public static void execute(FlinkCmdArg inputArgs, GradoopFinbenchBaseGraphState graph, Logger logger) throws DbException {
-        logger.info("executing query ComplexRead1 with args {}", inputArgs);
+public class ComplexRead1CmdArgExecutor extends AbstractCmdArgExecutor<List<ComplexRead1Result>> {
+
+    private ComplexRead1GradoopOperator operator;
+
+    @Override
+    public String getQueryTitle() {
+        return "ComplexRead1";
+    }
+
+    @Override
+    public String getQueryKey() {
+        return "complex_read_1";
+    }
+
+    @Override
+    public List<ComplexRead1Result> executeQuery(GradoopFinbenchBaseGraphState graph) throws DbException {
+        return operator.execute(graph.getGraph());
+    }
+
+    @Override
+    public void init(FlinkCmdArg inputArgs) {
         ComplexRead1 input = new ComplexRead1(inputArgs.getId(), inputArgs.getStartTime(), inputArgs.getEndTime(), inputArgs.getTruncationLimit(), inputArgs.getTruncationOrder());
-        ComplexRead1GradoopOperator operator = new ComplexRead1GradoopOperator(input);
-        logger.info("started execution...");
-        List<ComplexRead1Result> result = operator.execute(graph.getGraph());
-        logger.info("finished execution - result: {}", result);
+        this.operator = new ComplexRead1GradoopOperator(input);
     }
 }

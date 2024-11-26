@@ -24,9 +24,10 @@ import org.gradoop.temporal.model.impl.TemporalGraph;
 import org.gradoop.temporal.model.impl.pojo.TemporalEdge;
 import org.gradoop.temporal.model.impl.pojo.TemporalVertex;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead4;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead4Result;
 
 public class SimpleRead4GradoopOperator implements
-    UnaryBaseGraphToValueOperator<TemporalGraph, List<Tuple3<Long, Integer, Double>>> {
+    UnaryBaseGraphToValueOperator<TemporalGraph, List<SimpleRead4Result>> {
 
     private final Long id;
     private final Date startTime;
@@ -41,7 +42,7 @@ public class SimpleRead4GradoopOperator implements
     }
 
     @Override
-    public List<Tuple3<Long, Integer, Double>> execute(TemporalGraph temporalGraph) {
+    public List<SimpleRead4Result> execute(TemporalGraph temporalGraph) {
         TemporalGraph windowedGraph = temporalGraph
             .subgraph(new LabelIsIn<>("Account"), new LabelIsIn<>("transfer"))
             .fromTo(this.startTime.getTime(), this.endTime.getTime());
@@ -82,10 +83,10 @@ public class SimpleRead4GradoopOperator implements
                 int numEdges = (int) edge.getPropertyValue("count").getLong();
                 double sumAmount = roundToDecimalPlaces(edge.getPropertyValue("sum_amount").getDouble(), 3);
 
-                return new Tuple3<>(dstId, numEdges, sumAmount);
+                return new SimpleRead4Result(dstId, numEdges, sumAmount);
                 // Sorting is not yet supported in Gradoop, so we have to do it here
-            }).sorted(Comparator.comparing((Tuple3<Long, Integer, Double> tuple) -> tuple.f2).reversed()
-                .thenComparing(tuple -> tuple.f0)).collect(Collectors.toList());
+            }).sorted(Comparator.comparing(SimpleRead4Result::getSumAmount).reversed()
+                .thenComparing(SimpleRead4Result::getDstId)).collect(Collectors.toList());
 
         } catch (Exception e) {
             throw new RuntimeException(e);

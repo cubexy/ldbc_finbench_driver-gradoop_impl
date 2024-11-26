@@ -1,9 +1,7 @@
 package org.ldbcouncil.finbench.impls.gradoop;
 
-import static org.ldbcouncil.finbench.impls.gradoop.CommonUtils.parseUnixTimeString;
-
-import java.text.ParseException;
 import java.util.Date;
+import java.util.Set;
 import org.apache.commons.cli.CommandLine;
 import org.ldbcouncil.finbench.driver.truncation.TruncationOrder;
 
@@ -25,11 +23,12 @@ public class FlinkCmdArg {
 
     /**
      * Initializes the input arguments from the command line arguments.
+     *
      * @param cmd command line arguments
      */
-    public FlinkCmdArg(CommandLine cmd) {
+    public FlinkCmdArg(CommandLine cmd, Set<String> availableQueryNames) {
         try {
-            initializeFromArgs(cmd);
+            initializeFromArgs(cmd, availableQueryNames);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -37,9 +36,10 @@ public class FlinkCmdArg {
 
     /**
      * Initializes the input arguments from the command line arguments.
+     *
      * @param cmd command line arguments
      */
-    private void initializeFromArgs(CommandLine cmd) {
+    private void initializeFromArgs(CommandLine cmd, Set<String> availableQueryNames) {
         if (!cmd.hasOption("d") || !cmd.hasOption("q") || !cmd.hasOption("m")) {
             throw new RuntimeException("Missing required arguments");
         }
@@ -53,7 +53,7 @@ public class FlinkCmdArg {
             setDataPath(cmd.getOptionValue("d"));
         }
         if (cmd.hasOption("q")) {
-            setQueryName(cmd.getOptionValue("q"));
+            setQueryName(cmd.getOptionValue("q"), availableQueryNames);
         }
         if (cmd.hasOption("m")) {
             setMode(cmd.getOptionValue("m"));
@@ -100,16 +100,8 @@ public class FlinkCmdArg {
         return queryName;
     }
 
-    public void setQueryName(String queryName) {
-        if (!queryName.equals("simple_read_1") && !queryName.equals("simple_read_2") &&
-            !queryName.equals("simple_read_3") && !queryName.equals("simple_read_4") &&
-            !queryName.equals("simple_read_5") && !queryName.equals("simple_read_6") &&
-            !queryName.equals("complex_read_1") && !queryName.equals("complex_read_2") &&
-            !queryName.equals("complex_read_3") && !queryName.equals("complex_read_4") &&
-            !queryName.equals("complex_read_5") && !queryName.equals("complex_read_6") &&
-            !queryName.equals("complex_read_7") && !queryName.equals("complex_read_8") &&
-            !queryName.equals("complex_read_9") && !queryName.equals("complex_read_10") &&
-            !queryName.equals("complex_read_11") && !queryName.equals("complex_read_12")) {
+    public void setQueryName(String queryName, Set<String> availableQueryNames) {
+        if (!availableQueryNames.contains(queryName)) {
             throw new RuntimeException("Invalid query name: " + queryName);
         }
 
@@ -193,7 +185,8 @@ public class FlinkCmdArg {
     }
 
     public void setTruncationOrder(String truncationOrder) {
-        this.truncationOrder = TruncationOrder.valueOf(truncationOrder); // truncation order can be TIMESTAMP_DESCENDING or TIMESTAMP_ASCENDING
+        this.truncationOrder = TruncationOrder.valueOf(
+            truncationOrder); // truncation order can be TIMESTAMP_DESCENDING or TIMESTAMP_ASCENDING
     }
 
     public String getDataPath() {

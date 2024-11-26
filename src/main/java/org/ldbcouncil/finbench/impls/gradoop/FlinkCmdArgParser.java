@@ -14,6 +14,8 @@ import org.gradoop.temporal.model.impl.TemporalGraph;
 import org.gradoop.temporal.util.TemporalGradoopConfig;
 import org.ldbcouncil.finbench.driver.DbException;
 import org.ldbcouncil.finbench.impls.gradoop.queries.complex.read1.ComplexRead1CmdArgExecutor;
+import org.ldbcouncil.finbench.impls.gradoop.queries.simple.CmdArgExecutor;
+import org.ldbcouncil.finbench.impls.gradoop.queries.simple.CmdArgExecutorRegistry;
 import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read1.SimpleRead1CmdArgExecutor;
 import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read2.SimpleRead2CmdArgExecutor;
 import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read3.SimpleRead3CmdArgExecutor;
@@ -22,29 +24,33 @@ import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read4.SimpleRead4Cmd
 public class FlinkCmdArgParser {
     private final Logger logger;
     private final String[] args;
-    private CommandLine cmd;
     private final Options options;
+    private final CmdArgExecutorRegistry executorRegistry;
+    private CommandLine cmd;
 
     /**
      * Parses the command line arguments and initializes the database.
-     * @param args command line arguments
+     *
+     * @param args   command line arguments
      * @param logger logger
      */
     public FlinkCmdArgParser(String[] args, Logger logger) {
         this.args = args;
         this.logger = logger;
         this.options = initCLIOptions();
+        this.executorRegistry = new CmdArgExecutorRegistry();
     }
 
     /**
      * Parses the command line arguments and initializes the database.
+     *
      * @throws DbException error while initializing the database
      */
     public void parse() throws DbException {
         logger.info("Initializing FlinkCmdArgParser...");
         init();
         logger.info("Reading command line arguments...");
-        final FlinkCmdArg inputArgs = new FlinkCmdArg(cmd);
+        final FlinkCmdArg inputArgs = new FlinkCmdArg(cmd, executorRegistry.getAllExecutors().keySet());
         logger.info("FlinkCmdArgParser initialized.");
 
         logger.info("Initializing temporal graph...");
@@ -74,6 +80,7 @@ public class FlinkCmdArgParser {
 
     /**
      * Parses the command line arguments.
+     *
      * @return available input arguments
      */
     private Options initCLIOptions() {
@@ -94,6 +101,16 @@ public class FlinkCmdArgParser {
         return options;
     }
 
+    private CmdArgExecutorRegistry initExecutorRegistry() {
+        CmdArgExecutorRegistry registry = new CmdArgExecutorRegistry();
+        registry.registerCmdArgExecutor(new ComplexRead1CmdArgExecutor());
+        registry.registerCmdArgExecutor(new SimpleRead1CmdArgExecutor());
+        registry.registerCmdArgExecutor(new SimpleRead2CmdArgExecutor());
+        registry.registerCmdArgExecutor(new SimpleRead3CmdArgExecutor());
+        registry.registerCmdArgExecutor(new SimpleRead4CmdArgExecutor());
+        return registry;
+    }
+
     /**
      * Initializes the database.
      *
@@ -107,34 +124,23 @@ public class FlinkCmdArgParser {
         TemporalGradoopConfig config = TemporalGradoopConfig.createConfig(env);
 
         TemporalGraph tg = getTemporalGraph(mode, gradoopDataPath, config);
-        return new GradoopFinbenchBaseGraphState(tg, false); // this command is being executed inside a cluster -> don't call another cluster
+        return new GradoopFinbenchBaseGraphState(tg,
+            false); // this command is being executed inside a cluster -> don't call another cluster
     }
 
     /**
      * Executes the query.
+     *
      * @param inputArgs input arguments
-     * @param graph database
+     * @param graph     database
      */
     private void executeQuery(FlinkCmdArg inputArgs, GradoopFinbenchBaseGraphState graph) throws DbException {
-        switch (inputArgs.getQueryName()) {
-            case "simple_read_1":
-                SimpleRead1CmdArgExecutor.execute(inputArgs, graph, logger);
-                break;
-            case "simple_read_2":
-                SimpleRead2CmdArgExecutor.execute(inputArgs, graph, logger);
-                break;
-            case "simple_read_3":
-                SimpleRead3CmdArgExecutor.execute(inputArgs, graph, logger);
-                break;
-            case "simple_read_4":
-                SimpleRead4CmdArgExecutor.execute(inputArgs, graph, logger);
-                break;
-            case "complex_read_1":
-                ComplexRead1CmdArgExecutor.execute(inputArgs, graph, logger);
-                break;
-
-            default:
-                throw new RuntimeException("Query not implemented: " + inputArgs.getQueryName());
+        try {
+            CmdArgExecutor<?> executor = this.executorRegistry.getCmdArgExecutorByTitle(inputArgs.getQueryName());
+            executor.execute(inputArgs, graph, logger);
+        } catch (Exception e) {
+            logger.error("Error executing query", e);
+            throw new DbException(e);
         }
     }
 }
