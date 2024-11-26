@@ -25,7 +25,7 @@ import org.gradoop.temporal.model.impl.pojo.TemporalEdge;
 import org.gradoop.temporal.model.impl.pojo.TemporalVertex;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead4;
 
-class SimpleRead4GradoopOperator implements
+public class SimpleRead4GradoopOperator implements
     UnaryBaseGraphToValueOperator<TemporalGraph, List<Tuple3<Long, Integer, Double>>> {
 
     private final Long id;

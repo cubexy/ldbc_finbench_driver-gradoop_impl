@@ -16,6 +16,8 @@ import org.ldbcouncil.finbench.driver.DbException;
 import org.ldbcouncil.finbench.impls.gradoop.queries.complex.read1.ComplexRead1CmdArgExecutor;
 import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read1.SimpleRead1CmdArgExecutor;
 import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read2.SimpleRead2CmdArgExecutor;
+import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read3.SimpleRead3CmdArgExecutor;
+import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read4.SimpleRead4CmdArgExecutor;
 
 public class FlinkCmdArgParser {
     private final Logger logger;
@@ -120,6 +122,12 @@ public class FlinkCmdArgParser {
                 break;
             case "simple_read_2":
                 SimpleRead2CmdArgExecutor.execute(inputArgs, graph, logger);
+                break;
+            case "simple_read_3":
+                SimpleRead3CmdArgExecutor.execute(inputArgs, graph, logger);
+                break;
+            case "simple_read_4":
+                SimpleRead4CmdArgExecutor.execute(inputArgs, graph, logger);
                 break;
             case "complex_read_1":
                 ComplexRead1CmdArgExecutor.execute(inputArgs, graph, logger);
