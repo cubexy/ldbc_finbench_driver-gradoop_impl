@@ -103,7 +103,7 @@ public class FlinkCmdArgParser {
 
     /**
      * initializes the executor registry
-     * 
+     *
      * @return registry
      */
     private CmdArgExecutorRegistry initExecutorRegistry() {
