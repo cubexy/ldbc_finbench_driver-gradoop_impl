@@ -38,7 +38,7 @@ public class FlinkCmdArgParser {
         this.args = args;
         this.logger = logger;
         this.options = initCLIOptions();
-        this.executorRegistry = new CmdArgExecutorRegistry();
+        this.executorRegistry = initExecutorRegistry();
     }
 
     /**
@@ -101,6 +101,11 @@ public class FlinkCmdArgParser {
         return options;
     }
 
+    /**
+     * initializes the executor registry
+     * 
+     * @return registry
+     */
     private CmdArgExecutorRegistry initExecutorRegistry() {
         CmdArgExecutorRegistry registry = new CmdArgExecutorRegistry();
         registry.registerCmdArgExecutor(new ComplexRead1CmdArgExecutor());
