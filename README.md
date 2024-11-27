@@ -1,6 +1,6 @@
 ![LDBC Logo](ldbc-logo.png)
 
-# LDBC FinBench Driver
+# LDBC FinBench Driver :)
 
 ![Build status](https://github.com/ldbc/ldbc_finbench_driver/actions/workflows/ci.yml/badge.svg?branch=main)
 
