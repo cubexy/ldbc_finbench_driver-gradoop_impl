@@ -22,6 +22,7 @@ services:
       - datanode-data:/hadoop/dfs/datanode
     depends_on:
       - hdfs-namenode
+    hostname: localhost # needed to upload files to HDFS via web explorer
     ports:
       - "9864:9864" # Web UI for HDFS Datanode
 
