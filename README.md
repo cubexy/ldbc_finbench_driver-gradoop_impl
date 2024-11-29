@@ -1,6 +1,6 @@
 ![LDBC Logo](ldbc-logo.png)
 
-# LDBC FinBench Driver :)
+# LDBC FinBench Driver
 
 ![Build status](https://github.com/ldbc/ldbc_finbench_driver/actions/workflows/ci.yml/badge.svg?branch=main)
 
@@ -8,38 +8,23 @@ The LDBC FinBench Driver is a powerful tool designed for benchmarking the perfor
 
 ## 1. Configurations
 
-The Driver initiates by reading the configuration file. The default configuration file path for DummyDB is `src/main/resources/example/ldbc_finbench_driver_dummy.properties`.
+The Driver initiates by reading the configuration file. The file comes pre-filled with configuration data `src/main/resources/gradoop/ldbc_finbench_driver_gradoop.properties`.
+The Driver can run in two modes: `standalone` and `cluster`.
 
-### 1.1 SUT Defined
+#### Standalone mode (gradoop_cluster_execution=false)
 
-If required, the System Under Test (SUT) can customize the configuration parameters to connect to the database or read the query file. This can include the request host, port, path, etc.
+In Standalone mode, the driver only executes in a Flink MiniCluster locally. This can be useful for debugging.
 
-```shell
-host=localhost
-port=9091
-user=admin
-pass=123456
-path=cypher/
-```
+#### Cluster mode (gradoop_cluster_execution=true)
 
-### 1.2 DB
+In Cluster mode, the driver only starts the individual queries locally and then sends the job to a Gradoop cluster.
+Note: Please specify the cluster URL before using Cluster mode!
 
-For a new implementation of the SUT, update this configuration parameter accordingly.
+### 1.1 Flink
 
-```shell
-db=org.ldbcouncil.finbench.impls.dummy.DummyDb
-```
+Before running the `gradoop_cluster_execution` mode, please upload a prebuilt JAR to the SUT Flink cluster.
 
-### 1.3 Params
-
-Please update based on your parameter path. The `parameters_dir` is the `ComplexRead` parameter path, and `updates_dir` is the `Write` and `ReadWrite` incremental data path.
-
-```shell
-ldbc.finbench.transaction.queries.parameters_dir=src/main/resources/example/data/read_params
-ldbc.finbench.transaction.queries.updates_dir=src/main/resources/example/data/incremental_data
-```
-
-### 1.4 Mode
+### 1.2 Mode
 
 The driver operates in three modes:
 
@@ -90,16 +75,16 @@ operation_count=10000
 To get started, clone the repository and build it with Maven:
 
 ```bash
-git clone https://github.com/ldbc/ldbc_finbench_driver.git
-cd ldbc_finbench_driver
 mvn clean package -DskipTests
 ```
 
-For a quick trial of the driver, utilize the DummyDB shipped with it by running the following command:
+Fill the configuration properties as specified in the comments above the variables.
 
-```bash
-java -cp target/driver-0.2.0-alpha.jar org.ldbcouncil.finbench.driver.driver.Driver -P src/main/resources/example/ldbc_finbench_driver_dummy.properties
-```
+#### For Cluster mode:
+
+Start the docker-compose file inside the `flink` folder and upload the test files to HDFS. Note: You may need to tap into the datanode container and adjust read permissions manually to be able to create folders and upload files. Also upload the JAR to Flink.
+
+Then execute the Driver class.
 
 ## 3. Reference
 
