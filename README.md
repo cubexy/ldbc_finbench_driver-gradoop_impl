@@ -1,6 +1,7 @@
 ![LDBC Logo](ldbc-logo.png)
+![GRADOOP Logo](gradoop-logo.png)
 
-# LDBC FinBench Driver
+# *LDBC FinBench Driver* - GRADOOP Implementation
 
 ![Build status](https://github.com/ldbc/ldbc_finbench_driver/actions/workflows/ci.yml/badge.svg?branch=main)
 
