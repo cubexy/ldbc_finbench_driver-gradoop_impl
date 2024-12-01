@@ -1,4 +1,5 @@
 ![LDBC Logo](ldbc-logo.png)
+
 ![GRADOOP Logo](gradoop-logo.png)
 
 # *LDBC FinBench Driver* - GRADOOP Implementation
