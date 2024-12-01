@@ -4,8 +4,6 @@
 
 # *LDBC FinBench Driver* - GRADOOP Implementation
 
-![Build status](https://github.com/ldbc/ldbc_finbench_driver/actions/workflows/ci.yml/badge.svg?branch=main)
-
 The LDBC FinBench Driver is a powerful tool designed for benchmarking the performance of graph databases. This is the alpha version of the FinBench driver, currently undergoing alpha testing.
 
 ## 1. Configurations
