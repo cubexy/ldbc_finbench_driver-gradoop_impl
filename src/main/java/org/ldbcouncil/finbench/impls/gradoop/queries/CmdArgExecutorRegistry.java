@@ -1,4 +1,4 @@
-package org.ldbcouncil.finbench.impls.gradoop.queries.simple;
+package org.ldbcouncil.finbench.impls.gradoop.queries;
 
 import java.util.HashMap;
 import java.util.Map;

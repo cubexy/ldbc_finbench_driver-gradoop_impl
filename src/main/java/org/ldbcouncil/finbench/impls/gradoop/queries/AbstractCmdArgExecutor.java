@@ -1,4 +1,4 @@
-package org.ldbcouncil.finbench.impls.gradoop.queries.simple;
+package org.ldbcouncil.finbench.impls.gradoop.queries;
 import org.ldbcouncil.finbench.driver.DbException;
 import org.ldbcouncil.finbench.impls.gradoop.FlinkCmdArg;
 import org.ldbcouncil.finbench.impls.gradoop.GradoopFinbenchBaseGraphState;

@@ -1,14 +1,12 @@
 package org.ldbcouncil.finbench.impls.gradoop.queries.simple.read4;
 
 import java.util.List;
-import org.apache.flink.api.java.tuple.Tuple3;
-import org.apache.logging.log4j.Logger;
 import org.ldbcouncil.finbench.driver.DbException;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead4;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead4Result;
 import org.ldbcouncil.finbench.impls.gradoop.FlinkCmdArg;
 import org.ldbcouncil.finbench.impls.gradoop.GradoopFinbenchBaseGraphState;
-import org.ldbcouncil.finbench.impls.gradoop.queries.simple.AbstractCmdArgExecutor;
+import org.ldbcouncil.finbench.impls.gradoop.queries.AbstractCmdArgExecutor;
 
 public class SimpleRead4CmdArgExecutor extends AbstractCmdArgExecutor<List<SimpleRead4Result>> {
 

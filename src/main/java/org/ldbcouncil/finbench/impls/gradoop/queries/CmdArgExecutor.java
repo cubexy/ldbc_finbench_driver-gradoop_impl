@@ -1,4 +1,4 @@
-package org.ldbcouncil.finbench.impls.gradoop.queries.simple;
+package org.ldbcouncil.finbench.impls.gradoop.queries;
 
 import org.apache.logging.log4j.Logger;
 import org.ldbcouncil.finbench.driver.DbException;

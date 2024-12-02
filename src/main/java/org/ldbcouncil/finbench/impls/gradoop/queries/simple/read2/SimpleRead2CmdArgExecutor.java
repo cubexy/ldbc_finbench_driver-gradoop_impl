@@ -6,7 +6,7 @@ import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead2;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead2Result;
 import org.ldbcouncil.finbench.impls.gradoop.FlinkCmdArg;
 import org.ldbcouncil.finbench.impls.gradoop.GradoopFinbenchBaseGraphState;
-import org.ldbcouncil.finbench.impls.gradoop.queries.simple.AbstractCmdArgExecutor;
+import org.ldbcouncil.finbench.impls.gradoop.queries.AbstractCmdArgExecutor;
 
 public class SimpleRead2CmdArgExecutor extends AbstractCmdArgExecutor<List<SimpleRead2Result>> {
 
