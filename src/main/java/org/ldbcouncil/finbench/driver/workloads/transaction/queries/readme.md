@@ -1,0 +1,1 @@
+This folder contains the classes for the queries and their results.
