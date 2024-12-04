@@ -57,12 +57,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.nextbreakpoint</groupId>
-            <artifactId>com.nextbreakpoint.flink.client</artifactId>
-            <version>1.1.1</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.gradoop</groupId>
             <artifactId>gradoop-temporal</artifactId>
             <version>${dep.gradoop.version}</version>

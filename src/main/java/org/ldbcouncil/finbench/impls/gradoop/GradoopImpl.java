@@ -31,35 +31,6 @@ public class GradoopImpl extends Db {
     public static Logger logger = LogManager.getLogger("GradoopImpl");
     private GradoopFinbenchBaseGraphState graph;
 
-    @Override
-    protected void onInit(Map<String, String> properties, LoggingService loggingService) throws DbException {
-        logger.info("Initializing Gradoop");
-
-        final String gradoopGraphDataPath = properties.get("gradoop_import_path");
-        final String mode = properties.get("gradoop_import_mode");
-        final String execMode = properties.get("gradoop_cluster_execution");
-
-        if (gradoopGraphDataPath == null || mode == null || execMode == null || mode.isEmpty() ||
-            gradoopGraphDataPath.isEmpty() || execMode.isEmpty()) {
-            throw new DbException(
-                "gradoop_import_path, gradoop_import_mode or gradoop_execution_mode not set in properties file");
-        }
-
-        ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-        TemporalGradoopConfig config = TemporalGradoopConfig.createConfig(env);
-
-        TemporalGraph tg = getTemporalGraph(mode, gradoopGraphDataPath, config);
-        this.graph = new GradoopFinbenchBaseGraphState(tg, execMode.equals("true"));
-
-        //complex reads go here
-        registerOperationHandler(ComplexRead1.class, ComplexRead1Handler.class);
-        //simple reads go here
-        registerOperationHandler(SimpleRead1.class, SimpleRead1Handler.class);
-        registerOperationHandler(SimpleRead2.class, SimpleRead2Handler.class);
-        registerOperationHandler(SimpleRead3.class, SimpleRead3Handler.class);
-        registerOperationHandler(SimpleRead4.class, SimpleRead4Handler.class);
-    }
-
     protected static TemporalGraph getTemporalGraph(String mode, String gradoopGraphDataPath,
                                                     TemporalGradoopConfig config) throws DbException {
         final TemporalDataSource dataSource;
@@ -87,6 +58,54 @@ public class GradoopImpl extends Db {
             throw new DbException("Failed to load data from " + gradoopGraphDataPath, e);
         }
         return tg;
+    }
+
+    @Override
+    protected void onInit(Map<String, String> properties, LoggingService loggingService) throws DbException {
+        logger.info("Initializing Gradoop");
+
+        final String gradoopGraphDataPath = properties.get("gradoop_import_path");
+        final String mode = properties.get("gradoop_import_mode");
+        final String execMode = properties.get("gradoop_cluster_execution");
+        final String flinkEndpoint = properties.get("gradoop_cluster_url");
+        final int flinkEndpointPort = Integer.parseInt(properties.get("gradoop_cluster_port"));
+        final String flinkQueryDistributorClassName = properties.get("gradoop_query_executor_class");
+        final String flinkQueryExecutorJar = properties.get("gradoop_query_executor_jar");
+
+
+        if (gradoopGraphDataPath == null || mode == null || execMode == null || mode.isEmpty() ||
+            gradoopGraphDataPath.isEmpty() || execMode.isEmpty()) {
+            throw new DbException(
+                "gradoop_import_path, gradoop_import_mode or gradoop_execution_mode not set in properties file");
+        }
+
+        final boolean clusterExecution = execMode.equals("true");
+
+        if (clusterExecution &&
+            (flinkEndpoint == null || flinkQueryDistributorClassName == null || flinkQueryExecutorJar == null ||
+                flinkEndpoint.isEmpty() || flinkQueryDistributorClassName.isEmpty() ||
+                flinkQueryExecutorJar.isEmpty())) {
+            throw new DbException(
+                "Gradoop cluster execution enabled but flink_endpoint, flink_query_executor_jar or flink_query_distributor_class_name not set in properties file");
+        }
+
+        FlinkQueryDistributor distributor =
+            new FlinkQueryDistributor(flinkEndpoint, flinkQueryDistributorClassName, flinkQueryExecutorJar, logger);
+
+        ExecutionEnvironment env = ExecutionEnvironment.createRemoteEnvironment(flinkEndpoint, flinkEndpointPort);
+        TemporalGradoopConfig config = TemporalGradoopConfig.createConfig(env);
+
+        TemporalGraph tg = getTemporalGraph(mode, gradoopGraphDataPath, config);
+        this.graph = new GradoopFinbenchBaseGraphState(tg, clusterExecution);
+
+        //complex reads go here
+        registerOperationHandler(ComplexRead1.class, ComplexRead1Handler.class);
+        //simple reads go here
+        registerOperationHandler(SimpleRead1.class, SimpleRead1Handler.class);
+        registerOperationHandler(SimpleRead2.class, SimpleRead2Handler.class);
+        registerOperationHandler(SimpleRead3.class, SimpleRead3Handler.class);
+        registerOperationHandler(SimpleRead4.class, SimpleRead4Handler.class);
+        logger.info("Gradoop initialization complete");
     }
 
     @Override
