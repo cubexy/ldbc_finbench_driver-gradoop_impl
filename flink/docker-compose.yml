@@ -28,7 +28,7 @@ services:
 
   # Flink Job Manager Service
   jobmanager:
-    image: flink:1.20.0-scala_2.12
+    image: flink:1.9.3-scala_2.12
     container_name: flink-jobmanager
     environment:
       - |
@@ -37,6 +37,7 @@ services:
     command: jobmanager
     ports:
       - "8081:8081" # Web UI for Flink Job Manager
+      - "6123:6123" # Jobmanager RPB port
     depends_on:
       - hdfs-namenode
     networks:
@@ -44,7 +45,7 @@ services:
 
   # Flink Task Manager Service
   taskmanager:
-    image: flink:1.20.0-scala_2.12
+    image: flink:1.9.3-scala_2.12
     container_name: flink-taskmanager
     environment:
       - |
