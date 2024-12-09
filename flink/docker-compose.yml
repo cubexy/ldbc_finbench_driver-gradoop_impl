@@ -1,0 +1,68 @@
+services:
+  # HDFS Namenode Service
+  hdfs-namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: hdfs-namenode
+    environment:
+      - CLUSTER_NAME=hadoop_cluster
+      - CORE_CONF_fs_defaultFS=hdfs://hdfs-namenode:9000
+    volumes:
+      - namenode-data:/hadoop/dfs/namenode
+    ports:
+      - "9870:9870" # Web UI for HDFS Namenode
+      - "9000:9000" # HDFS protocol port
+
+  # HDFS Datanode Service
+  hdfs-datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: hdfs-datanode
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://hdfs-namenode:9000
+    volumes:
+      - datanode-data:/hadoop/dfs/datanode
+    depends_on:
+      - hdfs-namenode
+    hostname: localhost # needed to upload files to HDFS via web explorer
+    ports:
+      - "9864:9864" # Web UI for HDFS Datanode
+
+  # Flink Job Manager Service
+  jobmanager:
+    image: flink:1.9.3-scala_2.12
+    container_name: flink-jobmanager
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+    command: jobmanager
+    ports:
+      - "8081:8081" # Web UI for Flink Job Manager
+      - "6123:6123" # Jobmanager RPB port
+    depends_on:
+      - hdfs-namenode
+    networks:
+      - flink-network
+
+  # Flink Task Manager Service
+  taskmanager:
+    image: flink:1.9.3-scala_2.12
+    container_name: flink-taskmanager
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 2
+    command: taskmanager
+    scale: 1
+    depends_on:
+      - jobmanager
+      - hdfs-namenode
+    networks:
+      - flink-network
+
+volumes:
+  namenode-data:
+  datanode-data:
+
+networks:
+  flink-network:
