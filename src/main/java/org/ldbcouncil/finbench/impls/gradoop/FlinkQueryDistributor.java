@@ -1,40 +1,56 @@
 package org.ldbcouncil.finbench.impls.gradoop;
 
-import com.nextbreakpoint.flink.client.api.ApiException;
-import com.nextbreakpoint.flink.client.api.FlinkApi;
-import com.nextbreakpoint.flink.client.model.JarListInfo;
-import java.time.Duration;
+import java.io.File;
+import org.apache.flink.client.program.ProgramInvocationException;
+import org.apache.flink.client.program.ProgramMissingJobException;
 import org.apache.logging.log4j.Logger;
+import org.apache.flink.api.common.JobSubmissionResult;
+import org.apache.flink.client.deployment.StandaloneClusterId;
+import org.apache.flink.client.program.PackagedProgram;
+import org.apache.flink.client.program.rest.RestClusterClient;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.JobManagerOptions;
+import org.apache.flink.configuration.RestOptions;
 
 public class FlinkQueryDistributor {
-    private FlinkApi api; // https://github.com/nextbreakpoint/flink-client
 
-    public FlinkQueryDistributor(String flinkEndpoint, String flinkQueryDistributorJarClassName,
-                                 String flinkQueryExecutorJar, Logger logger) {
-        this.api = initFlinkApi(flinkEndpoint, logger);
+    private final RestClusterClient<StandaloneClusterId> client;
+
+    public FlinkQueryDistributor(String flinkEndpoint, int flinkEndpointPort,
+                                 String flinkQueryDistributorJarClassName,
+                                 String flinkQueryExecutorJar, Logger logger) throws Exception {
+        this.client = initClient(flinkEndpoint, flinkEndpointPort);
     }
 
-    private FlinkApi initFlinkApi(String flinkEndpoint, Logger logger) {
-        logger.info("Initializing Flink query distributor...");
-        FlinkApi api = new FlinkApi();
-        api.getApiClient()
-            .setBasePath(flinkEndpoint)
-            .setHttpClient(
-                api.getApiClient()
-                    .getHttpClient()
-                    .newBuilder()
-                    .connectTimeout(Duration.ofSeconds(20))
-                    .writeTimeout(Duration.ofSeconds(30))
-                    .readTimeout(Duration.ofSeconds(30))
-                    .build()
-            );
-        try {
-            JarListInfo jars = api.getJarList();
-            logger.info("available jars: {}", jars.getFiles());
-        } catch (ApiException e) {
-            throw new RuntimeException(e);
-        }
-        logger.info("Flink query distributor initialized.");
-        return api;
+    /**
+     * Initializes the client.
+     *
+     * @param hostname hostname of the Flink cluster
+     * @param port     port of the Flink cluster
+     * @return RestClusterClient
+     * @throws Exception error while initializing the client
+     */
+    private RestClusterClient<StandaloneClusterId> initClient(String hostname, int port) throws Exception {
+        Configuration config = new Configuration();
+        config.setString(JobManagerOptions.ADDRESS, hostname);
+        config.setInteger(RestOptions.PORT, port);
+
+        return new RestClusterClient<StandaloneClusterId>(config, StandaloneClusterId.getInstance());
     }
+
+    /**
+     * Runs a Flink job.
+     *
+     * @param parallelism number of parallel tasks
+     * @param jarFilePath path to the jar file
+     * @param args        arguments for the jar file
+     * @throws ProgramInvocationException error while running the job
+     * @throws ProgramMissingJobException  error while running the job
+     */
+    public void runJobOnClient(int parallelism, String jarFilePath, String[] args)
+        throws ProgramInvocationException, ProgramMissingJobException {
+        PackagedProgram packagedProgram = new PackagedProgram(new File(jarFilePath), args);
+        JobSubmissionResult result = this.client.run(packagedProgram,  parallelism);
+    }
+
 }
