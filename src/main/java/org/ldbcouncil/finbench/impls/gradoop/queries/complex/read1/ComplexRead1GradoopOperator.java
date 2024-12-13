@@ -87,6 +87,8 @@ class ComplexRead1GradoopOperator implements
                     }
                 }).distinct(0, 1, 2, 3);
 
+        windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
+
         result = result
             .sortPartition(1, Order.ASCENDING)
             .sortPartition(0, Order.ASCENDING)
