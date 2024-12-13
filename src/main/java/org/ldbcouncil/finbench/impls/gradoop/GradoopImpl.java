@@ -89,10 +89,14 @@ public class GradoopImpl extends Db {
                 "Gradoop cluster execution enabled but flink_endpoint, flink_query_executor_jar or flink_query_distributor_class_name not set in properties file");
         }
 
-        FlinkQueryDistributor distributor =
-            new FlinkQueryDistributor(flinkEndpoint, flinkQueryDistributorClassName, flinkQueryExecutorJar, logger);
+        try {
+            FlinkQueryDistributor distributor =
+                new FlinkQueryDistributor(flinkEndpoint, flinkEndpointPort, flinkQueryDistributorClassName, flinkQueryExecutorJar, logger);
+        } catch (Exception e) {
+            throw new DbException("Cluster could not be initialized", e);
+        }
 
-        ExecutionEnvironment env = ExecutionEnvironment.createRemoteEnvironment(flinkEndpoint, flinkEndpointPort);
+        ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         TemporalGradoopConfig config = TemporalGradoopConfig.createConfig(env);
 
         TemporalGraph tg = getTemporalGraph(mode, gradoopGraphDataPath, config);
