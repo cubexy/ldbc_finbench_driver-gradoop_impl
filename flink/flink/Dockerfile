@@ -20,10 +20,6 @@ RUN find / -name "*commons-cli*.jar" -delete
 # Download specific version of commons-cli that Flink 1.9.3 uses
 RUN wget https://repo1.maven.org/maven2/commons-cli/commons-cli/1.4/commons-cli-1.4.jar -P /opt/flink/lib/
 
-# Create basic Hadoop configuration
-RUN mkdir -p $HADOOP_CONF_DIR && \
-    echo '<configuration><property><name>fs.defaultFS</name><value>hdfs://hdfs-namenode:9000</value></property></configuration>' > $HADOOP_CONF_DIR/core-site.xml
-
 # Copy only the necessary Hadoop JARs (avoiding commons-cli from Hadoop)
 RUN mkdir -p /opt/flink/lib/hadoop && \
     cp $HADOOP_HOME/share/hadoop/common/hadoop-common-3.2.1.jar /opt/flink/lib/hadoop/ && \

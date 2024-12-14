@@ -1,7 +1,7 @@
 services:
   # HDFS Namenode Service
   hdfs-namenode:
-    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    build: ./hdfs-namenode
     container_name: hdfs-namenode
     environment:
       - CLUSTER_NAME=hadoop_cluster
@@ -28,7 +28,7 @@ services:
 
   # Flink Job Manager Service
   jobmanager:
-    build: .  # This will use your custom Dockerfile
+    build: ./flink
     container_name: flink-jobmanager
     environment:
       - |
@@ -36,15 +36,17 @@ services:
         jobmanager.rpc.address: jobmanager
     command: jobmanager
     ports:
-      - "8081:8081"
-      - "6123:6123"
+      - "8081:8081" # web ui
+      - "6123:6123" # jobmanager rpc port
     depends_on:
       - hdfs-namenode
     networks:
       - flink-network
+    volumes:
+      - ./flink/hadoop-conf/core-site.xml:/opt/hadoop-3.2.1/etc/hadoop/core-site.xml
 
   taskmanager:
-    build: .  # This will use your custom Dockerfile
+    build: ./flink
     environment:
       - |
         FLINK_PROPERTIES=
