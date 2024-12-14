@@ -1,6 +1,6 @@
 FROM flink:1.9.3-scala_2.12
 
-# Install Hadoop dependencies
+# install Hadoop dependencies
 RUN apt-get update && apt-get install -y wget
 
 # Download and install Hadoop
