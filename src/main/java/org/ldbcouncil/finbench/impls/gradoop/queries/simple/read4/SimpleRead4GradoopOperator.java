@@ -49,7 +49,7 @@ public class SimpleRead4GradoopOperator implements
 
         try {
             final long id_serializable =
-                this.id; // this is neccessary because this.id is not serializable, which is needed for the transformVertices function
+                this.id; // this is necessary because this.id is not serializable, which is needed for the transformVertices function
             TemporalGraph transfers = windowedGraph.query(
                     "MATCH (src:Account)-[transferOut:transfer]->(dst:Account) WHERE src <> dst AND src.id =" +
                         id_serializable +

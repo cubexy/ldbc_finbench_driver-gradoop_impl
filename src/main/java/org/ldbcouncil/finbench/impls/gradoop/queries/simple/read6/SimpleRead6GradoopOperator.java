@@ -56,7 +56,7 @@ class SimpleRead6GradoopOperator implements UnaryBaseGraphToValueOperator<Tempor
             .fromTo(this.startTime.getTime(), this.endTime.getTime());
 
             final long id_serializable =
-                this.id; // this is neccessary because this.id is not serializable, which is needed for the transformVertices function
+                this.id; // this is necessary because this.id is not serializable, which is needed for the transformVertices function
             DataSet<GraphTransaction> accounts = windowedGraph.query(
                     "MATCH (src:Account)<-[e1:transfer]-(mid:Account)-[e2:transfer]->(dst:Account) WHERE src <> dst AND src.id =" +
                         id_serializable +
