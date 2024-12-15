@@ -2,6 +2,7 @@ package org.ldbcouncil.finbench.impls.gradoop.queries.simple.read4;
 
 import static org.ldbcouncil.finbench.impls.gradoop.CommonUtils.roundToDecimalPlaces;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -9,6 +10,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.operators.Order;
+import org.apache.flink.api.java.operators.MapOperator;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
@@ -25,6 +29,7 @@ import org.gradoop.temporal.model.impl.pojo.TemporalEdge;
 import org.gradoop.temporal.model.impl.pojo.TemporalVertex;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead4;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead4Result;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead5Result;
 
 public class SimpleRead4GradoopOperator implements
     UnaryBaseGraphToValueOperator<TemporalGraph, List<SimpleRead4Result>> {
@@ -67,26 +72,37 @@ public class SimpleRead4GradoopOperator implements
                         Arrays.asList(new Count("count"), new SumProperty("amount")))
                 );
 
-            List<Tuple2<TemporalEdge, TemporalVertex>>
-                edges = transfers.getEdges().join(transfers.getVertices()).where(new TargetId<>()).equalTo(new Id<>())
+            MapOperator<Tuple2<TemporalEdge, TemporalVertex>, Tuple3<Long, Integer, Double>>
+                edgeMap = transfers.getEdges().join(transfers.getVertices()).where(new TargetId<>()).equalTo(new Id<>())
+                .map(new MapFunction<Tuple2<TemporalEdge, TemporalVertex>, Tuple3<Long, Integer, Double>>() {
+                    @Override
+                    public Tuple3<Long, Integer, Double> map(Tuple2<TemporalEdge, TemporalVertex> e) throws Exception {
+                        TemporalEdge edge = e.f0;
+                        TemporalVertex src = e.f1;
+
+                        long dstId = src.getPropertyValue("id").getLong(); //error here
+                        int numEdges = (int) edge.getPropertyValue("count").getLong();
+                        double sumAmount = roundToDecimalPlaces(edge.getPropertyValue("sum_amount").getDouble(), 3);
+
+                        return new Tuple3<>(dstId, numEdges, sumAmount);
+                    }
+
+                });
+
+            windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
+
+            List<Tuple3<Long, Integer, Double>> edges = edgeMap
+                .sortPartition(2, Order.DESCENDING)
+                .sortPartition(0, Order.ASCENDING)
                 .collect();
 
-            if (edges.isEmpty()) {
-                return Collections.emptyList();
+            List<SimpleRead4Result> simpleRead4Results = new ArrayList<>();
+
+            for (Tuple3<Long, Integer, Double> edge : edges) {
+                simpleRead4Results.add(new SimpleRead4Result(edge.f0, edge.f1, roundToDecimalPlaces(edge.f2, 3)));
             }
 
-            return edges.stream().map(e -> {
-                TemporalEdge edge = e.f0;
-                TemporalVertex dst = e.f1;
-
-                long dstId = dst.getPropertyValue("id").getLong(); //error here
-                int numEdges = (int) edge.getPropertyValue("count").getLong();
-                double sumAmount = roundToDecimalPlaces(edge.getPropertyValue("sum_amount").getDouble(), 3);
-
-                return new SimpleRead4Result(dstId, numEdges, sumAmount);
-                // Sorting is not yet supported in Gradoop, so we have to do it here
-            }).sorted(Comparator.comparing(SimpleRead4Result::getSumAmount).reversed()
-                .thenComparing(SimpleRead4Result::getDstId)).collect(Collectors.toList());
+            return simpleRead4Results;
 
         } catch (Exception e) {
             throw new RuntimeException(e);
