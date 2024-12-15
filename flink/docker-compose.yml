@@ -1,30 +1,41 @@
 services:
   # HDFS Namenode Service
   hdfs-namenode:
-    build: ./hdfs-namenode
+    image: apache/hadoop:2.10.2
     container_name: hdfs-namenode
+    hostname: namenode
+    user: root
     environment:
-      - CLUSTER_NAME=hadoop_cluster
-      - CORE_CONF_fs_defaultFS=hdfs://hdfs-namenode:9000
+      - HADOOP_HOME=/opt/hadoop
     volumes:
-      - namenode-data:/hadoop/dfs/namenode
+      - ./hadoop_namenode:/opt/hadoop/data/nameNode
+      - ./hadoop_config:/opt/hadoop/etc/hadoop
+      - ./start-hdfs.sh:/start-hdfs.sh
     ports:
-      - "9870:9870" # Web UI for HDFS Namenode
-      - "9000:9000" # HDFS protocol port
-
+      - "9870:9870"
+      - "9000:9000"
+    command: [ "/bin/bash", "/start-hdfs.sh" ]
+    networks:
+      - flink-network
   # HDFS Datanode Service
   hdfs-datanode:
-    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    image: apache/hadoop:2.10.2
     container_name: hdfs-datanode
+    hostname: localhost
+    user: root
     environment:
-      - CORE_CONF_fs_defaultFS=hdfs://hdfs-namenode:9000
+      - HADOOP_HOME=/opt/hadoop
     volumes:
-      - datanode-data:/hadoop/dfs/datanode
+      - ./hadoop_datanode:/opt/hadoop/data/dataNode
+      - ./hadoop_config:/opt/hadoop/etc/hadoop
+      - ./init-datanode.sh:/init-datanode.sh
     depends_on:
-      - hdfs-namenode
-    hostname: localhost # needed to upload files to HDFS via web explorer
+      - hdfs-namenode    
     ports:
-      - "9864:9864" # Web UI for HDFS Datanode
+      - "9864:9864"
+    command: [ "/bin/bash", "/init-datanode.sh" ]
+    networks:
+      - flink-network
 
   # Flink Job Manager Service
   jobmanager:
@@ -43,7 +54,7 @@ services:
     networks:
       - flink-network
     volumes:
-      - ./flink/hadoop-conf/core-site.xml:/opt/hadoop-3.2.1/etc/hadoop/core-site.xml
+      - ./flink/hadoop-conf/core-site.xml:/opt/hadoop-2.8.5/etc/hadoop/core-site.xml
 
   taskmanager:
     build: ./flink
