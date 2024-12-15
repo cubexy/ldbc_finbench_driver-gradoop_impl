@@ -14,9 +14,12 @@ ENV HADOOP_CONF_DIR=$HADOOP_HOME/etc/hadoop
 ENV HADOOP_CLASSPATH=$HADOOP_HOME/etc/hadoop:$HADOOP_HOME/share/hadoop/common/lib/*:$HADOOP_HOME/share/hadoop/common/*:$HADOOP_HOME/share/hadoop/hdfs:$HADOOP_HOME/share/hadoop/hdfs/lib/*:$HADOOP_HOME/share/hadoop/hdfs/*
 ENV PATH=$PATH:$HADOOP_HOME/bin
 
-# Remove all commons-cli jars first
 RUN find / -name "*commons-cli*.jar" -delete
+
+RUN wget https://repo1.maven.org/maven2/commons-cli/commons-cli/1.4/commons-cli-1.4.jar -P /opt/flink/lib/
 
 # Copy Hadoop JARs
 RUN mkdir -p /opt/flink/lib/hadoop && \
     cp -a $HADOOP_HOME/share/hadoop/. /opt/flink/lib/hadoop/
+
+ENV FLINK_ENV_JAVA_OPTS="-Djava.class.path=/opt/flink/lib/commons-cli-1.4.jar:/opt/flink/lib/*:/opt/flink/lib/hadoop/*"
