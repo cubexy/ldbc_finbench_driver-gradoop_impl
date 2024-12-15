@@ -18,14 +18,7 @@ public class SimpleRead5Handler implements OperationHandler<SimpleRead5, Gradoop
     public void executeOperation(SimpleRead5 sr5, GradoopFinbenchBaseGraphState connectionState,
                                  ResultReporter resultReporter) throws DbException {
         GradoopImpl.logger.info(sr5.toString());
-        DataSet<Tuple3<Long, Integer, Float>> simpleRead5Result = new SimpleRead5GradoopOperator(sr5).execute(connectionState.getGraph());
-        List<SimpleRead5Result> simpleRead5Results = new ArrayList<>();
-        try {
-            simpleRead5Result.collect().forEach(
-                tuple -> simpleRead5Results.add(new SimpleRead5Result(tuple.f0, tuple.f1, tuple.f2)));
-        } catch (Exception e) {
-            throw new DbException("Error while collecting results for simple read 5: " + e);
-        }
+        List<SimpleRead5Result> simpleRead5Results = new SimpleRead5GradoopOperator(sr5).execute(connectionState.getGraph());
         resultReporter.report(simpleRead5Results.size(), simpleRead5Results, sr5);
     }
 }

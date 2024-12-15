@@ -1,14 +1,16 @@
 package org.ldbcouncil.finbench.impls.gradoop.queries.simple.read5;
 
 import java.util.Date;
+import java.util.List;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
 import org.gradoop.temporal.model.impl.TemporalGraph;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead5;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead5Result;
 
 class SimpleRead5GradoopOperator implements
-    UnaryBaseGraphToValueOperator<TemporalGraph, DataSet<Tuple3<Long, Integer, Float>>> {
+    UnaryBaseGraphToValueOperator<TemporalGraph, List<SimpleRead5Result>> {
 
     private final Long id;
     private final Date startTime;
@@ -23,7 +25,7 @@ class SimpleRead5GradoopOperator implements
     }
 
     @Override
-    public DataSet<Tuple3<Long, Integer, Float>> execute(TemporalGraph temporalGraph) {
+    public List<SimpleRead5Result> execute(TemporalGraph temporalGraph) {
         return null;
     }
 }

@@ -24,6 +24,8 @@ public class FlinkQueryExecutor {
     public static void main(String[] args) {
         Logger logger = LogManager.getLogger("FlinkQueryExecutor");
 
+        logger.log(org.apache.logging.log4j.Level.INFO, "Starting Flink query executor");
+
         FlinkCmdArgParser parser = new FlinkCmdArgParser(args, logger); // initialize parser
         try {
             parser.parse(); // parse query arguments and initialize database
