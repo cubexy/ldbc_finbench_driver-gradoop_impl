@@ -7,7 +7,10 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.api.java.tuple.Tuple6;
+import org.gradoop.common.model.impl.pojo.EPGMEdge;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
 import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
 import org.gradoop.flink.model.impl.operators.aggregation.functions.count.Count;
@@ -42,7 +45,7 @@ public class SimpleRead2GradoopOperator implements
 
         try {
             final Long id = this.id;
-            List<TemporalEdge> edges = windowedGraph.query(
+            List<Tuple3<Double, Double, Long>> edges = windowedGraph.query(
                     "MATCH (src:Account)-[edge1:transfer]->(dst1:Account) WHERE src <> dst1 AND src.id =" + this.id + "L")
                 .union(windowedGraph.query(
                     "MATCH (dst2:Account)-[edge2:transfer]->(src:Account) WHERE src <> dst2 AND src.id =" + this.id +
@@ -58,33 +61,32 @@ public class SimpleRead2GradoopOperator implements
                     new KeyedGrouping<>(Arrays.asList(GroupingKeys.label(), GroupingKeys.property("id")), null, null,
                         Arrays.asList(new Count("count"), new SumProperty("amount"), new MaxProperty("amount")))
                 )
+                .toLogicalGraph()
                 .getEdges()
+                .map(new MapFunction<EPGMEdge, Tuple3<Double, Double, Long>>() {
+                    @Override
+                    public Tuple3<Double, Double, Long> map(EPGMEdge edge) throws Exception {
+                        double sumAmount = edge.getPropertyValue("sum_amount").getDouble();
+                        double maxAmount = edge.getPropertyValue("max_amount").getDouble();
+                        long count = edge.getPropertyValue("count").getLong();
+
+                        if (maxAmount == 0.0f) {
+                            maxAmount = -1.0f;
+                        }
+
+                        return new Tuple3<>(sumAmount, maxAmount, count);
+                    }
+                })
                 .collect();
 
-            final TemporalEdge transferIns = edges.get(0);
-            final TemporalEdge transferOuts = edges.get(1);
+            final Tuple3<Double, Double, Long> transferIns = edges.get(0);
+            final Tuple3<Double, Double, Long> transferOuts = edges.get(1);
 
-            final double transferOutSum =
-                roundToDecimalPlaces(transferOuts.getPropertyValue("sum_amount").getDouble(), 3);
-            final double transferInSum =
-                roundToDecimalPlaces(transferIns.getPropertyValue("sum_amount").getDouble(), 3);
-            double transferInMax = roundToDecimalPlaces(transferIns.getPropertyValue("max_amount").getDouble(), 3);
-            double transferOutMax = roundToDecimalPlaces(transferOuts.getPropertyValue("max_amount").getDouble(), 3);
-            final long transferInCount = transferIns.getPropertyValue("count").getLong();
-            final long transferOutCount = transferOuts.getPropertyValue("count").getLong();
-
-            if (transferInMax == 0.0f) {
-                transferInMax = -1.0f;
-            }
-
-            if (transferOutMax == 0.0f) {
-                transferOutMax = -1.0f;
-            }
 
             List<SimpleRead2Result> simpleRead2Results = new ArrayList<>();
             simpleRead2Results.add(
-                new SimpleRead2Result(transferOutSum, transferOutMax, transferOutCount, transferInSum, transferInMax,
-                    transferInCount));
+                new SimpleRead2Result(roundToDecimalPlaces(transferOuts.f0, 3), roundToDecimalPlaces(transferOuts.f1, 3), transferOuts.f2, roundToDecimalPlaces(transferIns.f0, 3), roundToDecimalPlaces(transferIns.f1, 3),
+                    transferIns.f2));
 
             return simpleRead2Results;
         } catch (Exception e) {
