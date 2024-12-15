@@ -1,11 +1,30 @@
 package org.ldbcouncil.finbench.impls.gradoop.queries.simple.read5;
 
+import static org.ldbcouncil.finbench.impls.gradoop.CommonUtils.roundToDecimalPlaces;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import org.apache.flink.api.java.DataSet;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
+import org.gradoop.flink.model.impl.functions.epgm.Id;
+import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
+import org.gradoop.flink.model.impl.functions.epgm.TargetId;
+import org.gradoop.flink.model.impl.operators.aggregation.functions.count.Count;
+import org.gradoop.flink.model.impl.operators.aggregation.functions.sum.SumProperty;
+import org.gradoop.flink.model.impl.operators.combination.ReduceCombination;
+import org.gradoop.flink.model.impl.operators.keyedgrouping.GroupingKeys;
+import org.gradoop.flink.model.impl.operators.keyedgrouping.KeyedGrouping;
 import org.gradoop.temporal.model.impl.TemporalGraph;
+import org.gradoop.temporal.model.impl.pojo.TemporalEdge;
+import org.gradoop.temporal.model.impl.pojo.TemporalVertex;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead4Result;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead5;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead5Result;
 
@@ -26,6 +45,54 @@ class SimpleRead5GradoopOperator implements
 
     @Override
     public List<SimpleRead5Result> execute(TemporalGraph temporalGraph) {
-        return null;
+
+        TemporalGraph windowedGraph = temporalGraph
+            .subgraph(new LabelIsIn<>("Account"), new LabelIsIn<>("transfer"))
+            .fromTo(this.startTime.getTime(), this.endTime.getTime());
+
+        try {
+            final long id_serializable =
+                this.id; // this is neccessary because this.id is not serializable, which is needed for the transformVertices function
+            TemporalGraph transfers = windowedGraph.query(
+                    "MATCH (dst:Account)<-[transferIn:transfer]-(src:Account) WHERE src <> dst AND dst.id =" +
+                        id_serializable +
+                        "L AND transferIn.amount > " + this.threshold)
+                .reduce(new ReduceCombination<>())
+                .transformVertices((currentVertex, transformedVertex) -> {
+                    if (currentVertex.hasProperty("id") &&
+                        Objects.equals(currentVertex.getPropertyValue("id").getLong(), id_serializable)) {
+                        currentVertex.removeProperty("id");
+                    }
+                    return currentVertex;
+                }).callForGraph(
+                    new KeyedGrouping<>(Arrays.asList(GroupingKeys.label(), GroupingKeys.property("id")),
+                        null, null,
+                        Arrays.asList(new Count("count"), new SumProperty("amount")))
+                );
+
+            List<Tuple2<TemporalEdge, TemporalVertex>>
+                edges = transfers.getEdges().join(transfers.getVertices()).where(new TargetId<>()).equalTo(new Id<>())
+                .collect();
+
+            if (edges.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            return edges.stream().map(e -> {
+                TemporalEdge edge = e.f0;
+                TemporalVertex dst = e.f1;
+
+                long dstId = dst.getPropertyValue("id").getLong(); //error here
+                int numEdges = (int) edge.getPropertyValue("count").getLong();
+                double sumAmount = roundToDecimalPlaces(edge.getPropertyValue("sum_amount").getDouble(), 3);
+
+                return new SimpleRead5Result(dstId, numEdges, sumAmount);
+                // Sorting is not yet supported in Gradoop, so we have to do it here
+            }).sorted(Comparator.comparing(SimpleRead5Result::getSumAmount).reversed()
+                .thenComparing(SimpleRead5Result::getSrcId)).collect(Collectors.toList());
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }
