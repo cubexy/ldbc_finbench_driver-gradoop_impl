@@ -18,14 +18,7 @@ public class SimpleRead6Handler implements OperationHandler<SimpleRead6, Gradoop
     public void executeOperation(SimpleRead6 sr6, GradoopFinbenchBaseGraphState connectionState,
                                  ResultReporter resultReporter) throws DbException {
         GradoopImpl.logger.info(sr6.toString());
-        DataSet<Tuple1<Long>> simpleRead6Result = new SimpleRead6GradoopOperator(sr6).execute(connectionState.getGraph());
-        List<SimpleRead6Result> simpleRead6Results = new ArrayList<>();
-        try {
-            simpleRead6Result.collect().forEach(
-                tuple -> simpleRead6Results.add(new SimpleRead6Result(tuple.f0)));
-        } catch (Exception e) {
-            throw new DbException("Error while collecting results for simple read 6: " + e);
-        }
+        List<SimpleRead6Result> simpleRead6Results = new SimpleRead6GradoopOperator(sr6).execute(connectionState.getGraph());
         resultReporter.report(simpleRead6Results.size(), simpleRead6Results, sr6);
     }
 }
