@@ -17,6 +17,7 @@ import org.gradoop.flink.model.impl.epgm.GraphCollection;
 import org.gradoop.flink.model.impl.epgm.LogicalGraph;
 import org.gradoop.flink.model.impl.functions.epgm.Id;
 import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
+import org.gradoop.flink.model.impl.functions.epgm.SourceId;
 import org.gradoop.flink.model.impl.functions.epgm.TargetId;
 import org.gradoop.flink.model.impl.operators.aggregation.functions.sum.SumProperty;
 import org.gradoop.flink.model.impl.operators.combination.ReduceCombination;
@@ -76,24 +77,29 @@ class ComplexRead2GradoopOperator implements
             LogicalGraph gcUnion = gtxLength1.union(gtxLength2).union(gtxLength3).reduce(new ReduceCombination<>())
                 .query("MATCH (other:Account)<-[e3:deposit]-(loan:Loan)")
                 .reduce(new ReduceCombination<>())
+                .transformVertices((currentVertex, transformedVertex) -> {
+                    if (!currentVertex.getLabel().equals("Loan")) {
+                        currentVertex.removeProperty("id");
+                    }
+                    return currentVertex;
+                })
                 .callForGraph(
                     new KeyedGrouping<>(Arrays.asList(GroupingKeys.label(), GroupingKeys.property("id")),
-                        null, null,
-                        Arrays.asList(new SumProperty("loanAmount"), new SumProperty("loanBalance")))
+                        Arrays.asList(new SumProperty("loanAmount"), new SumProperty("balance")), null,
+                        null)
                 );
 
             MapOperator<Tuple2<EPGMEdge, EPGMVertex>, Tuple3<Long, Double, Double>>
-                edgeMap = gcUnion.getEdges().join(gcUnion.getVertices()).where(new TargetId<>()).equalTo(new Id<>())
+                edgeMap = gcUnion.getEdges().join(gcUnion.getVertices()).where(new SourceId<>()).equalTo(new Id<>())
                 .map(new MapFunction<Tuple2<EPGMEdge, EPGMVertex>, Tuple3<Long, Double, Double>>() {
                     @Override
                     public Tuple3<Long, Double, Double> map(Tuple2<EPGMEdge, EPGMVertex> e)
                         throws Exception {
-                        EPGMEdge edge = e.f0;
                         EPGMVertex src = e.f1;
 
                         long otherID = src.getPropertyValue("id").getLong();
-                        double loanBalance = src.getPropertyValue("sum_loanBalance").getDouble();
-                        double loanAmount = edge.getPropertyValue("sum_loanAmount").getDouble();
+                        double loanBalance = src.getPropertyValue("sum_balance").getDouble();
+                        double loanAmount = src.getPropertyValue("sum_loanAmount").getDouble();
                         return new Tuple3<>(otherID, loanBalance, loanAmount);
                     }
 
