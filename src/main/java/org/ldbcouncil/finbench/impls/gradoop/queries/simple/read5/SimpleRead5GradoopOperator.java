@@ -44,7 +44,6 @@ class SimpleRead5GradoopOperator implements
 
     @Override
     public List<SimpleRead5Result> execute(TemporalGraph temporalGraph) {
-
         TemporalGraph windowedGraph = temporalGraph
             .subgraph(new LabelIsIn<>("Account"), new LabelIsIn<>("transfer"))
             .fromTo(this.startTime.getTime(), this.endTime.getTime());
