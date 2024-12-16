@@ -17,15 +17,21 @@ import org.ldbcouncil.finbench.driver.DbConnectionState;
 import org.ldbcouncil.finbench.driver.DbException;
 import org.ldbcouncil.finbench.driver.log.LoggingService;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead1;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead2;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead1;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead2;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead3;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead4;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead5;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead6;
 import org.ldbcouncil.finbench.impls.gradoop.queries.complex.read1.ComplexRead1Handler;
+import org.ldbcouncil.finbench.impls.gradoop.queries.complex.read2.ComplexRead2Handler;
 import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read1.SimpleRead1Handler;
 import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read2.SimpleRead2Handler;
 import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read3.SimpleRead3Handler;
 import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read4.SimpleRead4Handler;
+import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read5.SimpleRead5Handler;
+import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read6.SimpleRead6Handler;
 
 public class GradoopImpl extends Db {
     public static Logger logger = LogManager.getLogger("GradoopImpl");
@@ -104,11 +110,14 @@ public class GradoopImpl extends Db {
 
         //complex reads go here
         registerOperationHandler(ComplexRead1.class, ComplexRead1Handler.class);
+        registerOperationHandler(ComplexRead2.class, ComplexRead2Handler.class);
         //simple reads go here
         registerOperationHandler(SimpleRead1.class, SimpleRead1Handler.class);
         registerOperationHandler(SimpleRead2.class, SimpleRead2Handler.class);
         registerOperationHandler(SimpleRead3.class, SimpleRead3Handler.class);
         registerOperationHandler(SimpleRead4.class, SimpleRead4Handler.class);
+        registerOperationHandler(SimpleRead5.class, SimpleRead5Handler.class);
+        registerOperationHandler(SimpleRead6.class, SimpleRead6Handler.class);
         logger.info("Gradoop initialization complete");
     }
 
