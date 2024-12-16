@@ -38,6 +38,7 @@ class ComplexRead1GradoopOperator implements
 
     @Override
     public List<ComplexRead1Result> execute(TemporalGraph temporalGraph) {
+        // TODO: implement truncation strategy
         TemporalGraph windowedGraph = temporalGraph
             .subgraph(new LabelIsIn<>("Account", "Medium"), new LabelIsIn<>("transfer", "signIn"))
             .fromTo(this.startTime, this.endTime);
