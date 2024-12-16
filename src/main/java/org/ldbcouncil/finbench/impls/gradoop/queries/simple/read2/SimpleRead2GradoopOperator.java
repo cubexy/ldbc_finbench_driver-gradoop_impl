@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Objects;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.tuple.Tuple3;
-import org.apache.flink.api.java.tuple.Tuple6;
 import org.gradoop.common.model.impl.pojo.EPGMEdge;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
 import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
@@ -20,7 +19,6 @@ import org.gradoop.flink.model.impl.operators.combination.ReduceCombination;
 import org.gradoop.flink.model.impl.operators.keyedgrouping.GroupingKeys;
 import org.gradoop.flink.model.impl.operators.keyedgrouping.KeyedGrouping;
 import org.gradoop.temporal.model.impl.TemporalGraph;
-import org.gradoop.temporal.model.impl.pojo.TemporalEdge;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead2;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead2Result;
 

@@ -4,12 +4,9 @@ import static org.ldbcouncil.finbench.impls.gradoop.CommonUtils.roundToDecimalPl
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.operators.Order;
 import org.apache.flink.api.java.operators.MapOperator;
@@ -29,7 +26,6 @@ import org.gradoop.temporal.model.impl.pojo.TemporalEdge;
 import org.gradoop.temporal.model.impl.pojo.TemporalVertex;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead4;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead4Result;
-import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead5Result;
 
 public class SimpleRead4GradoopOperator implements
     UnaryBaseGraphToValueOperator<TemporalGraph, List<SimpleRead4Result>> {

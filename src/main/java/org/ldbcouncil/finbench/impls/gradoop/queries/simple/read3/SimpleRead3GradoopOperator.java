@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import org.apache.flink.api.java.tuple.Tuple1;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
 import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
 import org.gradoop.flink.model.impl.operators.aggregation.functions.count.Count;
