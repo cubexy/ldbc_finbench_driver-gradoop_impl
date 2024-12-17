@@ -1,0 +1,80 @@
+services:
+  # HDFS Namenode Service
+  hdfs-namenode:
+    image: apache/hadoop:2.10.2
+    container_name: hdfs-namenode
+    hostname: namenode
+    user: root
+    environment:
+      - HADOOP_HOME=/opt/hadoop
+    volumes:
+      - ./hadoop_namenode:/opt/hadoop/data/nameNode
+      - ./hadoop_config:/opt/hadoop/etc/hadoop
+      - ./start-hdfs.sh:/start-hdfs.sh
+    ports:
+      - "9870:9870"
+      - "9000:9000"
+    command: [ "/bin/bash", "/start-hdfs.sh" ]
+    networks:
+      - flink-network
+  # HDFS Datanode Service
+  hdfs-datanode:
+    image: apache/hadoop:2.10.2
+    container_name: hdfs-datanode
+    hostname: localhost
+    user: root
+    environment:
+      - HADOOP_HOME=/opt/hadoop
+    volumes:
+      - ./hadoop_datanode:/opt/hadoop/data/dataNode
+      - ./hadoop_config:/opt/hadoop/etc/hadoop
+      - ./init-datanode.sh:/init-datanode.sh
+    depends_on:
+      - hdfs-namenode    
+    ports:
+      - "9864:9864"
+    command: [ "/bin/bash", "/init-datanode.sh" ]
+    networks:
+      - flink-network
+
+  # Flink Job Manager Service
+  jobmanager:
+    build: ./flink
+    container_name: flink-jobmanager
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+    command: jobmanager
+    ports:
+      - "8081:8081" # web ui
+      - "6123:6123" # jobmanager rpc port
+    depends_on:
+      - hdfs-namenode
+    networks:
+      - flink-network
+    volumes:
+      - ./flink/hadoop-conf/core-site.xml:/opt/hadoop-2.8.5/etc/hadoop/core-site.xml
+
+  taskmanager:
+    build: ./flink
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 4
+    command: taskmanager
+    deploy:
+      replicas: 2
+    depends_on:
+      - jobmanager
+      - hdfs-namenode
+    networks:
+      - flink-network
+
+volumes:
+  namenode-data:
+  datanode-data:
+
+networks:
+  flink-network:

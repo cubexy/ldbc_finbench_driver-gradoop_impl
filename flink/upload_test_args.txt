@@ -1,0 +1,7 @@
+classpath
+
+org.ldbcouncil.finbench.impls.gradoop.FlinkQueryExecutor
+
+args
+
+-q complex_read_1 -m csv -d "hdfs://hdfs-namenode:9000/datasets/sf1/gradoop_data" -q_id 281474976715389 -q_st 1627020616747 -q_et 1699690342640 -q_tl 500 -q_to TIMESTAMP_ASCENDING
