@@ -52,8 +52,6 @@ class ComplexRead2GradoopOperator implements
             .subgraph(new LabelIsIn<>("Account", "Loan", "Person"), new LabelIsIn<>("transfer", "own", "deposit"))
             .fromTo(this.startTime, this.endTime);
 
-
-
             GraphCollection gtxLength1 = windowedGraph
                 .temporalQuery(
                     "MATCH (p:Person)-[e1:own]->(a:Account)<-[e2:transfer]-(other:Account)<-[e3:deposit]-(loan:Loan)" +
