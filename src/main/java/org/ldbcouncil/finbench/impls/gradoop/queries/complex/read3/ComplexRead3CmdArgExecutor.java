@@ -8,7 +8,7 @@ import org.ldbcouncil.finbench.impls.gradoop.FlinkCmdArg;
 import org.ldbcouncil.finbench.impls.gradoop.GradoopFinbenchBaseGraphState;
 import org.ldbcouncil.finbench.impls.gradoop.queries.AbstractCmdArgExecutor;
 
-public class ComplexRead3CmdArgExecutor extends AbstractCmdArgExecutor<List<ComplexRead3Result>> {
+public class ComplexRead3CmdArgExecutor extends AbstractCmdArgExecutor<ComplexRead3Result> {
 
     private ComplexRead3GradoopOperator operator;
 
@@ -23,7 +23,7 @@ public class ComplexRead3CmdArgExecutor extends AbstractCmdArgExecutor<List<Comp
     }
 
     @Override
-    public List<ComplexRead3Result> executeQuery(GradoopFinbenchBaseGraphState graph) throws DbException {
+    public ComplexRead3Result executeQuery(GradoopFinbenchBaseGraphState graph) throws DbException {
         return operator.execute(graph.getGraph());
     }
 
