@@ -18,7 +18,6 @@ import org.gradoop.flink.model.impl.epgm.LogicalGraph;
 import org.gradoop.flink.model.impl.functions.epgm.Id;
 import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
 import org.gradoop.flink.model.impl.functions.epgm.SourceId;
-import org.gradoop.flink.model.impl.functions.epgm.TargetId;
 import org.gradoop.flink.model.impl.operators.aggregation.functions.sum.SumProperty;
 import org.gradoop.flink.model.impl.operators.combination.ReduceCombination;
 import org.gradoop.flink.model.impl.operators.keyedgrouping.GroupingKeys;
@@ -53,7 +52,7 @@ class ComplexRead2GradoopOperator implements
             .subgraph(new LabelIsIn<>("Account", "Loan", "Person"), new LabelIsIn<>("transfer", "own", "deposit"))
             .fromTo(this.startTime, this.endTime);
 
-        try {
+
 
             GraphCollection gtxLength1 = windowedGraph
                 .temporalQuery(
@@ -108,20 +107,22 @@ class ComplexRead2GradoopOperator implements
             windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
 
 
-            List<Tuple3<Long, Double, Double>> edges = edgeMap
+        List<Tuple3<Long, Double, Double>> edges = null;
+        try {
+            edges = edgeMap
                 .sortPartition(1, Order.DESCENDING)
                 .sortPartition(0, Order.ASCENDING)
                 .collect();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
-            List<ComplexRead2Result> complexRead2Results = new ArrayList<>();
+        List<ComplexRead2Result> complexRead2Results = new ArrayList<>();
 
             for (Tuple3<Long, Double, Double> edge : edges) {
                 complexRead2Results.add(new ComplexRead2Result(edge.f0, roundToDecimalPlaces(edge.f1, 3), roundToDecimalPlaces(edge.f2, 3)));
             }
 
             return complexRead2Results;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 }
