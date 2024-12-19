@@ -18,14 +18,7 @@ public class ComplexRead3Handler implements OperationHandler<ComplexRead3, Grado
     public void executeOperation(ComplexRead3 cr3, GradoopFinbenchBaseGraphState connectionState,
                                  ResultReporter resultReporter) throws DbException {
         GradoopImpl.logger.info(cr3.toString());
-        DataSet<Tuple1<Long>> complexRead3Result = new ComplexRead3GradoopOperator(cr3).execute(connectionState.getGraph());
-        List<ComplexRead3Result> complexRead3Results = new ArrayList<>();
-        try {
-            complexRead3Result.collect().forEach(
-                tuple -> complexRead3Results.add(new ComplexRead3Result(tuple.f0)));
-        } catch (Exception e) {
-            throw new DbException("Error while collecting results for complex read 3: " + e);
-        }
+        List<ComplexRead3Result> complexRead3Results = new ComplexRead3GradoopOperator(cr3).execute(connectionState.getGraph());
         resultReporter.report(complexRead3Results.size(), complexRead3Results, cr3);
     }
 }

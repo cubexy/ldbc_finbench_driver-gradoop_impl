@@ -1,13 +1,15 @@
 package org.ldbcouncil.finbench.impls.gradoop.queries.complex.read3;
 
 import java.util.Date;
+import java.util.List;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.tuple.Tuple1;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
 import org.gradoop.temporal.model.impl.TemporalGraph;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead3;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead3Result;
 
-class ComplexRead3GradoopOperator implements UnaryBaseGraphToValueOperator<TemporalGraph, DataSet<Tuple1<Long>>> {
+class ComplexRead3GradoopOperator implements UnaryBaseGraphToValueOperator<TemporalGraph, List<ComplexRead3Result>> {
 
     private final Date startTime;
     private final Date endTime;
@@ -22,7 +24,7 @@ class ComplexRead3GradoopOperator implements UnaryBaseGraphToValueOperator<Tempo
     }
 
     @Override
-    public DataSet<Tuple1<Long>> execute(TemporalGraph temporalGraph) {
+    public List<ComplexRead3Result> execute(TemporalGraph temporalGraph) {
         return null;
     }
 }
