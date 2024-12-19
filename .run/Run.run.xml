@@ -5,6 +5,7 @@
     <option name="MAIN_CLASS_NAME" value="org.ldbcouncil.finbench.driver.driver.Driver" />
     <module name="driver" />
     <option name="PROGRAM_PARAMETERS" value="-P src/main/resources/gradoop/ldbc_finbench_driver_gradoop.properties" />
+    <option name="VM_PARAMETERS" value="-d64 -Xms512m -Xmx14g" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>
