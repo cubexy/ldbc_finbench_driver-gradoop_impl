@@ -25,6 +25,9 @@ class ComplexRead3GradoopOperator implements UnaryBaseGraphToValueOperator<Tempo
 
     @Override
     public ComplexRead3Result execute(TemporalGraph temporalGraph) {
+        long serializableId1 = this.id1;
+        long serializableId2 = this.id2;
+
         TemporalGraph windowedGraph = temporalGraph
             .subgraph(new LabelIsIn<>("Account"), new LabelIsIn<>("transfer"))
             .fromTo(this.startTime, this.endTime);
@@ -40,7 +43,7 @@ class ComplexRead3GradoopOperator implements UnaryBaseGraphToValueOperator<Tempo
             src =
                 weightedGraph.getVertices()
                     .filter(ver -> ver.hasProperty("id"))
-                    .filter(ver -> ver.getPropertyValue("id").getLong() == this.id1).collect()
+                    .filter(ver -> ver.getPropertyValue("id").getLong() == serializableId1).collect()
                     .get(0);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -60,14 +63,14 @@ class ComplexRead3GradoopOperator implements UnaryBaseGraphToValueOperator<Tempo
         try {
             dst = SSSPGraph.getVertices()
                     .filter( ver -> ver.hasProperty("id"))
-                    .filter(ver -> ver.getPropertyValue("id").getLong() == this.id2).collect();
+                    .filter(ver -> ver.getPropertyValue("id").getLong() == serializableId2).collect();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
         if (dst.isEmpty()) { return new ComplexRead3Result(-1); }
 
-        long distance = dst.get(0).getPropertyValue("distance").getLong();
+        long distance = (long) dst.get(0).getPropertyValue("distance").getDouble();
 
         return new ComplexRead3Result(distance);
     }
