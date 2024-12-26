@@ -18,6 +18,7 @@ import org.ldbcouncil.finbench.impls.gradoop.queries.CmdArgExecutor;
 import org.ldbcouncil.finbench.impls.gradoop.queries.CmdArgExecutorRegistry;
 import org.ldbcouncil.finbench.impls.gradoop.queries.complex.read2.ComplexRead2CmdArgExecutor;
 import org.ldbcouncil.finbench.impls.gradoop.queries.complex.read3.ComplexRead3CmdArgExecutor;
+import org.ldbcouncil.finbench.impls.gradoop.queries.complex.read4.ComplexRead4CmdArgExecutor;
 import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read1.SimpleRead1CmdArgExecutor;
 import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read2.SimpleRead2CmdArgExecutor;
 import org.ldbcouncil.finbench.impls.gradoop.queries.simple.read3.SimpleRead3CmdArgExecutor;
@@ -115,6 +116,7 @@ public class FlinkCmdArgParser {
         registry.registerCmdArgExecutor(new ComplexRead1CmdArgExecutor());
         registry.registerCmdArgExecutor(new ComplexRead2CmdArgExecutor());
         registry.registerCmdArgExecutor(new ComplexRead3CmdArgExecutor());
+        registry.registerCmdArgExecutor(new ComplexRead4CmdArgExecutor());
         registry.registerCmdArgExecutor(new SimpleRead1CmdArgExecutor());
         registry.registerCmdArgExecutor(new SimpleRead2CmdArgExecutor());
         registry.registerCmdArgExecutor(new SimpleRead3CmdArgExecutor());
