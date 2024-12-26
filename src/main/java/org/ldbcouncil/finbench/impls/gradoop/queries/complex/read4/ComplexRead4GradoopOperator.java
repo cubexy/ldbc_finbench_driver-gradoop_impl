@@ -8,6 +8,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.operators.Order;
+import org.apache.flink.api.java.operators.MapOperator;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.api.java.tuple.Tuple7;
@@ -74,53 +76,67 @@ class ComplexRead4GradoopOperator implements
         List<Tuple7<Long, Integer, Double, Double, Integer, Double, Double>> edgeMap = null;
 
         try {
-            edgeMap = otherAccounts.getEdges()
-            .join(otherAccounts.getVertices()).where(new SourceId<>()).equalTo(new Id<>())
-            .map(new MapFunction<Tuple2<TemporalEdge, TemporalVertex>, Tuple4<Long, Integer, Double, Double>>() {
-                @Override
-                public Tuple4<Long, Integer, Double, Double> map(Tuple2<TemporalEdge, TemporalVertex> e)
-                    throws Exception {
-                    TemporalEdge edge2 = e.f0;
-                    TemporalVertex src = e.f1;
+            MapOperator<Tuple2<Tuple4<Long, Integer, Double, Double>, Tuple4<Long, Integer, Double, Double>>, Tuple7<Long, Integer, Double, Double, Integer, Double, Double>>
+                edges = otherAccounts.getEdges()
+                .join(otherAccounts.getVertices()).where(new SourceId<>()).equalTo(new Id<>())
+                .map(new MapFunction<Tuple2<TemporalEdge, TemporalVertex>, Tuple4<Long, Integer, Double, Double>>() {
+                    @Override
+                    public Tuple4<Long, Integer, Double, Double> map(Tuple2<TemporalEdge, TemporalVertex> e)
+                        throws Exception {
+                        TemporalEdge edge2 = e.f0;
+                        TemporalVertex src = e.f1;
 
-                    long otherID = src.getPropertyValue("id").getLong();
-                    int numEdges = (int) edge2.getPropertyValue("count").getLong();
-                    double sumAmount = roundToDecimalPlaces(edge2.getPropertyValue("sum_amount").getDouble(), 3);
-                    double maxAmount = roundToDecimalPlaces(edge2.getPropertyValue("max_amount").getDouble(), 3);
+                        long otherID = src.getPropertyValue("id").getLong();
+                        int numEdges = (int) edge2.getPropertyValue("count").getLong();
+                        double sumAmount = roundToDecimalPlaces(edge2.getPropertyValue("sum_amount").getDouble(), 3);
+                        double maxAmount = roundToDecimalPlaces(edge2.getPropertyValue("max_amount").getDouble(), 3);
 
-                    return new Tuple4<>(otherID, numEdges, sumAmount, maxAmount);
-                }
-            }).join(
+                        return new Tuple4<>(otherID, numEdges, sumAmount, maxAmount);
+                    }
+                }).join(
                     otherAccounts.getEdges()
                         .join(otherAccounts.getVertices()).where(new TargetId<>()).equalTo(new Id<>())
-                        .map(new MapFunction<Tuple2<TemporalEdge, TemporalVertex>, Tuple4<Long, Integer, Double, Double>>() {
-                            @Override
-                            public Tuple4<Long, Integer, Double, Double> map(Tuple2<TemporalEdge, TemporalVertex> e)
-                                throws Exception {
-                                TemporalEdge edge3 = e.f0;
-                                TemporalVertex src = e.f1;
+                        .map(
+                            new MapFunction<Tuple2<TemporalEdge, TemporalVertex>, Tuple4<Long, Integer, Double, Double>>() {
+                                @Override
+                                public Tuple4<Long, Integer, Double, Double> map(Tuple2<TemporalEdge, TemporalVertex> e)
+                                    throws Exception {
+                                    TemporalEdge edge3 = e.f0;
+                                    TemporalVertex src = e.f1;
 
-                                long otherID = src.getPropertyValue("id").getLong();
-                                int numEdges = (int) edge3.getPropertyValue("count").getLong();
-                                double sumAmount = roundToDecimalPlaces(edge3.getPropertyValue("sum_amount").getDouble(), 3);
-                                double maxAmount = roundToDecimalPlaces(edge3.getPropertyValue("max_amount").getDouble(), 3);
+                                    long otherID = src.getPropertyValue("id").getLong();
+                                    int numEdges = (int) edge3.getPropertyValue("count").getLong();
+                                    double sumAmount =
+                                        roundToDecimalPlaces(edge3.getPropertyValue("sum_amount").getDouble(), 3);
+                                    double maxAmount =
+                                        roundToDecimalPlaces(edge3.getPropertyValue("max_amount").getDouble(), 3);
 
-                                return new Tuple4<>(otherID, numEdges, sumAmount, maxAmount);
-                            }
-                        })
+                                    return new Tuple4<>(otherID, numEdges, sumAmount, maxAmount);
+                                }
+                            })
                 ).where(0)
                 .equalTo(0)
                 .map(
                     new MapFunction<Tuple2<Tuple4<Long, Integer, Double, Double>, Tuple4<Long, Integer, Double, Double>>, Tuple7<Long, Integer, Double, Double, Integer, Double, Double>>() {
                         @Override
-                        public Tuple7<Long, Integer, Double, Double, Integer, Double, Double> map(Tuple2<Tuple4<Long, Integer, Double, Double>, Tuple4<Long, Integer, Double, Double>> e)
+                        public Tuple7<Long, Integer, Double, Double, Integer, Double, Double> map(
+                            Tuple2<Tuple4<Long, Integer, Double, Double>, Tuple4<Long, Integer, Double, Double>> e)
                             throws Exception {
                             Tuple4<Long, Integer, Double, Double> edge2 = e.f0;
                             Tuple4<Long, Integer, Double, Double> edge3 = e.f1;
 
                             return new Tuple7<>(edge2.f0, edge2.f1, edge2.f2, edge2.f3, edge3.f1, edge3.f2, edge3.f3);
                         }
-                    }).collect();
+                    });
+
+            windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
+
+            edgeMap = edges
+                .sortPartition(2, Order.DESCENDING)
+                .sortPartition(5, Order.ASCENDING)
+                .sortPartition(0, Order.ASCENDING)
+                .collect();
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
