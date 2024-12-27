@@ -1,32 +1,31 @@
 package org.ldbcouncil.finbench.impls.gradoop.queries.complex.read5;
 
-import java.util.Date;
-import org.apache.flink.api.java.DataSet;
-import org.apache.flink.api.java.tuple.Tuple1;
+import java.util.List;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
 import org.gradoop.temporal.model.impl.TemporalGraph;
-import org.ldbcouncil.finbench.driver.result.Path;
 import org.ldbcouncil.finbench.driver.truncation.TruncationOrder;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead5;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead5Result;
 
-class ComplexRead5GradoopOperator implements UnaryBaseGraphToValueOperator<TemporalGraph, DataSet<Tuple1<Path>>> {
+class ComplexRead5GradoopOperator implements UnaryBaseGraphToValueOperator<TemporalGraph, List<ComplexRead5Result>> {
 
-    private final Long id;
-    private final Date startTime;
-    private final Date endTime;
-    private final Integer truncationLimit;
-    private final TruncationOrder truncationOrder;
+    private final long id;
+    private final long startTime;
+    private final long endTime;
+    private final int truncationLimit;
+    private final boolean isTruncationOrderAscending;
 
     public ComplexRead5GradoopOperator(ComplexRead5 cr5) {
         this.id = cr5.getId();
-        this.startTime = cr5.getStartTime();
-        this.endTime = cr5.getEndTime();
+        this.startTime = cr5.getStartTime().getTime();
+        this.endTime = cr5.getEndTime().getTime();
         this.truncationLimit = cr5.getTruncationLimit();
-        this.truncationOrder = cr5.getTruncationOrder();
+        final TruncationOrder truncationOrder = cr5.getTruncationOrder();
+        this.isTruncationOrderAscending = truncationOrder == TruncationOrder.TIMESTAMP_ASCENDING;
     }
 
     @Override
-    public DataSet<Tuple1<Path>> execute(TemporalGraph temporalGraph) {
+    public List<ComplexRead5Result> execute(TemporalGraph temporalGraph) {
         return null;
     }
 }
