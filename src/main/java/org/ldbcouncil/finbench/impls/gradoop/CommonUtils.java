@@ -7,12 +7,14 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 import org.gradoop.common.model.impl.id.GradoopId;
 import org.gradoop.common.model.impl.properties.PropertyValue;
 import org.gradoop.flink.model.impl.layouts.transactional.tuples.GraphTransaction;
+import org.ldbcouncil.finbench.driver.result.Path;
 
 public class CommonUtils {
 
@@ -30,6 +32,17 @@ public class CommonUtils {
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.GERMAN);
         df.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
         return df.parse(time);
+    }
+
+    public static Path parsePath(List<Long> path) {
+        Path p = new Path();
+        for (Long l : path) {
+            if (l == -1L) {
+                continue;
+            }
+            p.addId(l);
+        }
+        return p;
     }
 
     public static Double roundToDecimalPlaces(Double num, int decimalPlaces) {
