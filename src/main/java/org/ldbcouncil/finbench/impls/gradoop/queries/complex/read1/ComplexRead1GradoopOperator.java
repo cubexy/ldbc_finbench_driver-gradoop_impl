@@ -51,7 +51,6 @@ class ComplexRead1GradoopOperator implements
                 ".val_from) AND m.isBlocked = true")
             .toGraphCollection()
             .getGraphTransactions();
-        // sort with sortPartition and limit
 
         DataSet<GraphTransaction> gtxLength2 = windowedGraph
             .temporalQuery(
