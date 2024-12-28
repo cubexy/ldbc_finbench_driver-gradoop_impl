@@ -2,16 +2,25 @@ package org.ldbcouncil.finbench.impls.gradoop.queries.complex.read6;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.tuple.Tuple3;
+import org.apache.flink.api.java.tuple.Tuple4;
+import org.gradoop.common.model.impl.id.GradoopId;
+import org.gradoop.common.model.impl.pojo.EPGMEdge;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
 import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
+import org.gradoop.flink.model.impl.layouts.transactional.tuples.GraphTransaction;
 import org.gradoop.flink.model.impl.operators.combination.ReduceCombination;
 import org.gradoop.temporal.model.impl.TemporalGraph;
 import org.ldbcouncil.finbench.driver.truncation.TruncationOrder;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead6;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead6Result;
+import org.ldbcouncil.finbench.impls.gradoop.CommonUtils;
 
 class ComplexRead6GradoopOperator implements
     UnaryBaseGraphToValueOperator<TemporalGraph, List<ComplexRead6Result>> {
@@ -44,24 +53,55 @@ class ComplexRead6GradoopOperator implements
             .subgraph(new LabelIsIn<>("Account"), new LabelIsIn<>("transfer", "withdraw"))
             .fromTo(this.startTime, this.endTime);
 
-        windowedGraph.query(
+        DataSet<Tuple3<Long, Double, Double>> edges = windowedGraph.query(
             "MATCH (src1:Account)-[edge1:transfer]->(mid:Account)-[edge2:withdraw]->(dstCard:Account) WHERE dstCard.id = " +
                 this.id + "L AND dstCard.type = 'card' AND edge1.amount > " + this.threshold1 + " AND edge2.amount > " + this.threshold2)
-            .reduce(new ReduceCombination<>())
-            .transformVertices((currentVertex, transformedVertex) -> {
-                // note: this only removed the id of dstCard, not id of src1. therefore, grouping only by mid id is not possible since
-                // we cannot find out if the current edge is src1 or mid.
-                // we cannot access outgoing edges, otherwise we could say "do you have an outgoing withdraw edge?"
-                // we cannot access variable mappings, otherwise we could say "is your label "mid"?"
+            .toGraphCollection()
+            .getGraphTransactions()
+            .map(new MapFunction<GraphTransaction, Tuple3<Long, Double, Double>>() {
+                @Override
+                public Tuple3<Long, Double, Double> map(GraphTransaction graphTransaction) throws Exception {
+                    Map<String, GradoopId> m = CommonUtils.getVariableMapping(graphTransaction);
 
-                // therefore, we can group by mid id, but we have to aggregate src1 later
-                if (currentVertex.hasProperty("id") && (
-                    Objects.equals(currentVertex.getPropertyValue("id").getLong(), id_serializable)
-                )) {
-                    currentVertex.removeProperty("id");
+                    GradoopId srcGradoopId = m.get("src");
+                    GradoopId midGradoopId = m.get("mid");
+                    GradoopId dstGradoopId = m.get("dstCard");
+
+                    double edge1Amount = 0;
+                    double edge2Amount = 0;
+
+                    Set<EPGMEdge> edges = graphTransaction.getEdges();
+
+                    for (EPGMEdge edge : edges) {
+                        if (edge.getLabel().equals("transfer")) {
+                            edge1Amount = edge.getPropertyValue("amount").getDouble();
+                        } else if (edge.getLabel().equals("withdraw")) {
+                            edge2Amount = edge.getPropertyValue("amount").getDouble();
+                        }
+                    }
+
+                    Long midId =
+                        graphTransaction.getVertexById(midGradoopId).getPropertyValue("id").getLong();
+                    return new Tuple3<>(midId, edge1Amount, edge2Amount);
                 }
-                return currentVertex;
+            })
+            .groupBy(0)
+            .reduce(new ReduceFunction<Tuple3<Long, Double, Double>>() {
+                @Override
+                public Tuple3<Long, Double, Double> reduce(Tuple3<Long, Double, Double> t1,
+                                                           Tuple3<Long, Double, Double> t2) throws Exception {
+                    return new Tuple3<>(t1.f0, t1.f1 + t2.f1, t1.f2 + t2.f2);
+                }
             });
+
+        List<Tuple3<Long, Double, Double>> edgesList = null;
+        try {
+            edgesList = edges.collect();
+
+            System.out.println("test");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
         return null;
     }
