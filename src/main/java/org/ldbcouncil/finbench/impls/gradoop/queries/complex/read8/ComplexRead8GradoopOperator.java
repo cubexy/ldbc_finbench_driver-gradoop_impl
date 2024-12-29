@@ -1,19 +1,24 @@
 package org.ldbcouncil.finbench.impls.gradoop.queries.complex.read8;
 
+import static org.ldbcouncil.finbench.impls.gradoop.CommonUtils.roundToDecimalPlaces;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.operators.Order;
 import org.apache.flink.api.java.DataSet;
+import org.apache.flink.api.java.operators.MapOperator;
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.gradoop.common.model.impl.id.GradoopId;
+import org.gradoop.common.model.impl.pojo.EPGMEdge;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
 import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
 import org.gradoop.flink.model.impl.layouts.transactional.tuples.GraphTransaction;
 import org.gradoop.temporal.model.impl.TemporalGraph;
 import org.ldbcouncil.finbench.driver.truncation.TruncationOrder;
-import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead1Result;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead8;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead8Result;
 import org.ldbcouncil.finbench.impls.gradoop.CommonUtils;
@@ -41,146 +46,108 @@ class ComplexRead8GradoopOperator implements
     @Override
     public List<ComplexRead8Result> execute(TemporalGraph temporalGraph) {
         // TODO: implement truncation strategy
+        final double thresholdSerializable = this.threshold;
+
         TemporalGraph windowedGraph = temporalGraph
-            .subgraph(new LabelIsIn<>("Account", "Medium"), new LabelIsIn<>("transfer", "withdraw"))
+            .subgraph(new LabelIsIn<>("Account", "Loan"), new LabelIsIn<>("transfer", "withdraw", "deposit"))
             .fromTo(this.startTime, this.endTime);
 
-        DataSet<GraphTransaction> gtxLength3ttt = windowedGraph
+        DataSet<GraphTransaction> gtxLength3 = windowedGraph
             .temporalQuery(
-                "MATCH (loan:Loan)-[edge1:transfer]->(src:Account)-[edge2:transfer]->(dst:Account)-[edge3:transfer]->(dst2:Account)-[edge4:transfer]->(dst3:Account)" +
+                "MATCH (loan:Loan)-[edge1:deposit]->(src:Account)-[edge2]->(dst:Account)-[edge3]->(dst2:Account)-[edge4]->(dst3:Account)" +
                     " WHERE loan.id = " + this.id + "L")
             .toGraphCollection()
             .getGraphTransactions();
 
-        DataSet<GraphTransaction> gtxLength3wtt = windowedGraph
+        DataSet<GraphTransaction> gtxLength2 = windowedGraph
             .temporalQuery(
-                "MATCH (loan:Loan)-[edge1:transfer]->(src:Account)-[edge2:withdraw]->(dst:Account)-[edge3:transfer]->(dst2:Account)-[edge4:transfer]->(dst3:Account)" +
+                "MATCH (loan:Loan)-[edge1:deposit]->(src:Account)-[edge2]->(dst:Account)-[edge3]->(dst2:Account)" +
                     " WHERE loan.id = " + this.id + "L")
             .toGraphCollection()
             .getGraphTransactions();
 
-        DataSet<GraphTransaction> gtxLength3twt = windowedGraph
+        DataSet<GraphTransaction> gtxLength1 = windowedGraph
             .temporalQuery(
-                "MATCH (loan:Loan)-[edge1:transfer]->(src:Account)-[edge2:transfer]->(dst:Account)-[edge3:withdraw]->(dst2:Account)-[edge4:transfer]->(dst3:Account)" +
+                "MATCH (loan:Loan)-[edge1:deposit]->(src:Account)-[edge2]->(dst:Account)" +
                     " WHERE loan.id = " + this.id + "L")
             .toGraphCollection()
             .getGraphTransactions();
 
-        DataSet<GraphTransaction> gtxLength3ttw = windowedGraph
-            .temporalQuery(
-                "MATCH (loan:Loan)-[edge1:transfer]->(src:Account)-[edge2:transfer]->(dst:Account)-[edge3:transfer]->(dst2:Account)-[edge4:withdraw]->(dst3:Account)" +
-                    " WHERE loan.id = " + this.id + "L")
-            .toGraphCollection()
-            .getGraphTransactions();
-
-        DataSet<GraphTransaction> gtxLength3wwt = windowedGraph
-            .temporalQuery(
-                "MATCH (loan:Loan)-[edge1:transfer]->(src:Account)-[edge2:withdraw]->(dst:Account)-[edge3:withdraw]->(dst2:Account)-[edge4:transfer]->(dst3:Account)" +
-                    " WHERE loan.id = " + this.id + "L")
-            .toGraphCollection()
-            .getGraphTransactions();
-
-        DataSet<GraphTransaction> gtxLength3tww = windowedGraph
-            .temporalQuery(
-                "MATCH (loan:Loan)-[edge1:transfer]->(src:Account)-[edge2:transfer]->(dst:Account)-[edge3:withdraw]->(dst2:Account)-[edge4:withdraw]->(dst3:Account)" +
-                    " WHERE loan.id = " + this.id + "L")
-            .toGraphCollection()
-            .getGraphTransactions();
-
-        DataSet<GraphTransaction> gtxLength3wtw = windowedGraph
-            .temporalQuery(
-                "MATCH (loan:Loan)-[edge1:transfer]->(src:Account)-[edge2:withdraw]->(dst:Account)-[edge3:transfer]->(dst2:Account)-[edge4:withdraw]->(dst3:Account)" +
-                    " WHERE loan.id = " + this.id + "L")
-            .toGraphCollection()
-            .getGraphTransactions();
-
-        DataSet<GraphTransaction> gtxLength3www = windowedGraph
-            .temporalQuery(
-                "MATCH (loan:Loan)-[edge1:transfer]->(src:Account)-[edge2:withdraw]->(dst:Account)-[edge3:withdraw]->(dst2:Account)-[edge4:withdraw]->(dst3:Account)" +
-                    " WHERE loan.id = " + this.id + "L")
-            .toGraphCollection()
-            .getGraphTransactions();
-
-        DataSet<GraphTransaction> gtxLength2tt = windowedGraph
-            .temporalQuery(
-                "MATCH (loan:Loan)-[edge1:transfer]->(src:Account)-[edge2:transfer]->(dst:Account)-[edge3:transfer]->(dst2:Account)" +
-                    " WHERE loan.id = " + this.id + "L")
-            .toGraphCollection()
-            .getGraphTransactions();
-
-        DataSet<GraphTransaction> gtxLength2tw = windowedGraph
-            .temporalQuery(
-                "MATCH (loan:Loan)-[edge1:transfer]->(src:Account)-[edge2:transfer]->(dst:Account)-[edge3:withdraw]->(dst2:Account)" +
-                    " WHERE loan.id = " + this.id + "L")
-            .toGraphCollection()
-            .getGraphTransactions();
-
-        DataSet<GraphTransaction> gtxLength2wt = windowedGraph
-            .temporalQuery(
-                "MATCH (loan:Loan)-[edge1:transfer]->(src:Account)-[edge2:withdraw]->(dst:Account)-[edge3:transfer]->(dst2:Account)" +
-                    " WHERE loan.id = " + this.id + "L")
-            .toGraphCollection()
-            .getGraphTransactions();
-
-        DataSet<GraphTransaction> gtxLength2ww = windowedGraph
-            .temporalQuery(
-                "MATCH (loan:Loan)-[edge1:transfer]->(src:Account)-[edge2:withdraw]->(dst:Account)-[edge3:withdraw]->(dst2:Account)" +
-                    " WHERE loan.id = " + this.id + "L")
-            .toGraphCollection()
-            .getGraphTransactions();
-
-        DataSet<GraphTransaction> gtxLength1t = windowedGraph
-            .temporalQuery(
-                "MATCH (loan:Loan)-[edge1:transfer]->(src:Account)-[edge2:transfer]->(dst:Account)" +
-                    " WHERE loan.id = " + this.id + "L")
-            .toGraphCollection()
-            .getGraphTransactions();
-
-        DataSet<GraphTransaction> gtxLength1w = windowedGraph
-            .temporalQuery(
-                "MATCH (loan:Loan)-[edge1:transfer]->(src:Account)-[edge2:withdraw]->(dst:Account)" +
-                    " WHERE loan.id = " + this.id + "L")
-            .toGraphCollection()
-            .getGraphTransactions();
-
-        DataSet<Tuple4<Long, Integer, Long, String>> result =
-            gtxLength1t.union(gtxLength1w).union(gtxLength2tt).union(gtxLength2tw).union(gtxLength2wt).union(gtxLength2ww).union(gtxLength3ttt).union(gtxLength3ttw).union(gtxLength3twt).union(gtxLength3wtt).union(gtxLength3tww).union(gtxLength3wtw).union(gtxLength3wwt).union(gtxLength3www)
-                .map(new MapFunction<GraphTransaction, Tuple4<Long, Integer, Long, String>>() {
+        DataSet<Tuple4<Long, Float, Integer, Boolean>> result =
+            gtxLength1.union(gtxLength2).union(gtxLength3)
+                .map(new MapFunction<GraphTransaction, Tuple4<Long, Float, Integer, Boolean>>() {
                     @Override
-                    public Tuple4<Long, Integer, Long, String> map(GraphTransaction graphTransaction) throws Exception {
+                    public Tuple4<Long, Float, Integer, Boolean> map(GraphTransaction graphTransaction) {
                         Map<String, GradoopId> m = CommonUtils.getVariableMapping(graphTransaction);
 
-                        GradoopId otherGradoopId = m.get("other");
-                        GradoopId mediumGradoopId = m.get("m");
+                        Set<EPGMEdge> edges = graphTransaction.getEdges();
+                        int minAccountDistance = edges.size() - 1;
+                        GradoopId lastDstGradoopId = m.get("dst");
+                        GradoopId loanGradoopId = m.get("loan");
 
-                        Long otherId =
-                            graphTransaction.getVertexById(otherGradoopId).getPropertyValue("id").getLong();
-                        int accountDistance = graphTransaction.getEdges().size() - 1;
-                        Long mediumId =
-                            graphTransaction.getVertexById(mediumGradoopId).getPropertyValue("id").getLong();
-                        String mediumType =
-                            graphTransaction.getVertexById(mediumGradoopId).getPropertyValue("type").getString();
-                        return new Tuple4<>(otherId, accountDistance, mediumId,
-                            mediumType);
+                        double loanAmount =
+                            graphTransaction.getVertexById(loanGradoopId).getPropertyValue("loanAmount").getDouble();
+                        double inflow = 0.0;
+                        boolean valid = true;
+
+                        for (EPGMEdge edge : edges) {
+                            if (edge.getLabel().equals("deposit")) {
+                                continue;
+                            }
+                            double amount = edge.getPropertyValue("amount").getDouble();
+
+                            //TODO: ---> error here: amount.withdraw is a float <---
+
+                            if (amount > inflow * thresholdSerializable) {
+                                if (edge.getLabel().equals("transfer")) {
+                                    inflow += amount;
+                                }
+                            } else {
+                                valid = false;
+                            }
+                        }
+                        if (minAccountDistance > 1) {
+                            lastDstGradoopId = m.get("dst2");
+                            if (minAccountDistance > 2) {
+                                lastDstGradoopId = m.get("dst3");
+                            }
+                        }
+
+                        long lastDstId =
+                            graphTransaction.getVertexById(lastDstGradoopId).getPropertyValue("id").getLong();
+
+                        float ratio = (float) (inflow / loanAmount);
+
+                        return new Tuple4<>(lastDstId, roundToDecimalPlaces(ratio, 3), minAccountDistance, valid);
                     }
-                }).distinct(0, 1, 2, 3);
+                })
+                .filter(new FilterFunction<Tuple4<Long, Float, Integer, Boolean>>() {
+                    @Override
+                    public boolean filter(Tuple4<Long, Float, Integer, Boolean> tuple)
+                        throws Exception {
+                        return tuple.f3;
+                    }
+                });
 
         windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
 
         result = result
-            .sortPartition(1, Order.ASCENDING)
-            .sortPartition(0, Order.ASCENDING)
-            .sortPartition(3, Order.ASCENDING);
+            .sortPartition(2, Order.DESCENDING)
+            .sortPartition(1, Order.DESCENDING)
+            .sortPartition(0, Order.ASCENDING);
 
-        List<ComplexRead1Result> complexRead1Results = new ArrayList<>();
+        List<ComplexRead8Result> complexRead8Results = new ArrayList<>();
 
         try {
-            result.collect().forEach(
-                tuple -> complexRead1Results.add(new ComplexRead1Result(tuple.f0, tuple.f1, tuple.f2, tuple.f3)));
+            List<Tuple4<Long, Float, Integer, Boolean>> resultList = result.collect();
+
+            for (Tuple4<Long, Float, Integer, Boolean> tuple : resultList) {
+                    complexRead8Results.add(new ComplexRead8Result(tuple.f0, tuple.f1, tuple.f2));
+            }
         } catch (Exception e) {
-            throw new RuntimeException("Error while collecting results for complex read 1: " + e);
+            throw new RuntimeException(e);
         }
 
-        return null;
+        return complexRead8Results;
     }
 }
