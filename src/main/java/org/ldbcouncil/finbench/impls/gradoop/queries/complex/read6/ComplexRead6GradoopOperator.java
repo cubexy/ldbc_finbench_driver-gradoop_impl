@@ -72,7 +72,6 @@ class ComplexRead6GradoopOperator implements
                     double edge2Amount = 0;
 
                     Set<EPGMEdge> edges = graphTransaction.getEdges();
-                    // one graph transaction =
 
                     for (EPGMEdge edge : edges) {
                         if (edge.getLabel().equals("transfer")) {
