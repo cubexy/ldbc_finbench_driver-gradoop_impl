@@ -1,5 +1,8 @@
 package org.ldbcouncil.finbench.impls.gradoop.queries.complex.read6;
 
+import static org.ldbcouncil.finbench.impls.gradoop.CommonUtils.roundToDecimalPlaces;
+
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -63,14 +66,13 @@ class ComplexRead6GradoopOperator implements
                 public Tuple3<Long, Double, Double> map(GraphTransaction graphTransaction) throws Exception {
                     Map<String, GradoopId> m = CommonUtils.getVariableMapping(graphTransaction);
 
-                    GradoopId srcGradoopId = m.get("src");
                     GradoopId midGradoopId = m.get("mid");
-                    GradoopId dstGradoopId = m.get("dstCard");
 
                     double edge1Amount = 0;
                     double edge2Amount = 0;
 
                     Set<EPGMEdge> edges = graphTransaction.getEdges();
+                    // one graph transaction =
 
                     for (EPGMEdge edge : edges) {
                         if (edge.getLabel().equals("transfer")) {
@@ -97,12 +99,15 @@ class ComplexRead6GradoopOperator implements
         List<Tuple3<Long, Double, Double>> edgesList = null;
         try {
             edgesList = edges.collect();
-
-            System.out.println("test");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
-        return null;
+        List<ComplexRead6Result> complexRead6Results = new ArrayList<>();
+        for (Tuple3<Long, Double, Double> edge : edgesList) {
+            complexRead6Results.add(new ComplexRead6Result(edge.f0, roundToDecimalPlaces(edge.f1, 3), roundToDecimalPlaces(edge.f2, 3)));
+        }
+
+        return complexRead6Results;
     }
 }
