@@ -58,7 +58,7 @@ class ComplexRead7GradoopOperator implements
 
         TemporalGraph tg = windowedGraph.query(
                 "MATCH (src:Account)-[edge1:transfer]->(mid:Account)-[edge2:transfer]->(dst:Account) WHERE mid.id = " +
-                    this.id + "L AND dstCard.type = 'card' AND edge1.amount > " + this.threshold + " AND edge2.amount > " +
+                    this.id + "L AND edge1.amount > " + this.threshold + " AND edge2.amount > " +
                     this.threshold)
             .reduce(new ReduceCombination<>())
             .transformVertices((currentVertex, transformedVertex) -> {
@@ -73,67 +73,61 @@ class ComplexRead7GradoopOperator implements
                     null, null,
                     Arrays.asList(new Count("count"), new SumProperty("amount"))));
 
-        MapOperator<Tuple2<Tuple3<Long, Integer, Double>, Tuple3<Long, Integer, Double>>, Tuple3<Integer, Integer, Double>>
+        MapOperator<Tuple2<TemporalEdge, TemporalVertex>, Tuple3<String, Integer, Double>>
             edgeValues = tg.getEdges()
             .join(tg.getVertices()).where(new SourceId<>()).equalTo(new Id<>())
-            .map(new MapFunction<Tuple2<TemporalEdge, TemporalVertex>, Tuple3<Long, Integer, Double>>() {
+            .map(new MapFunction<Tuple2<TemporalEdge, TemporalVertex>, Tuple3<String, Integer, Double>>() {
                 @Override
-                public Tuple3<Long, Integer, Double> map(Tuple2<TemporalEdge, TemporalVertex> e)
+                public Tuple3<String, Integer, Double> map(Tuple2<TemporalEdge, TemporalVertex> e)
                     throws Exception {
-                    TemporalEdge edge2 = e.f0;
-                    TemporalVertex src = e.f1;
+                    TemporalEdge edge = e.f0;
+                    TemporalVertex srcVertex = e.f1;
 
-                    long srcId = src.getPropertyValue("id").getLong();
-                    int edge2Count = (int) edge2.getPropertyValue("count").getLong();
-                    double edge2Sum = edge2.getPropertyValue("sum_amount").getDouble();
-
-                    return new Tuple3<>(srcId, edge2Count, edge2Sum);
-                }
-            }).join(
-                tg.getEdges()
-                    .join(tg.getVertices()).where(new TargetId<>()).equalTo(new Id<>())
-                    .map(
-                        new MapFunction<Tuple2<TemporalEdge, TemporalVertex>, Tuple3<Long, Integer, Double>>() {
-                            @Override
-                            public Tuple3<Long, Integer, Double> map(Tuple2<TemporalEdge, TemporalVertex> e)
-                                throws Exception {
-                                TemporalEdge edge1 = e.f0;
-                                TemporalVertex src = e.f1;
-
-                                long srcId = src.getPropertyValue("id").getLong();
-                                int edge2Count = (int) edge1.getPropertyValue("count").getLong();
-                                double edge2Sum = edge1.getPropertyValue("sum_amount").getDouble();
-
-                                return new Tuple3<>(srcId, edge2Count, edge2Sum);
-                            }
-                        })
-            ).where(0)
-            .equalTo(0)
-            .map(
-                new MapFunction<Tuple2<Tuple3<Long, Integer, Double>, Tuple3<Long, Integer, Double>>, Tuple3<Integer, Integer, Double>>() {
-                    @Override
-                    public Tuple3<Integer, Integer, Double> map(
-                        Tuple2<Tuple3<Long, Integer, Double>, Tuple3<Long, Integer, Double>> e)
-                        throws Exception {
-                        Tuple3<Long, Integer, Double> edge2 = e.f0;
-                        Tuple3<Long, Integer, Double> edge1 = e.f1;
-
-                        return new Tuple3<>(edge1.f1, edge2.f1, roundToDecimalPlaces(edge1.f2 / edge2.f2, 3));
+                    String srcTag = "src";
+                    if (srcVertex.getPropertyValue("id").is(Long.class)) {
+                        srcTag = "mid";
                     }
-                });
 
-        List<Tuple3<Integer, Integer, Double>> edgeValuesList = null;
+                    int edgeCount = (int) edge.getPropertyValue("count").getLong();
+                    double edgeSum = edge.getPropertyValue("sum_amount").getDouble();
+
+                    return new Tuple3<>(srcTag, edgeCount, edgeSum);
+                }
+            });
+
+        List<Tuple3<String, Integer, Double>> edgeValuesList = null;
         try {
-            edgeValuesList = edgeValues
-                .collect();
+            edgeValuesList = edgeValues.collect();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
         List<ComplexRead7Result> complexRead7Results = new ArrayList<>();
-        for (Tuple3<Integer, Integer, Double> edge : edgeValuesList) {
-            complexRead7Results.add(new ComplexRead7Result(edge.f0, edge.f1, edge.f2.floatValue()));
+
+        double edge1Sum = 0.0;
+        double edge2Sum = 0.0;
+        int edge1Count = 0;
+        int edge2Count = 0;
+
+        for (Tuple3<String, Integer, Double> edge : edgeValuesList) {
+            if (edge.f0.equals("src")) {
+                edge1Count = edge.f1;
+                edge1Sum = edge.f2;
+                continue;
+            }
+            if (edge.f0.equals("mid")) {
+                edge2Count = edge.f1;
+                edge2Sum = edge.f2;
+            }
         }
+
+        float inOutRatio = -1.0f;
+
+        if (edge2Sum > 0.0) {
+            inOutRatio = roundToDecimalPlaces(edge1Sum / edge2Sum, 3).floatValue();
+        }
+
+        complexRead7Results.add(new ComplexRead7Result(edge1Count, edge2Count, inOutRatio));
 
         return complexRead7Results;
     }
