@@ -82,7 +82,7 @@ class ComplexRead10GradoopOperator implements UnaryBaseGraphToValueOperator<Temp
         Tuple2<Integer, Integer> jaccardCoefficient;
 
         try {
-            jaccardCoefficient = jaccard.collect().get(0);
+            jaccardCoefficient = jaccard.collect().get(0); // this throws an error, something is not right --> TODO:
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
