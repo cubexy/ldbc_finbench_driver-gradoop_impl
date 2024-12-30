@@ -56,6 +56,7 @@ class ComplexRead6GradoopOperator implements
             .subgraph(new LabelIsIn<>("Account"), new LabelIsIn<>("transfer", "withdraw"))
             .fromTo(this.startTime, this.endTime);
 
+        //TODO: edge2.amount could be string because of withdraw. Maybe need to parse it to double
         DataSet<Tuple3<Long, Double, Double>> edges = windowedGraph.query(
             "MATCH (src1:Account)-[edge1:transfer]->(mid:Account)-[edge2:withdraw]->(dstCard:Account) WHERE dstCard.id = " +
                 this.id + "L AND dstCard.type = 'card' AND edge1.amount > " + this.threshold1 + " AND edge2.amount > " + this.threshold2)
