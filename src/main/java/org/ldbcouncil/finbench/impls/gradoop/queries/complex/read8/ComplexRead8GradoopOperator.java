@@ -91,9 +91,7 @@ class ComplexRead8GradoopOperator implements
                             if (edge.getLabel().equals("deposit")) {
                                 continue;
                             }
-                            double amount = edge.getPropertyValue("amount").is(String.class)
-                                ? Double.parseDouble(edge.getPropertyValue("amount").getString())
-                                : edge.getPropertyValue("amount").getDouble();
+                            double amount = edge.getPropertyValue("amount").getDouble();
 
                             valid = amount > inflow * thresholdSerializable;
 
