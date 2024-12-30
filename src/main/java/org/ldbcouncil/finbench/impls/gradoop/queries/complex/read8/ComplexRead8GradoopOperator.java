@@ -79,14 +79,12 @@ class ComplexRead8GradoopOperator implements
                     @Override
                     public Tuple4<Long, Float, Integer, Boolean> map(GraphTransaction graphTransaction) {
                         Map<String, GradoopId> m = CommonUtils.getVariableMapping(graphTransaction);
-
                         Set<EPGMEdge> edges = graphTransaction.getEdges();
                         int minAccountDistance = edges.size() - 1;
-                        GradoopId lastDstGradoopId = m.get("dst");
+
                         GradoopId loanGradoopId = m.get("loan");
 
-                        double loanAmount =
-                            graphTransaction.getVertexById(loanGradoopId).getPropertyValue("loanAmount").getDouble();
+                        double loanAmount = graphTransaction.getVertexById(loanGradoopId).getPropertyValue("loanAmount").getDouble();
                         double inflow = 0.0;
                         boolean valid = true;
 
@@ -94,24 +92,22 @@ class ComplexRead8GradoopOperator implements
                             if (edge.getLabel().equals("deposit")) {
                                 continue;
                             }
-                            double amount = edge.getPropertyValue("amount").getDouble();
+                            double amount = edge.getPropertyValue("amount").is(String.class)
+                                ? Double.parseDouble(edge.getPropertyValue("amount").getString())
+                                : edge.getPropertyValue("amount").getDouble();
 
-                            //TODO: ---> error here: amount.withdraw is a float <---
+                            valid = amount > inflow * thresholdSerializable;
 
-                            if (amount > inflow * thresholdSerializable) {
-                                if (edge.getLabel().equals("transfer")) {
-                                    inflow += amount;
-                                }
-                            } else {
-                                valid = false;
+                            if (edge.getLabel().equals("transfer")) {
+                                inflow += amount;
                             }
                         }
-                        if (minAccountDistance > 1) {
-                            lastDstGradoopId = m.get("dst2");
-                            if (minAccountDistance > 2) {
-                                lastDstGradoopId = m.get("dst3");
-                            }
-                        }
+
+                        GradoopId lastDstGradoopId = minAccountDistance > 2
+                            ? m.get("dst3")
+                            : minAccountDistance > 1
+                                ? m.get("dst2")
+                                : m.get("dst");
 
                         long lastDstId =
                             graphTransaction.getVertexById(lastDstGradoopId).getPropertyValue("id").getLong();
@@ -123,8 +119,7 @@ class ComplexRead8GradoopOperator implements
                 })
                 .filter(new FilterFunction<Tuple4<Long, Float, Integer, Boolean>>() {
                     @Override
-                    public boolean filter(Tuple4<Long, Float, Integer, Boolean> tuple)
-                        throws Exception {
+                    public boolean filter(Tuple4<Long, Float, Integer, Boolean> tuple) {
                         return tuple.f3;
                     }
                 });
