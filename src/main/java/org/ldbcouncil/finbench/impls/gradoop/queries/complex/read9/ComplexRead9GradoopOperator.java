@@ -1,6 +1,5 @@
 package org.ldbcouncil.finbench.impls.gradoop.queries.complex.read9;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -8,8 +7,6 @@ import java.util.Set;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.java.DataSet;
-import org.apache.flink.api.java.operators.ReduceOperator;
-import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.gradoop.common.model.impl.id.GradoopId;
 import org.gradoop.common.model.impl.pojo.EPGMEdge;
@@ -49,14 +46,6 @@ class ComplexRead9GradoopOperator implements
             .subgraph(new LabelIsIn<>("Account", "Loan"), new LabelIsIn<>("transfer", "repay", "deposit"))
             .fromTo(this.startTime, this.endTime);
 
-//        windowedGraph.query("MATCH (loan1:Loan)-[edge1:deposit]->(mid:Account)-[edge2:repay]->(loan2:Loan)," +
-//                " (up:Account)-[edge3:transfer]->(mid)-[edge4:transfer]->(down:Account)" +
-//                " WHERE mid.id = " + this.id + "L" +
-//                " AND edge1.amount > " + this.threshold + " AND edge2.amount > " + this.threshold +
-//                " AND edge3.amount > " + this.threshold + " AND edge4.amount > " + this.threshold)
-//            .toGraphCollection()
-//            .getGraphTransactions();
-
         DataSet<GraphTransaction> edge1gt = windowedGraph.query("MATCH (loan1:Loan)-[edge1:deposit]->(mid:Account)" +
                 " WHERE mid.id = " + this.id + "L" +
                 " AND edge1.amount > " + this.threshold)
@@ -81,46 +70,50 @@ class ComplexRead9GradoopOperator implements
             .toGraphCollection()
             .getGraphTransactions();
 
-        DataSet<Tuple4<Double, Double, Double, Double>> result = edge1gt.union(edge2gt).union(edge3gt).union(edge4gt).map(
-            new MapFunction<GraphTransaction, Tuple4<Double, Double, Double, Double>>() {
-                @Override
-                public Tuple4<Double, Double, Double, Double> map(GraphTransaction graphTransaction) throws Exception {
-                    Set<EPGMEdge> edges = graphTransaction.getEdges();
+        DataSet<Tuple4<Double, Double, Double, Double>> result =
+            edge1gt.union(edge2gt).union(edge3gt).union(edge4gt).map(
+                    new MapFunction<GraphTransaction, Tuple4<Double, Double, Double, Double>>() {
+                        @Override
+                        public Tuple4<Double, Double, Double, Double> map(GraphTransaction graphTransaction)
+                            throws Exception {
+                            Set<EPGMEdge> edges = graphTransaction.getEdges();
 
-                    double edge1Amount = 0;
-                    double edge2Amount = 0;
-                    double edge3Amount = 0;
-                    double edge4Amount = 0;
+                            double edge1Amount = 0;
+                            double edge2Amount = 0;
+                            double edge3Amount = 0;
+                            double edge4Amount = 0;
 
-                    for (EPGMEdge edge : edges) {
-                        double edgeAmount = edge.getPropertyValue("amount").getDouble();
-                        if (edge.getLabel().equals("deposit")) {
-                            edge1Amount = edgeAmount;
-                            continue;
+                            for (EPGMEdge edge : edges) {
+                                double edgeAmount = edge.getPropertyValue("amount").getDouble();
+                                if (edge.getLabel().equals("deposit")) {
+                                    edge1Amount = edgeAmount;
+                                    continue;
+                                }
+                                if (edge.getLabel().equals("repay")) {
+                                    edge2Amount = edgeAmount;
+                                    continue;
+                                }
+                                // edge type 3 and 4 are transfers - we can find out which one it is by looking at the source and target
+                                Map<String, GradoopId> m = CommonUtils.getVariableMapping(graphTransaction);
+                                GradoopId midGradoopId = m.get("mid");
+                                if (edge.getTargetId().equals(midGradoopId)) {
+                                    edge3Amount = edgeAmount;
+                                    continue;
+                                }
+                                edge4Amount = edgeAmount;
+                            }
+                            return new Tuple4<>(edge1Amount, edge2Amount, edge3Amount, edge4Amount);
                         }
-                        if (edge.getLabel().equals("repay")) {
-                            edge2Amount = edgeAmount;
-                            continue;
-                        }
-                        // edge type 3 and 4 are transfers - we can find out which one it is by looking at the source and target
-                        Map<String, GradoopId> m = CommonUtils.getVariableMapping(graphTransaction);
-                        GradoopId midGradoopId = m.get("mid");
-                        if (edge.getTargetId().equals(midGradoopId)) {
-                            edge3Amount = edgeAmount;
-                            continue;
-                        }
-                        edge4Amount = edgeAmount;
                     }
-                    return new Tuple4<>(edge1Amount, edge2Amount, edge3Amount, edge4Amount);
-                }
-            }
-        )
-            .reduce(new ReduceFunction<Tuple4<Double, Double, Double, Double>>() {
-                @Override
-                public Tuple4<Double, Double, Double, Double> reduce(Tuple4<Double, Double, Double, Double> t1, Tuple4<Double, Double, Double, Double> t2) throws Exception {
-                    return new Tuple4<>(t1.f0 + t2.f0, t1.f1 + t2.f1, t1.f2 + t2.f2, t1.f3 + t2.f3);
-                }
-            });
+                )
+                .reduce(new ReduceFunction<Tuple4<Double, Double, Double, Double>>() {
+                    @Override
+                    public Tuple4<Double, Double, Double, Double> reduce(Tuple4<Double, Double, Double, Double> t1,
+                                                                         Tuple4<Double, Double, Double, Double> t2)
+                        throws Exception {
+                        return new Tuple4<>(t1.f0 + t2.f0, t1.f1 + t2.f1, t1.f2 + t2.f2, t1.f3 + t2.f3);
+                    }
+                });
 
         Tuple4<Double, Double, Double, Double> data = null;
 
