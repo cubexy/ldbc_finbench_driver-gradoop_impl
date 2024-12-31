@@ -39,27 +39,20 @@ class ComplexRead10GradoopOperator implements UnaryBaseGraphToValueOperator<Temp
             .fromTo(this.startTime, this.endTime);
 
         DataSet<GraphTransaction> p1companies = windowedGraph.query("MATCH (p:Person)-[edge1:invest]->(com:Company)" +
-                " WHERE p.id = " + this.id + "L")
+                " WHERE p.id = " + this.id + "L OR p.id = " + this.id2 + "L")
             .toGraphCollection()
             .getGraphTransactions();
 
-        DataSet<GraphTransaction> p2companies = windowedGraph.query("MATCH (p:Person)-[edge1:invest]->(com:Company)" +
-                " WHERE p.id = " + this.id2 + "L")
-            .toGraphCollection()
-            .getGraphTransactions();
-
-        DataSet<Tuple2<Integer, Integer>> jaccard = p1companies.union(p2companies)
+        DataSet<Tuple2<Integer, Integer>> jaccard = p1companies
             .map(new MapFunction<GraphTransaction, Tuple2<Long, Long>>() {
                 @Override
                 public Tuple2<Long, Long> map(GraphTransaction graphTransaction) throws Exception {
                     Map<String, GradoopId> m = CommonUtils.getVariableMapping(graphTransaction);
 
-                    Set<EPGMEdge> edges = graphTransaction.getEdges();
+                    long pId = graphTransaction.getVertexById(m.get("p")).getPropertyValue("id").getLong();
+                    long comId = graphTransaction.getVertexById(m.get("com")).getPropertyValue("id").getLong();
 
-                    GradoopId pId = m.get("p");
-                    GradoopId comId = m.get("com");
-
-                    return new Tuple2<>(graphTransaction.getVertexById(pId).getPropertyValue("id").getLong(), graphTransaction.getVertexById(comId).getPropertyValue("id").getLong());
+                    return new Tuple2<>(pId, comId);
                 }
             })
             .distinct(0, 1)
