@@ -38,12 +38,10 @@ class ComplexRead10GradoopOperator implements UnaryBaseGraphToValueOperator<Temp
             .subgraph(new LabelIsIn<>("Person", "Company"), new LabelIsIn<>("invest"))
             .fromTo(this.startTime, this.endTime);
 
-        DataSet<GraphTransaction> p1companies = windowedGraph.query("MATCH (p:Person)-[edge1:invest]->(com:Company)" +
+        DataSet<Tuple2<Integer, Integer>> jaccard = windowedGraph.query("MATCH (p:Person)-[edge1:invest]->(com:Company)" +
                 " WHERE p.id = " + this.id + "L OR p.id = " + this.id2 + "L")
             .toGraphCollection()
-            .getGraphTransactions();
-
-        DataSet<Tuple2<Integer, Integer>> jaccard = p1companies
+            .getGraphTransactions()
             .map(new MapFunction<GraphTransaction, Tuple2<Long, Long>>() {
                 @Override
                 public Tuple2<Long, Long> map(GraphTransaction graphTransaction) throws Exception {
