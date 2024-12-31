@@ -18,14 +18,7 @@ public class ComplexRead11Handler implements OperationHandler<ComplexRead11, Gra
     public void executeOperation(ComplexRead11 cr11, GradoopFinbenchBaseGraphState connectionState,
                                  ResultReporter resultReporter) throws DbException {
         GradoopImpl.logger.info(cr11.toString());
-        DataSet<Tuple2<Double, Integer>> complexRead11Result = new ComplexRead11GradoopOperator(cr11).execute(connectionState.getGraph());
-        List<ComplexRead11Result> complexRead11Results = new ArrayList<>();
-        try {
-            complexRead11Result.collect().forEach(
-                tuple -> complexRead11Results.add(new ComplexRead11Result(tuple.f0, tuple.f1)));
-        } catch (Exception e) {
-            throw new DbException("Error while collecting results for complex read 11: " + e);
-        }
+        List<ComplexRead11Result> complexRead11Results = new ComplexRead11GradoopOperator(cr11).execute(connectionState.getGraph());
         resultReporter.report(complexRead11Results.size(), complexRead11Results, cr11);
     }
 }
