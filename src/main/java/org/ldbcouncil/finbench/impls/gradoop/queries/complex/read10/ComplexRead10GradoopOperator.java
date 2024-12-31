@@ -3,11 +3,13 @@ package org.ldbcouncil.finbench.impls.gradoop.queries.complex.read10;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.gradoop.common.model.impl.id.GradoopId;
+import org.gradoop.common.model.impl.pojo.EPGMEdge;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
 import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
 import org.gradoop.flink.model.impl.layouts.transactional.tuples.GraphTransaction;
@@ -36,17 +38,23 @@ class ComplexRead10GradoopOperator implements UnaryBaseGraphToValueOperator<Temp
             .subgraph(new LabelIsIn<>("Person", "Company"), new LabelIsIn<>("invest"))
             .fromTo(this.startTime, this.endTime);
 
-        DataSet<Tuple2<Integer, Integer>> jaccard = windowedGraph.query("MATCH (p:Person)-[edge1:invest]->(com:Company)" +
+        DataSet<GraphTransaction> p1companies = windowedGraph.query("MATCH (p:Person)-[edge1:invest]->(com:Company)" +
                 " WHERE p.id = " + this.id + "L")
-            .union(
-                windowedGraph.query("MATCH (p:Person)-[edge1:invest]->(com:Company)" +
-                    " WHERE p.id = " + this.id2 + "L")
-            ).toGraphCollection()
-            .getGraphTransactions()
+            .toGraphCollection()
+            .getGraphTransactions();
+
+        DataSet<GraphTransaction> p2companies = windowedGraph.query("MATCH (p:Person)-[edge1:invest]->(com:Company)" +
+                " WHERE p.id = " + this.id2 + "L")
+            .toGraphCollection()
+            .getGraphTransactions();
+
+        DataSet<Tuple2<Integer, Integer>> jaccard = p1companies.union(p2companies)
             .map(new MapFunction<GraphTransaction, Tuple2<Long, Long>>() {
                 @Override
                 public Tuple2<Long, Long> map(GraphTransaction graphTransaction) throws Exception {
                     Map<String, GradoopId> m = CommonUtils.getVariableMapping(graphTransaction);
+
+                    Set<EPGMEdge> edges = graphTransaction.getEdges();
 
                     GradoopId pId = m.get("p");
                     GradoopId comId = m.get("com");
@@ -54,6 +62,7 @@ class ComplexRead10GradoopOperator implements UnaryBaseGraphToValueOperator<Temp
                     return new Tuple2<>(graphTransaction.getVertexById(pId).getPropertyValue("id").getLong(), graphTransaction.getVertexById(comId).getPropertyValue("id").getLong());
                 }
             })
+            .distinct(0, 1)
             .groupBy(1)
             .reduce(new ReduceFunction<Tuple2<Long, Long>>() {
                 @Override
@@ -82,7 +91,8 @@ class ComplexRead10GradoopOperator implements UnaryBaseGraphToValueOperator<Temp
         Tuple2<Integer, Integer> jaccardCoefficient;
 
         try {
-            jaccardCoefficient = jaccard.collect().get(0); // this throws an error, something is not right --> TODO:
+            final List<Tuple2<Integer, Integer>> jaccardResult = jaccard.collect();
+            jaccardCoefficient = !jaccardResult.isEmpty() ? jaccardResult.get(0) : new Tuple2<>(0,0); // this throws an error, something is not right --> TODO:
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
