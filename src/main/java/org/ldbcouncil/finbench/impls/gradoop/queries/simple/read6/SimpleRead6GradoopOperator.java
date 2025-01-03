@@ -32,6 +32,12 @@ class SimpleRead6GradoopOperator implements UnaryBaseGraphToValueOperator<Tempor
         this.endTime = sr6.getEndTime();
     }
 
+    /**
+     * Given an Account (account), find all the blocked Accounts (dstAccounts) that connect to a common
+     * account (midAccount) with the given Account (account). Return all the accounts’ id.
+     * @param temporalGraph input graph
+     * @return all the accounts’ id
+     */
     @Override
     public List<SimpleRead6Result> execute(TemporalGraph temporalGraph) {
         TemporalGraph windowedGraph = temporalGraph

@@ -42,6 +42,13 @@ public class SimpleRead4GradoopOperator implements
         this.threshold = sr4.getThreshold();
     }
 
+    /**
+     * Given an account (src), find all the transfer-outs (edge) from the src to a dst where the amount
+     * exceeds threshold in a specific time range between startTime and endTime. Return the count of
+     * transfer-outs and the amount sum.
+     * @param temporalGraph input graph
+     * @return count of transfer-outs and the amount sum
+     */
     @Override
     public List<SimpleRead4Result> execute(TemporalGraph temporalGraph) {
         TemporalGraph windowedGraph = temporalGraph

@@ -27,6 +27,11 @@ public class SimpleRead1GradoopOperator implements
         this.id = simpleRead1.getId();
     }
 
+    /**
+     * Given an id of an Account, find the properties of the specific Account.
+     * @param temporalGraph input graph
+     * @return created time, isBlocked status and type of the Account
+     */
     @Override
     public List<SimpleRead1Result> execute(TemporalGraph temporalGraph) {
         DataSet<Tuple3<Date, Boolean, String>>

@@ -41,6 +41,14 @@ public class SimpleRead2GradoopOperator implements
         this.endTime = sr2.getEndTime();
     }
 
+    /**
+     * Given an account, find the sum and max of fund amount in transfer-ins and transfer-outs between
+     * them in a specific time range between startTime and endTime. Return the sum and max of amount.
+     * For edge1 and edge2, return -1 for the max (maxEdge1Amount and maxEdge2Amount) if there is no
+     * transfer.
+     * @param temporalGraph input graph
+     * @return sum of fund amount in transfer-ins and transfer-outs between them in a specific time range
+     */
     @Override
     public List<SimpleRead2Result> execute(TemporalGraph temporalGraph) {
         TemporalGraph windowedGraph = temporalGraph

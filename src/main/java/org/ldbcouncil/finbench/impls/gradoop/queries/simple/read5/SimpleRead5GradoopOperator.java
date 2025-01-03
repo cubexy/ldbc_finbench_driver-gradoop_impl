@@ -42,6 +42,13 @@ class SimpleRead5GradoopOperator implements
         this.endTime = sr5.getEndTime();
     }
 
+    /**
+     * Given an account (dst), find all the transfer-ins (edge) from the src to a dst where the amount
+     * exceeds threshold in a specific time range between startTime and endTime. Return the count of
+     * transfer-ins and the amount sum.
+     * @param temporalGraph input graph
+     * @return count of transfer-ins and the amount sum
+     */
     @Override
     public List<SimpleRead5Result> execute(TemporalGraph temporalGraph) {
         TemporalGraph windowedGraph = temporalGraph
