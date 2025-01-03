@@ -76,24 +76,20 @@ class ComplexRead11GradoopOperator implements
                 windowedGraph
                     .temporalQuery(
                         "MATCH (p1:Person)-[:guarantee]->(p2:Person)-[:guarantee]->(p3:Person), (p2)-[:apply]->(:Loan), (p3)-[:apply]->(:Loan) " +
-                            " WHERE p1.id = " + this.id + "L")
+                            " WHERE p1.id = " + this.id + "L"
+                    )
             )
             .union(
                 windowedGraph
                     .temporalQuery("MATCH (p1:Person)-[:guarantee]->(p2:Person)-[:apply]->(:Loan)" +
-                        " WHERE p1.id = " + this.id + "L")
+                        " WHERE p1.id = " + this.id + "L"
+                    )
             )
             .reduce(new ReduceCombination<>())
             .query("MATCH (:Loan)")
             .reduce(new ReduceCombination<>())
-            .transformVertices((currentVertex, transformedVertex) -> {
-                if (currentVertex.hasProperty("id")) {
-                    currentVertex.removeProperty("id");
-                }
-                return currentVertex;
-            })
             .callForGraph(
-                new KeyedGrouping<>(Arrays.asList(GroupingKeys.label(), GroupingKeys.property("id")),
+                new KeyedGrouping<>(Collections.singletonList(GroupingKeys.label()),
                     Arrays.asList(new Count("count"), new SumProperty("loanAmount")),
                     null,
                     null
