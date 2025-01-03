@@ -9,22 +9,8 @@ The LDBC FinBench Driver is a powerful tool designed for benchmarking the perfor
 ## 1. Configurations
 
 The Driver initiates by reading the configuration file. The file comes pre-filled with configuration data `src/main/resources/gradoop/ldbc_finbench_driver_gradoop.properties`.
-The Driver can run in two modes: `standalone` and `cluster`.
 
-#### Standalone mode (gradoop_cluster_execution=false)
-
-In Standalone mode, the driver only executes in a Flink MiniCluster locally. This can be useful for debugging.
-
-#### Cluster mode (gradoop_cluster_execution=true)
-
-In Cluster mode, the driver only starts the individual queries locally and then sends the job to a Gradoop cluster.
-Note: Please specify the cluster URL before using Cluster mode!
-
-### 1.1 Flink
-
-Before running the `gradoop_cluster_execution` mode, please upload a prebuilt JAR to the SUT Flink cluster.
-
-### 1.2 Mode
+### 1.1 Mode
 
 The driver operates in three modes:
 
@@ -79,12 +65,7 @@ mvn clean package -DskipTests
 ```
 
 Fill the configuration properties as specified in the comments above the variables.
-
-#### For Cluster mode:
-
-Start the docker-compose file inside the `flink` folder and upload the test files to HDFS. Note: You may need to tap into the datanode container and adjust read permissions manually to be able to create folders and upload files. Also upload the JAR to Flink.
-
-Then execute the Driver class.
+Then execute the Driver class or run it inside of a Flink cluster..
 
 ## 3. Reference
 
