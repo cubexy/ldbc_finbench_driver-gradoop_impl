@@ -48,6 +48,12 @@ class ComplexRead11GradoopOperator implements
         this.isTruncationOrderAscending = truncationOrder == TruncationOrder.TIMESTAMP_ASCENDING;
     }
 
+
+    /**
+     * Executes the complex read 11 query.
+     * @implNote Implementation only supports path lengths of up to 5 Person nodes because Gradoop does not support
+     * variable length paths.
+     */
     @Override
     public List<ComplexRead11Result> execute(TemporalGraph temporalGraph) {
         // TODO: implement truncation strategy
@@ -55,10 +61,17 @@ class ComplexRead11GradoopOperator implements
             .subgraph(new LabelIsIn<>("Person", "Loan"), new LabelIsIn<>("guarantee", "apply"))
             .fromTo(this.startTime, this.endTime);
 
-        DataSet<Tuple2<Float, Integer>> loanEdges = windowedGraph
+        DataSet<Tuple2<Double, Integer>> loanEdges = windowedGraph
             .temporalQuery(
+                "MATCH (p1:Person)-[:guarantee]->(p2:Person)-[:guarantee]->(p3:Person)-[:guarantee]->(p4:Person)-[:guarantee]->(p5:Person), (p2)-[:apply]->(:Loan), (p3)-[:apply]->(:Loan), (p4)-[:apply]->(:Loan), (p5)-[:apply]->(:Loan) " +
+                    " WHERE p1.id = " + this.id + "L"
+            )
+            .union(
+                windowedGraph.temporalQuery(
                 "MATCH (p1:Person)-[:guarantee]->(p2:Person)-[:guarantee]->(p3:Person)-[:guarantee]->(p4:Person), (p2)-[:apply]->(:Loan), (p3)-[:apply]->(:Loan), (p4)-[:apply]->(:Loan) " +
-                    " WHERE p1.id = " + this.id + "L")
+                    " WHERE p1.id = " + this.id + "L"
+                )
+            )
             .union(
                 windowedGraph
                     .temporalQuery(
@@ -86,17 +99,17 @@ class ComplexRead11GradoopOperator implements
                     null
                 )
             ).getVertices()
-            .map(new MapFunction<TemporalVertex, Tuple2<Float, Integer>>() {
+            .map(new MapFunction<TemporalVertex, Tuple2<Double, Integer>>() {
                 @Override
-                public Tuple2<Float, Integer> map(TemporalVertex temporalVertex) throws Exception {
-                    float sumAmount = temporalVertex.getPropertyValue("sum_loanAmount").getFloat();
-                    int count = temporalVertex.getPropertyValue("count").getInt();
+                public Tuple2<Double, Integer> map(TemporalVertex temporalVertex) throws Exception {
+                    double sumAmount = temporalVertex.getPropertyValue("sum_loanAmount").getDouble();
+                    int count = (int) temporalVertex.getPropertyValue("count").getLong();
                     return new Tuple2<>(sumAmount, count);
                 }
             });
 
 
-        List<Tuple2<Float, Integer>> loanEdgesList = new ArrayList<>();
+        List<Tuple2<Double, Integer>> loanEdgesList;
 
         try {
             loanEdgesList = loanEdges.collect();
