@@ -1,17 +1,29 @@
 package org.ldbcouncil.finbench.impls.gradoop.queries.complex.read11;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.operators.Order;
 import org.apache.flink.api.java.DataSet;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.gradoop.common.model.impl.id.GradoopId;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
+import org.gradoop.flink.model.impl.functions.bool.False;
 import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
 import org.gradoop.flink.model.impl.layouts.transactional.tuples.GraphTransaction;
+import org.gradoop.flink.model.impl.operators.aggregation.functions.count.Count;
+import org.gradoop.flink.model.impl.operators.aggregation.functions.max.MaxProperty;
+import org.gradoop.flink.model.impl.operators.aggregation.functions.sum.SumProperty;
+import org.gradoop.flink.model.impl.operators.combination.ReduceCombination;
+import org.gradoop.flink.model.impl.operators.keyedgrouping.GroupingKeys;
+import org.gradoop.flink.model.impl.operators.keyedgrouping.KeyedGrouping;
 import org.gradoop.temporal.model.impl.TemporalGraph;
+import org.gradoop.temporal.model.impl.TemporalGraphCollection;
+import org.gradoop.temporal.model.impl.pojo.TemporalVertex;
 import org.ldbcouncil.finbench.driver.truncation.TruncationOrder;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead11;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead11Result;
@@ -43,64 +55,59 @@ class ComplexRead11GradoopOperator implements
             .subgraph(new LabelIsIn<>("Person", "Loan"), new LabelIsIn<>("guarantee", "apply"))
             .fromTo(this.startTime, this.endTime);
 
-        DataSet<GraphTransaction> gtxLength3 = windowedGraph
+        DataSet<Tuple2<Float, Integer>> loanEdges = windowedGraph
             .temporalQuery(
-                "MATCH (p1:Person)-[:guarantee]->(p2:Person)->[:guarantee]->(p3:Person)->[:guarantee]->(p4:Person), (p2)->[a:apply]->(l:Loan), (p3)->[a]->(l), (p4)->[a]->(l) " +
+                "MATCH (p1:Person)-[:guarantee]->(p2:Person)-[:guarantee]->(p3:Person)-[:guarantee]->(p4:Person), (p2)-[:apply]->(:Loan), (p3)-[:apply]->(:Loan), (p4)-[:apply]->(:Loan) " +
                     " WHERE p1.id = " + this.id + "L")
-            .toGraphCollection()
-            .getGraphTransactions();
+            .union(
+                windowedGraph
+                    .temporalQuery(
+                        "MATCH (p1:Person)-[:guarantee]->(p2:Person)-[:guarantee]->(p3:Person), (p2)-[:apply]->(:Loan), (p3)-[:apply]->(:Loan) " +
+                            " WHERE p1.id = " + this.id + "L")
+            )
+            .union(
+                windowedGraph
+                    .temporalQuery("MATCH (p1:Person)-[:guarantee]->(p2:Person)-[:apply]->(:Loan)" +
+                        " WHERE p1.id = " + this.id + "L")
+            )
+            .reduce(new ReduceCombination<>())
+            .query("MATCH (:Loan)")
+            .reduce(new ReduceCombination<>())
+            .transformVertices((currentVertex, transformedVertex) -> {
+                if (currentVertex.hasProperty("id")) {
+                    currentVertex.removeProperty("id");
+                }
+                return currentVertex;
+            })
+            .callForGraph(
+                new KeyedGrouping<>(Arrays.asList(GroupingKeys.label(), GroupingKeys.property("id")),
+                    Arrays.asList(new Count("count"), new SumProperty("loanAmount")),
+                    null,
+                    null
+                )
+            ).getVertices()
+            .map(new MapFunction<TemporalVertex, Tuple2<Float, Integer>>() {
+                @Override
+                public Tuple2<Float, Integer> map(TemporalVertex temporalVertex) throws Exception {
+                    float sumAmount = temporalVertex.getPropertyValue("sum_loanAmount").getFloat();
+                    int count = temporalVertex.getPropertyValue("count").getInt();
+                    return new Tuple2<>(sumAmount, count);
+                }
+            });
 
-        DataSet<GraphTransaction> gtxLength2 = windowedGraph
-            .temporalQuery(
-                "MATCH (p1:Person)-[:guarantee]->(p2:Person)->[:guarantee]->(p3:Person), (p2)->[a:apply]->(l:Loan), (p3)->[a]->(l) " +
-                    " WHERE p1.id = " + this.id + "L")
-            .toGraphCollection()
-            .getGraphTransactions();
 
-        DataSet<GraphTransaction> gtxLength1 = windowedGraph
-            .temporalQuery("MATCH (p1:Person)-[:guarantee]->(p2:Person)-[a:apply]->(l:Loan)" +
-                " WHERE p1.id = " + this.id + "L")
-            .toGraphCollection()
-            .getGraphTransactions();
-
-        DataSet<Tuple4<Long, Integer, Long, String>> result =
-            gtxLength1.union(gtxLength2).union(gtxLength3)
-                .map(new MapFunction<GraphTransaction, Tuple4<Long, Integer, Long, String>>() {
-                    @Override
-                    public Tuple4<Long, Integer, Long, String> map(GraphTransaction graphTransaction) throws Exception {
-                        Map<String, GradoopId> m = CommonUtils.getVariableMapping(graphTransaction);
-
-                        GradoopId otherGradoopId = m.get("other");
-                        GradoopId mediumGradoopId = m.get("m");
-
-                        Long otherId =
-                            graphTransaction.getVertexById(otherGradoopId).getPropertyValue("id").getLong();
-                        int accountDistance = graphTransaction.getEdges().size() - 1;
-                        Long mediumId =
-                            graphTransaction.getVertexById(mediumGradoopId).getPropertyValue("id").getLong();
-                        String mediumType =
-                            graphTransaction.getVertexById(mediumGradoopId).getPropertyValue("type").getString();
-                        return new Tuple4<>(otherId, accountDistance, mediumId,
-                            mediumType);
-                    }
-                }).distinct(0, 1, 2, 3);
-
-        windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
-
-        result = result
-            .sortPartition(1, Order.ASCENDING)
-            .sortPartition(0, Order.ASCENDING)
-            .sortPartition(3, Order.ASCENDING);
-
-        List<ComplexRead1Result> complexRead1Results = new ArrayList<>();
+        List<Tuple2<Float, Integer>> loanEdgesList = new ArrayList<>();
 
         try {
-            result.collect().forEach(
-                tuple -> complexRead1Results.add(new ComplexRead1Result(tuple.f0, tuple.f1, tuple.f2, tuple.f3)));
+            loanEdgesList = loanEdges.collect();
         } catch (Exception e) {
-            throw new RuntimeException("Error while collecting results for complex read 1: " + e);
+            throw new RuntimeException("Error while collecting results for complex read 11: " + e);
         }
 
-        return complexRead1Results;
+        if (loanEdgesList.isEmpty()) {
+            return Collections.singletonList(new ComplexRead11Result(0.0f, 0));
+        }
+
+        return Collections.singletonList(new ComplexRead11Result(loanEdgesList.get(0).f0, loanEdgesList.get(0).f1));
     }
 }
