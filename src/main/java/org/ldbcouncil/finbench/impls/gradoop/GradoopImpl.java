@@ -19,6 +19,7 @@ import org.ldbcouncil.finbench.driver.log.LoggingService;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead1;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead10;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead11;
+import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead12;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead2;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead3;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead4;
@@ -36,6 +37,7 @@ import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead6;
 import org.ldbcouncil.finbench.impls.gradoop.queries.complex.read1.ComplexRead1Handler;
 import org.ldbcouncil.finbench.impls.gradoop.queries.complex.read10.ComplexRead10Handler;
 import org.ldbcouncil.finbench.impls.gradoop.queries.complex.read11.ComplexRead11Handler;
+import org.ldbcouncil.finbench.impls.gradoop.queries.complex.read12.ComplexRead12Handler;
 import org.ldbcouncil.finbench.impls.gradoop.queries.complex.read2.ComplexRead2Handler;
 import org.ldbcouncil.finbench.impls.gradoop.queries.complex.read3.ComplexRead3Handler;
 import org.ldbcouncil.finbench.impls.gradoop.queries.complex.read4.ComplexRead4Handler;
@@ -138,6 +140,7 @@ public class GradoopImpl extends Db {
         registerOperationHandler(ComplexRead9.class, ComplexRead9Handler.class);
         registerOperationHandler(ComplexRead10.class, ComplexRead10Handler.class);
         registerOperationHandler(ComplexRead11.class, ComplexRead11Handler.class);
+        registerOperationHandler(ComplexRead12.class, ComplexRead12Handler.class);
         //simple reads go here
         registerOperationHandler(SimpleRead1.class, SimpleRead1Handler.class);
         registerOperationHandler(SimpleRead2.class, SimpleRead2Handler.class);
