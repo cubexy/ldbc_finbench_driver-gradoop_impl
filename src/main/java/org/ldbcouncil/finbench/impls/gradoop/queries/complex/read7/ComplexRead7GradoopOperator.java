@@ -14,7 +14,6 @@ import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
 import org.gradoop.flink.model.impl.functions.epgm.Id;
 import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
 import org.gradoop.flink.model.impl.functions.epgm.SourceId;
-import org.gradoop.flink.model.impl.functions.epgm.TargetId;
 import org.gradoop.flink.model.impl.operators.aggregation.functions.count.Count;
 import org.gradoop.flink.model.impl.operators.aggregation.functions.sum.SumProperty;
 import org.gradoop.flink.model.impl.operators.combination.ReduceCombination;
@@ -47,6 +46,14 @@ class ComplexRead7GradoopOperator implements
         this.threshold = cr7.getThreshold();
     }
 
+    /**
+     * Given an Account and a specified time window between startTime and endTime, find all the transfer-
+     * in (edge1) and transfer-out (edge2) whose amount exceeds threshold. Return the count of src and
+     * dst accounts and the ratio of transfer-in amount over transfer-out amount. The fast-in and fash-out
+     * means a tight window between startTime and endTime. Return the ratio as -1 if there is no edge2
+     * @param temporalGraph input graph
+     * @return list count of src and dst accounts and the ratio of transfer-in amount over transfer-out amount
+     */
     @Override
     public List<ComplexRead7Result> execute(TemporalGraph temporalGraph) {
         final long id_serializable = this.id;
@@ -78,8 +85,7 @@ class ComplexRead7GradoopOperator implements
             .join(tg.getVertices()).where(new SourceId<>()).equalTo(new Id<>())
             .map(new MapFunction<Tuple2<TemporalEdge, TemporalVertex>, Tuple3<String, Integer, Double>>() {
                 @Override
-                public Tuple3<String, Integer, Double> map(Tuple2<TemporalEdge, TemporalVertex> e)
-                    throws Exception {
+                public Tuple3<String, Integer, Double> map(Tuple2<TemporalEdge, TemporalVertex> e) {
                     TemporalEdge edge = e.f0;
                     TemporalVertex srcVertex = e.f1;
 
@@ -95,7 +101,7 @@ class ComplexRead7GradoopOperator implements
                 }
             });
 
-        List<Tuple3<String, Integer, Double>> edgeValuesList = null;
+        List<Tuple3<String, Integer, Double>> edgeValuesList;
         try {
             edgeValuesList = edgeValues.collect();
         } catch (Exception e) {

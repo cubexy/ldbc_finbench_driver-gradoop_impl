@@ -1,9 +1,6 @@
 package org.ldbcouncil.finbench.impls.gradoop.queries.complex.read12;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import org.apache.flink.api.common.functions.MapFunction;
@@ -16,16 +13,8 @@ import org.gradoop.common.model.impl.pojo.EPGMEdge;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
 import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
 import org.gradoop.flink.model.impl.layouts.transactional.tuples.GraphTransaction;
-import org.gradoop.flink.model.impl.operators.aggregation.functions.count.Count;
-import org.gradoop.flink.model.impl.operators.aggregation.functions.sum.SumProperty;
-import org.gradoop.flink.model.impl.operators.combination.ReduceCombination;
-import org.gradoop.flink.model.impl.operators.keyedgrouping.GroupingKeys;
-import org.gradoop.flink.model.impl.operators.keyedgrouping.KeyedGrouping;
 import org.gradoop.temporal.model.impl.TemporalGraph;
-import org.gradoop.temporal.model.impl.pojo.TemporalVertex;
 import org.ldbcouncil.finbench.driver.truncation.TruncationOrder;
-import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead11Result;
-import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead12;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead12;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead12Result;
 import org.ldbcouncil.finbench.impls.gradoop.CommonUtils;
@@ -48,6 +37,13 @@ class ComplexRead12GradoopOperator implements
         this.isTruncationOrderAscending = truncationOrder == TruncationOrder.TIMESTAMP_ASCENDING;
     }
 
+    /**
+     * Given a Person and a specified time window between startTime and endTime, find all the company
+     * accounts that s/he has transferred to. Return the ids of the companies’ accounts and the sum of
+     * their transfer amount.
+     * @param temporalGraph input graph
+     * @return ids of the companies’ accounts and the sum of their transfer amount
+     */
     @Override
     public List<ComplexRead12Result> execute(TemporalGraph temporalGraph) {
         // TODO: implement truncation strategy
@@ -64,7 +60,7 @@ class ComplexRead12GradoopOperator implements
             .getGraphTransactions()
             .map(new MapFunction<GraphTransaction, Tuple2<Long, Double>>() {
                 @Override
-                public Tuple2<Long, Double> map(GraphTransaction graphTransaction) throws Exception {
+                public Tuple2<Long, Double> map(GraphTransaction graphTransaction) {
                     Map<String, GradoopId> m = CommonUtils.getVariableMapping(graphTransaction);
                     GradoopId compAccGradoopId = m.get("compAcc");
                     long compAccId = graphTransaction.getVertexById(compAccGradoopId).getPropertyValue("id").getLong();

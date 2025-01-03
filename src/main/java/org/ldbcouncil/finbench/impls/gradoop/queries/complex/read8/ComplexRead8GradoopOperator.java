@@ -42,6 +42,18 @@ class ComplexRead8GradoopOperator implements
         this.threshold = cr8.getThreshold();
     }
 
+    /**
+     * Given a Loan and a specified time window between startTime and endTime, trace the fund transfer
+     * or withdraw by at most 3 steps from the account the Loan deposits. Note that the transfer paths of
+     * edge1, edge2, edge3 and edge4 are in a specific time range between startTime and endTime. Amount
+     * of each transfers or withdrawals between the account and the upstream account should exceed a
+     * specified threshold of the upstream transfer. Return all the accounts’ id in the downstream of loan
+     * with the final ratio and distanceFromLoan.
+     * Note: Upstream of an edge refers to the aggregated total amounts of all transfer-in edges of its
+     * source Account.
+     * @param temporalGraph input graph
+     * @return all the accounts’ id in the downstream of loan with the final ratio and distanceFromLoan
+     */
     @Override
     public List<ComplexRead8Result> execute(TemporalGraph temporalGraph) {
         // TODO: implement truncation strategy

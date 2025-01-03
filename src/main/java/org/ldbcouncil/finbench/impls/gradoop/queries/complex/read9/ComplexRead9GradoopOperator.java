@@ -39,6 +39,16 @@ class ComplexRead9GradoopOperator implements
         this.threshold = cr9.getThreshold();
     }
 
+    /**
+     * Given an account, a bound of transfer amount and a specified time window between startTime and
+     * endTime, find the deposit and repay edge between the account and a loan, the transfers-in and transfers-
+     * out. Return ratioRepay (sum of all the edge1 over sum of all the edge2), ratioDeposit (sum of edge1
+     * over sum of edge4), ratioTransfer (sum of edge3 over sum of edge4). Return -1 for ratioRepay if there
+     * is no edge2 found. Return -1 for ratioDeposit and ratioTransfer if there is no edge4 found.
+     * Note: There may be multiple loans that the given account is related to.
+     * @param temporalGraph input graph
+     * @return ratioRepay, ratioDeposit, ratioTransfer
+     */
     @Override
     public List<ComplexRead9Result> execute(TemporalGraph temporalGraph) {
 
@@ -74,8 +84,7 @@ class ComplexRead9GradoopOperator implements
             edge1gt.union(edge2gt).union(edge3gt).union(edge4gt).map(
                     new MapFunction<GraphTransaction, Tuple4<Double, Double, Double, Double>>() {
                         @Override
-                        public Tuple4<Double, Double, Double, Double> map(GraphTransaction graphTransaction)
-                            throws Exception {
+                        public Tuple4<Double, Double, Double, Double> map(GraphTransaction graphTransaction) {
                             Set<EPGMEdge> edges = graphTransaction.getEdges();
 
                             double edge1Amount = 0;
@@ -109,13 +118,12 @@ class ComplexRead9GradoopOperator implements
                 .reduce(new ReduceFunction<Tuple4<Double, Double, Double, Double>>() {
                     @Override
                     public Tuple4<Double, Double, Double, Double> reduce(Tuple4<Double, Double, Double, Double> t1,
-                                                                         Tuple4<Double, Double, Double, Double> t2)
-                        throws Exception {
+                                                                         Tuple4<Double, Double, Double, Double> t2) {
                         return new Tuple4<>(t1.f0 + t2.f0, t1.f1 + t2.f1, t1.f2 + t2.f2, t1.f3 + t2.f3);
                     }
                 });
 
-        Tuple4<Double, Double, Double, Double> data = null;
+        Tuple4<Double, Double, Double, Double> data;
 
         try {
             data = result.collect().get(0);

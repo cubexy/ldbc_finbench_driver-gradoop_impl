@@ -23,6 +23,15 @@ class ComplexRead3GradoopOperator implements UnaryBaseGraphToValueOperator<Tempo
         this.id2 = cr3.getId2();
     }
 
+    /**
+     * Given two accounts and a specified time window between startTime and endTime, find the length
+     * of shortest path between these two accounts by the transfer relationships. Note that all the edges
+     * in the path should be in the time window and of type transfer. Return 1 if src and dst are directly
+     * connected. Return -1 if there is no path found.
+     * @param temporalGraph input graph
+     * @return 1 if src and dst are directly connected. -1 if there is no path found. otherwise, return the
+     * length of shortest path between these two accounts.
+     */
     @Override
     public ComplexRead3Result execute(TemporalGraph temporalGraph) {
         long serializableId1 = this.id1;
@@ -35,7 +44,7 @@ class ComplexRead3GradoopOperator implements UnaryBaseGraphToValueOperator<Tempo
                 return e1;
             });
 
-        TemporalVertex src = null;
+        TemporalVertex src;
 
         try {
             src =
@@ -56,7 +65,7 @@ class ComplexRead3GradoopOperator implements UnaryBaseGraphToValueOperator<Tempo
             )
         );
 
-        List<TemporalVertex> dst = null;
+        List<TemporalVertex> dst;
 
         try {
             dst = SSSPGraph.getVertices()

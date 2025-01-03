@@ -12,7 +12,6 @@ import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
 import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
 import org.gradoop.flink.model.impl.layouts.transactional.tuples.GraphTransaction;
 import org.gradoop.temporal.model.impl.TemporalGraph;
-import org.ldbcouncil.finbench.driver.DbException;
 import org.ldbcouncil.finbench.driver.truncation.TruncationOrder;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead1;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead1Result;
@@ -36,6 +35,17 @@ class ComplexRead1GradoopOperator implements
         this.isTruncationOrderAscending = truncationOrder == TruncationOrder.TIMESTAMP_ASCENDING;
     }
 
+    /**
+     * Given an Account and a specified time window between startTime and endTime, find all the Account
+     * that is signed in by a blocked Medium and has fund transferred via edge1 by at most 3 steps. Note
+     * that all timestamps in the transfer trace must be in ascending order(only greater than). Return
+     * the id of the account, the distance from the account to given one, the id and type of the related
+     * medium.
+     * Note: The returned accounts may exist in different distance from the given one.
+     * @param temporalGraph input graph
+     * @return id of the account, the distance from the account to given one, the id and type of the related
+     * medium
+     */
     @Override
     public List<ComplexRead1Result> execute(TemporalGraph temporalGraph) {
         // TODO: implement truncation strategy
@@ -69,7 +79,7 @@ class ComplexRead1GradoopOperator implements
             gtxLength1.union(gtxLength2).union(gtxLength3)
                 .map(new MapFunction<GraphTransaction, Tuple4<Long, Integer, Long, String>>() {
                     @Override
-                    public Tuple4<Long, Integer, Long, String> map(GraphTransaction graphTransaction) throws Exception {
+                    public Tuple4<Long, Integer, Long, String> map(GraphTransaction graphTransaction) {
                         Map<String, GradoopId> m = CommonUtils.getVariableMapping(graphTransaction);
 
                         GradoopId otherGradoopId = m.get("other");

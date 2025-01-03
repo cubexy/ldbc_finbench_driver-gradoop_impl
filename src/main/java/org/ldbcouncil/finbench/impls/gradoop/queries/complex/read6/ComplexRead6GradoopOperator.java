@@ -3,23 +3,19 @@ package org.ldbcouncil.finbench.impls.gradoop.queries.complex.read6;
 import static org.ldbcouncil.finbench.impls.gradoop.CommonUtils.roundToDecimalPlaces;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.common.operators.Order;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.tuple.Tuple3;
-import org.apache.flink.api.java.tuple.Tuple4;
 import org.gradoop.common.model.impl.id.GradoopId;
 import org.gradoop.common.model.impl.pojo.EPGMEdge;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
 import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
 import org.gradoop.flink.model.impl.layouts.transactional.tuples.GraphTransaction;
-import org.gradoop.flink.model.impl.operators.combination.ReduceCombination;
 import org.gradoop.temporal.model.impl.TemporalGraph;
 import org.ldbcouncil.finbench.driver.truncation.TruncationOrder;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead6;
@@ -48,9 +44,17 @@ class ComplexRead6GradoopOperator implements
         this.threshold2 = cr6.getThreshold2();
     }
 
+    /**
+     * Given an account of type card and a specified time window between startTime and endTime, find all
+     * the connected accounts (mid) via withdrawal (edge2) satisfying, (1) More than 3 transfer-ins (edge1)
+     * from other accounts (src) whose amount exceeds threshold1. (2) The amount of withdrawal (edge2)
+     * from mid to dstCard whose exceeds threshold2. Return the sum of transfer amount from src to mid,
+     * the amount from mid to dstCard grouped by mid.
+     * @param temporalGraph input graph
+     * @return sum of transfer amount from src to mid, the amount from mid to dstCard grouped by mid
+     */
     @Override
     public List<ComplexRead6Result> execute(TemporalGraph temporalGraph) {
-        final long id_serializable = this.id;
 
         // TODO: implement truncation strategy
         TemporalGraph windowedGraph = temporalGraph
@@ -64,7 +68,7 @@ class ComplexRead6GradoopOperator implements
             .getGraphTransactions()
             .map(new MapFunction<GraphTransaction, Tuple3<Long, Double, Double>>() {
                 @Override
-                public Tuple3<Long, Double, Double> map(GraphTransaction graphTransaction) throws Exception {
+                public Tuple3<Long, Double, Double> map(GraphTransaction graphTransaction) {
                     Map<String, GradoopId> m = CommonUtils.getVariableMapping(graphTransaction);
 
                     GradoopId midGradoopId = m.get("mid");
@@ -91,7 +95,7 @@ class ComplexRead6GradoopOperator implements
             .reduce(new ReduceFunction<Tuple3<Long, Double, Double>>() {
                 @Override
                 public Tuple3<Long, Double, Double> reduce(Tuple3<Long, Double, Double> t1,
-                                                           Tuple3<Long, Double, Double> t2) throws Exception {
+                                                           Tuple3<Long, Double, Double> t2) {
                     return new Tuple3<>(t1.f0, t1.f1 + t2.f1, t1.f2 + t2.f2);
                 }
             });
@@ -102,7 +106,7 @@ class ComplexRead6GradoopOperator implements
             .sortPartition(2, Order.DESCENDING)
             .sortPartition(0, Order.ASCENDING);
 
-        List<Tuple3<Long, Double, Double>> edgesList = null;
+        List<Tuple3<Long, Double, Double>> edgesList;
         try {
             edgesList = edges.collect();
         } catch (Exception e) {

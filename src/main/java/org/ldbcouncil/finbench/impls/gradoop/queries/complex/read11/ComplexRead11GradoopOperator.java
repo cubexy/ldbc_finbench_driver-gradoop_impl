@@ -1,33 +1,23 @@
 package org.ldbcouncil.finbench.impls.gradoop.queries.complex.read11;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.common.operators.Order;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.api.java.tuple.Tuple4;
-import org.gradoop.common.model.impl.id.GradoopId;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
-import org.gradoop.flink.model.impl.functions.bool.False;
 import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
-import org.gradoop.flink.model.impl.layouts.transactional.tuples.GraphTransaction;
 import org.gradoop.flink.model.impl.operators.aggregation.functions.count.Count;
-import org.gradoop.flink.model.impl.operators.aggregation.functions.max.MaxProperty;
 import org.gradoop.flink.model.impl.operators.aggregation.functions.sum.SumProperty;
 import org.gradoop.flink.model.impl.operators.combination.ReduceCombination;
 import org.gradoop.flink.model.impl.operators.keyedgrouping.GroupingKeys;
 import org.gradoop.flink.model.impl.operators.keyedgrouping.KeyedGrouping;
 import org.gradoop.temporal.model.impl.TemporalGraph;
-import org.gradoop.temporal.model.impl.TemporalGraphCollection;
 import org.gradoop.temporal.model.impl.pojo.TemporalVertex;
 import org.ldbcouncil.finbench.driver.truncation.TruncationOrder;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead11;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead11Result;
-import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead1Result;
 import org.ldbcouncil.finbench.impls.gradoop.CommonUtils;
 
 class ComplexRead11GradoopOperator implements
@@ -50,7 +40,11 @@ class ComplexRead11GradoopOperator implements
 
 
     /**
-     * Executes the complex read 11 query.
+     * Given a Person and a specified time window between startTime and endTime, find all the persons
+     * in the guarantee chain until end and their loans applied. Return the sum of loan amount and the
+     * count of distinct loans.
+     * @param temporalGraph input graph
+     * @return sum of loan amount and the count of distinct loans
      * @implNote Implementation only supports path lengths of up to 5 Person nodes because Gradoop does not support
      * variable length paths.
      */
@@ -97,7 +91,7 @@ class ComplexRead11GradoopOperator implements
             ).getVertices()
             .map(new MapFunction<TemporalVertex, Tuple2<Double, Integer>>() {
                 @Override
-                public Tuple2<Double, Integer> map(TemporalVertex temporalVertex) throws Exception {
+                public Tuple2<Double, Integer> map(TemporalVertex temporalVertex) {
                     double sumAmount = CommonUtils.roundToDecimalPlaces(temporalVertex.getPropertyValue("sum_loanAmount").getDouble(), 3);
                     int count = (int) temporalVertex.getPropertyValue("count").getLong();
                     return new Tuple2<>(sumAmount, count);

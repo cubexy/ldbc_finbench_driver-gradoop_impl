@@ -3,13 +3,11 @@ package org.ldbcouncil.finbench.impls.gradoop.queries.complex.read10;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.gradoop.common.model.impl.id.GradoopId;
-import org.gradoop.common.model.impl.pojo.EPGMEdge;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
 import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
 import org.gradoop.flink.model.impl.layouts.transactional.tuples.GraphTransaction;
@@ -32,6 +30,13 @@ class ComplexRead10GradoopOperator implements UnaryBaseGraphToValueOperator<Temp
         this.endTime = cr10.getEndTime().getTime();
     }
 
+    /**
+     * Given two Persons and a specified time window between startTime and endTime, find all the Com-
+     * panies the two Persons invest in. Return the Jaccard similarity between the two companies set.
+     * Return 0 if there is no edges found connecting to any of these two persons.
+     * @param temporalGraph input graph
+     * @return Jaccard similarity between the two companies set
+     */
     @Override
     public List<ComplexRead10Result> execute(TemporalGraph temporalGraph) {
         TemporalGraph windowedGraph = temporalGraph
@@ -44,7 +49,7 @@ class ComplexRead10GradoopOperator implements UnaryBaseGraphToValueOperator<Temp
             .getGraphTransactions()
             .map(new MapFunction<GraphTransaction, Tuple2<Long, Long>>() {
                 @Override
-                public Tuple2<Long, Long> map(GraphTransaction graphTransaction) throws Exception {
+                public Tuple2<Long, Long> map(GraphTransaction graphTransaction) {
                     Map<String, GradoopId> m = CommonUtils.getVariableMapping(graphTransaction);
 
                     long pId = graphTransaction.getVertexById(m.get("p")).getPropertyValue("id").getLong();
@@ -57,15 +62,14 @@ class ComplexRead10GradoopOperator implements UnaryBaseGraphToValueOperator<Temp
             .groupBy(1)
             .reduce(new ReduceFunction<Tuple2<Long, Long>>() {
                 @Override
-                public Tuple2<Long, Long> reduce(Tuple2<Long, Long> t1, Tuple2<Long, Long> t2)
-                    throws Exception {
+                public Tuple2<Long, Long> reduce(Tuple2<Long, Long> t1, Tuple2<Long, Long> t2) {
                     Long f0 = t1.f0.equals(t2.f0) ? t1.f0 : 0L;
                     return new Tuple2<>(f0, t1.f1);
                 }
             })
             .map(new MapFunction<Tuple2<Long, Long>, Tuple2<Integer, Integer>>() {
                 @Override
-                public Tuple2<Integer, Integer> map(Tuple2<Long, Long> t) throws Exception {
+                public Tuple2<Integer, Integer> map(Tuple2<Long, Long> t) {
                     return new Tuple2<>(1, t.f0.equals(0L) ? 1 : 0);
                 }
             })
@@ -73,7 +77,7 @@ class ComplexRead10GradoopOperator implements UnaryBaseGraphToValueOperator<Temp
                 new ReduceFunction<Tuple2<Integer, Integer>>() {
                     @Override
                     public Tuple2<Integer, Integer> reduce(Tuple2<Integer, Integer> t1,
-                                                           Tuple2<Integer, Integer> t2) throws Exception {
+                                                           Tuple2<Integer, Integer> t2) {
                         return new Tuple2<>(t1.f0+t2.f0, t1.f1 + t2.f1);
                     }
                 }

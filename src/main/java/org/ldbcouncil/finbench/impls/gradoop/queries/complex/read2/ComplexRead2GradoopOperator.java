@@ -45,6 +45,15 @@ class ComplexRead2GradoopOperator implements
         this.isTruncationOrderAscending = truncationOrder == TruncationOrder.TIMESTAMP_ASCENDING;
     }
 
+    /**
+     * Given a Person and a specified time window between startTime and endTime, find an Account owned
+     * by the Person which has fund transferred from other Accounts by at most 3 steps (edge2) which has
+     * fund deposited from a loan. The timestamps of in transfer trace (edge2) must be in ascending order
+     * (only greater than) from the upstream to downstream. Return the sum of distinct loan amount,
+     * the sum of distinct loan balance and the count of distinct loans.
+     * @param temporalGraph input graph
+     * @return sum of distinct loan amount, the sum of distinct loan balance and the count of distinct loans
+     */
     @Override
     public List<ComplexRead2Result> execute(TemporalGraph temporalGraph) {
         // TODO: implement truncation strategy
@@ -90,8 +99,7 @@ class ComplexRead2GradoopOperator implements
                 edgeMap = gcUnion.getEdges().join(gcUnion.getVertices()).where(new SourceId<>()).equalTo(new Id<>())
                 .map(new MapFunction<Tuple2<EPGMEdge, EPGMVertex>, Tuple3<Long, Double, Double>>() {
                     @Override
-                    public Tuple3<Long, Double, Double> map(Tuple2<EPGMEdge, EPGMVertex> e)
-                        throws Exception {
+                    public Tuple3<Long, Double, Double> map(Tuple2<EPGMEdge, EPGMVertex> e) {
                         EPGMVertex src = e.f1;
 
                         long otherID = src.getPropertyValue("id").getLong();
@@ -105,7 +113,7 @@ class ComplexRead2GradoopOperator implements
             windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
 
 
-        List<Tuple3<Long, Double, Double>> edges = null;
+        List<Tuple3<Long, Double, Double>> edges;
         try {
             edges = edgeMap
                 .sortPartition(1, Order.DESCENDING)

@@ -45,6 +45,17 @@ class ComplexRead4GradoopOperator implements
         this.id2 = cr4.getId2();
     }
 
+    /**
+     * Given two accounts src and dst, and a specified time window between startTime and endTime,
+     * (1) check whether src transferred money to dst in the given time window (edge1). If edge1 does
+     * not exist, return with empty results (the result size is 0).
+     * (2) find all other accounts (other1, ... , otherN) which received money from dst (edge2) and
+     * transferred money to src (edge3) in a specific time.
+     * For each of these other accounts, return the id of the account, the sum and max of the transfer
+     * amount (edge2 and edge3).
+     * @param temporalGraph input graph
+     * @return id of the account, the sum and max of the transfer amount (edge2 and edge3)
+     */
     @Override
     public List<ComplexRead4Result> execute(TemporalGraph temporalGraph) {
         final long id_serializable = this.id1;
@@ -73,7 +84,7 @@ class ComplexRead4GradoopOperator implements
                     Arrays.asList(new Count("count"), new SumProperty("amount"), new MaxProperty("amount")))
             );
 
-        List<Tuple7<Long, Integer, Double, Double, Integer, Double, Double>> edgeMap = null;
+        List<Tuple7<Long, Integer, Double, Double, Integer, Double, Double>> edgeMap;
 
         try {
             MapOperator<Tuple2<Tuple4<Long, Integer, Double, Double>, Tuple4<Long, Integer, Double, Double>>, Tuple7<Long, Integer, Double, Double, Integer, Double, Double>>
@@ -81,8 +92,7 @@ class ComplexRead4GradoopOperator implements
                 .join(otherAccounts.getVertices()).where(new SourceId<>()).equalTo(new Id<>())
                 .map(new MapFunction<Tuple2<TemporalEdge, TemporalVertex>, Tuple4<Long, Integer, Double, Double>>() {
                     @Override
-                    public Tuple4<Long, Integer, Double, Double> map(Tuple2<TemporalEdge, TemporalVertex> e)
-                        throws Exception {
+                    public Tuple4<Long, Integer, Double, Double> map(Tuple2<TemporalEdge, TemporalVertex> e) {
                         TemporalEdge edge2 = e.f0;
                         TemporalVertex src = e.f1;
 
@@ -99,8 +109,7 @@ class ComplexRead4GradoopOperator implements
                         .map(
                             new MapFunction<Tuple2<TemporalEdge, TemporalVertex>, Tuple4<Long, Integer, Double, Double>>() {
                                 @Override
-                                public Tuple4<Long, Integer, Double, Double> map(Tuple2<TemporalEdge, TemporalVertex> e)
-                                    throws Exception {
+                                public Tuple4<Long, Integer, Double, Double> map(Tuple2<TemporalEdge, TemporalVertex> e) {
                                     TemporalEdge edge3 = e.f0;
                                     TemporalVertex src = e.f1;
 
@@ -120,8 +129,7 @@ class ComplexRead4GradoopOperator implements
                     new MapFunction<Tuple2<Tuple4<Long, Integer, Double, Double>, Tuple4<Long, Integer, Double, Double>>, Tuple7<Long, Integer, Double, Double, Integer, Double, Double>>() {
                         @Override
                         public Tuple7<Long, Integer, Double, Double, Integer, Double, Double> map(
-                            Tuple2<Tuple4<Long, Integer, Double, Double>, Tuple4<Long, Integer, Double, Double>> e)
-                            throws Exception {
+                            Tuple2<Tuple4<Long, Integer, Double, Double>, Tuple4<Long, Integer, Double, Double>> e) {
                             Tuple4<Long, Integer, Double, Double> edge2 = e.f0;
                             Tuple4<Long, Integer, Double, Double> edge3 = e.f1;
 
