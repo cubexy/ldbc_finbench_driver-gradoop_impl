@@ -51,7 +51,7 @@ class SimpleRead6GradoopOperator implements UnaryBaseGraphToValueOperator<Tempor
                 public Tuple1<Long> map(GraphTransaction graphTransaction) throws Exception {
                     Map<String, GradoopId> m = CommonUtils.getVariableMapping(graphTransaction);
 
-                    GradoopId accountId = m.get("a");
+                    GradoopId accountId = m.get("dst");
 
                     EPGMVertex account = graphTransaction.getVertexById(accountId);
 
