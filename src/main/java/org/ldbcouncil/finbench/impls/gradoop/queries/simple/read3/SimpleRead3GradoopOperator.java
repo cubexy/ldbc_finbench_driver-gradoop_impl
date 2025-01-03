@@ -67,6 +67,9 @@ public class SimpleRead3GradoopOperator
             .map(new MapFunction<TemporalVertex, Tuple2<Integer, Integer>>() {
                 @Override
                 public Tuple2<Integer, Integer> map(TemporalVertex temporalVertex) throws Exception {
+                    if (temporalVertex.getPropertyValue("isBlocked").getType() == null) { // dst account
+                        return new Tuple2<>(0, 0);
+                    }
                     final boolean isBlocked = temporalVertex.getPropertyValue("isBlocked").getBoolean();
                     return isBlocked ? new Tuple2<>(0, 1) : new Tuple2<>(1, 0);
                 }
