@@ -15,7 +15,8 @@ public class SimpleRead3Handler implements OperationHandler<SimpleRead3, Gradoop
     public void executeOperation(SimpleRead3 sr3, GradoopFinbenchBaseGraphState connectionState,
                                  ResultReporter resultReporter) throws DbException {
         GradoopImpl.logger.info(sr3.toString());
-        List<SimpleRead3Result> simpleRead3Results = new SimpleRead3GradoopOperator(sr3).execute(connectionState.getGraph());
+        List<SimpleRead3Result> simpleRead3Results =
+            new SimpleRead3GradoopOperator(sr3).execute(connectionState.getGraph());
         resultReporter.report(simpleRead3Results.size(), simpleRead3Results, sr3);
     }
 }

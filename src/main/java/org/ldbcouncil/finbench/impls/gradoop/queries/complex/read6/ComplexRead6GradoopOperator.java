@@ -50,6 +50,7 @@ class ComplexRead6GradoopOperator implements
      * from other accounts (src) whose amount exceeds threshold1. (2) The amount of withdrawal (edge2)
      * from mid to dstCard whose exceeds threshold2. Return the sum of transfer amount from src to mid,
      * the amount from mid to dstCard grouped by mid.
+     *
      * @param temporalGraph input graph
      * @return sum of transfer amount from src to mid, the amount from mid to dstCard grouped by mid
      */
@@ -62,8 +63,9 @@ class ComplexRead6GradoopOperator implements
             .fromTo(this.startTime, this.endTime);
 
         DataSet<Tuple3<Long, Double, Double>> edges = windowedGraph.query(
-            "MATCH (src1:Account)-[edge1:transfer]->(mid:Account)-[edge2:withdraw]->(dstCard:Account) WHERE dstCard.id = " +
-                this.id + "L AND dstCard.type = 'card' AND edge1.amount > " + this.threshold1 + " AND edge2.amount > " + this.threshold2)
+                "MATCH (src1:Account)-[edge1:transfer]->(mid:Account)-[edge2:withdraw]->(dstCard:Account) WHERE dstCard.id = " +
+                    this.id + "L AND dstCard.type = 'card' AND edge1.amount > " + this.threshold1 + " AND edge2.amount > " +
+                    this.threshold2)
             .toGraphCollection()
             .getGraphTransactions()
             .map(new MapFunction<GraphTransaction, Tuple3<Long, Double, Double>>() {
@@ -115,7 +117,8 @@ class ComplexRead6GradoopOperator implements
 
         List<ComplexRead6Result> complexRead6Results = new ArrayList<>();
         for (Tuple3<Long, Double, Double> edge : edgesList) {
-            complexRead6Results.add(new ComplexRead6Result(edge.f0, roundToDecimalPlaces(edge.f1, 3), roundToDecimalPlaces(edge.f2, 3)));
+            complexRead6Results.add(
+                new ComplexRead6Result(edge.f0, roundToDecimalPlaces(edge.f1, 3), roundToDecimalPlaces(edge.f2, 3)));
         }
 
         return complexRead6Results;

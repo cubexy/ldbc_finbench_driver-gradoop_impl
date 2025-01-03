@@ -41,6 +41,7 @@ public class SimpleRead3GradoopOperator
      * Given an Account, find the ratio of transfer-ins from blocked Accounts in all its transfer-ins in a specific
      * time range between startTime and endTime. Return the ratio. Return -1 if there is no transfer-ins to
      * the given account.
+     *
      * @param temporalGraph input graph
      * @return ratio of transfer-ins from blocked Accounts in all its transfer-ins in a specific time range
      */

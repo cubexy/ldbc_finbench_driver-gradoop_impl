@@ -29,7 +29,8 @@ public class ComplexRead1CmdArgExecutor extends AbstractCmdArgExecutor<List<Comp
 
     @Override
     public void init(FlinkCmdArg inputArgs) {
-        ComplexRead1 input = new ComplexRead1(inputArgs.getId(), inputArgs.getStartTime(), inputArgs.getEndTime(), inputArgs.getTruncationLimit(), inputArgs.getTruncationOrder());
+        ComplexRead1 input = new ComplexRead1(inputArgs.getId(), inputArgs.getStartTime(), inputArgs.getEndTime(),
+            inputArgs.getTruncationLimit(), inputArgs.getTruncationOrder());
         this.operator = new ComplexRead1GradoopOperator(input);
     }
 }

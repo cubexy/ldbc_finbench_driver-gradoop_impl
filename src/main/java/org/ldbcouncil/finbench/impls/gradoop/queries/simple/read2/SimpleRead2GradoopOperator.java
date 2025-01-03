@@ -46,6 +46,7 @@ public class SimpleRead2GradoopOperator implements
      * them in a specific time range between startTime and endTime. Return the sum and max of amount.
      * For edge1 and edge2, return -1 for the max (maxEdge1Amount and maxEdge2Amount) if there is no
      * transfer.
+     *
      * @param temporalGraph input graph
      * @return sum of fund amount in transfer-ins and transfer-outs between them in a specific time range
      */
@@ -112,7 +113,9 @@ public class SimpleRead2GradoopOperator implements
             }
 
             simpleRead2Results.add(
-                new SimpleRead2Result(roundToDecimalPlaces(transferOuts.f0, 3), roundToDecimalPlaces(transferOuts.f1, 3), transferOuts.f2, roundToDecimalPlaces(transferIns.f0, 3), roundToDecimalPlaces(transferIns.f1, 3),
+                new SimpleRead2Result(roundToDecimalPlaces(transferOuts.f0, 3),
+                    roundToDecimalPlaces(transferOuts.f1, 3), transferOuts.f2, roundToDecimalPlaces(transferIns.f0, 3),
+                    roundToDecimalPlaces(transferIns.f1, 3),
                     transferIns.f2));
 
             return simpleRead2Results;

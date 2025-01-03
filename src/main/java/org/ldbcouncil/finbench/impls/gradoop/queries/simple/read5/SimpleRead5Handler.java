@@ -1,9 +1,6 @@
 package org.ldbcouncil.finbench.impls.gradoop.queries.simple.read5;
 
-import java.util.ArrayList;
 import java.util.List;
-import org.apache.flink.api.java.DataSet;
-import org.apache.flink.api.java.tuple.Tuple3;
 import org.ldbcouncil.finbench.driver.DbException;
 import org.ldbcouncil.finbench.driver.OperationHandler;
 import org.ldbcouncil.finbench.driver.ResultReporter;
@@ -18,7 +15,8 @@ public class SimpleRead5Handler implements OperationHandler<SimpleRead5, Gradoop
     public void executeOperation(SimpleRead5 sr5, GradoopFinbenchBaseGraphState connectionState,
                                  ResultReporter resultReporter) throws DbException {
         GradoopImpl.logger.info(sr5.toString());
-        List<SimpleRead5Result> simpleRead5Results = new SimpleRead5GradoopOperator(sr5).execute(connectionState.getGraph());
+        List<SimpleRead5Result> simpleRead5Results =
+            new SimpleRead5GradoopOperator(sr5).execute(connectionState.getGraph());
         resultReporter.report(simpleRead5Results.size(), simpleRead5Results, sr5);
     }
 }

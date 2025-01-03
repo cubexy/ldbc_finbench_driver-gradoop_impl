@@ -51,6 +51,7 @@ class ComplexRead2GradoopOperator implements
      * fund deposited from a loan. The timestamps of in transfer trace (edge2) must be in ascending order
      * (only greater than) from the upstream to downstream. Return the sum of distinct loan amount,
      * the sum of distinct loan balance and the count of distinct loans.
+     *
      * @param temporalGraph input graph
      * @return sum of distinct loan amount, the sum of distinct loan balance and the count of distinct loans
      */
@@ -61,56 +62,56 @@ class ComplexRead2GradoopOperator implements
             .subgraph(new LabelIsIn<>("Account", "Loan", "Person"), new LabelIsIn<>("transfer", "own", "deposit"))
             .fromTo(this.startTime, this.endTime);
 
-            GraphCollection gtxLength1 = windowedGraph
-                .temporalQuery(
-                    "MATCH (p:Person)-[e1:own]->(a:Account)<-[e2:transfer]-(other:Account)<-[e3:deposit]-(loan:Loan)" +
-                        " WHERE p.id = " + this.id + "L AND a <> other")
-                .toGraphCollection();
+        GraphCollection gtxLength1 = windowedGraph
+            .temporalQuery(
+                "MATCH (p:Person)-[e1:own]->(a:Account)<-[e2:transfer]-(other:Account)<-[e3:deposit]-(loan:Loan)" +
+                    " WHERE p.id = " + this.id + "L AND a <> other")
+            .toGraphCollection();
 
-            GraphCollection gtxLength2 = windowedGraph
-                .temporalQuery(
-                    "MATCH (p:Person)-[e1:own]->(a:Account)<-[t1:transfer]-(:Account)<-[e2:transfer]-(other:Account)<-[e3:deposit]-(loan:Loan)" +
-                        " WHERE p.id = " + this.id + "L AND e2.val_from.before(t1.val_from) AND a <> other")
-                .toGraphCollection();
+        GraphCollection gtxLength2 = windowedGraph
+            .temporalQuery(
+                "MATCH (p:Person)-[e1:own]->(a:Account)<-[t1:transfer]-(:Account)<-[e2:transfer]-(other:Account)<-[e3:deposit]-(loan:Loan)" +
+                    " WHERE p.id = " + this.id + "L AND e2.val_from.before(t1.val_from) AND a <> other")
+            .toGraphCollection();
 
-            GraphCollection gtxLength3 = windowedGraph
-                .temporalQuery(
-                    "MATCH (p:Person)-[e1:own]->(a:Account)<-[t2:transfer]-(:Account)<-[t1:transfer]-(:Account)<-[e2:transfer]-(other:Account)<-[e3:deposit]-(loan:Loan)" +
-                        " WHERE p.id = " + this.id +
-                        "L AND e2.val_from.before(t1.val_from) AND t1.val_from.before(t2.val_from) AND a <> other")
-                .toGraphCollection();
+        GraphCollection gtxLength3 = windowedGraph
+            .temporalQuery(
+                "MATCH (p:Person)-[e1:own]->(a:Account)<-[t2:transfer]-(:Account)<-[t1:transfer]-(:Account)<-[e2:transfer]-(other:Account)<-[e3:deposit]-(loan:Loan)" +
+                    " WHERE p.id = " + this.id +
+                    "L AND e2.val_from.before(t1.val_from) AND t1.val_from.before(t2.val_from) AND a <> other")
+            .toGraphCollection();
 
-            LogicalGraph gcUnion = gtxLength1.union(gtxLength2).union(gtxLength3).reduce(new ReduceCombination<>())
-                .query("MATCH (other:Account)<-[e3:deposit]-(loan:Loan)")
-                .reduce(new ReduceCombination<>())
-                .transformVertices((currentVertex, transformedVertex) -> {
-                    if (!currentVertex.getLabel().equals("Loan")) {
-                        currentVertex.removeProperty("id");
-                    }
-                    return currentVertex;
-                })
-                .callForGraph(
-                    new KeyedGrouping<>(Arrays.asList(GroupingKeys.label(), GroupingKeys.property("id")),
-                        Arrays.asList(new SumProperty("loanAmount"), new SumProperty("balance")), null,
-                        null)
-                );
+        LogicalGraph gcUnion = gtxLength1.union(gtxLength2).union(gtxLength3).reduce(new ReduceCombination<>())
+            .query("MATCH (other:Account)<-[e3:deposit]-(loan:Loan)")
+            .reduce(new ReduceCombination<>())
+            .transformVertices((currentVertex, transformedVertex) -> {
+                if (!currentVertex.getLabel().equals("Loan")) {
+                    currentVertex.removeProperty("id");
+                }
+                return currentVertex;
+            })
+            .callForGraph(
+                new KeyedGrouping<>(Arrays.asList(GroupingKeys.label(), GroupingKeys.property("id")),
+                    Arrays.asList(new SumProperty("loanAmount"), new SumProperty("balance")), null,
+                    null)
+            );
 
-            MapOperator<Tuple2<EPGMEdge, EPGMVertex>, Tuple3<Long, Double, Double>>
-                edgeMap = gcUnion.getEdges().join(gcUnion.getVertices()).where(new SourceId<>()).equalTo(new Id<>())
-                .map(new MapFunction<Tuple2<EPGMEdge, EPGMVertex>, Tuple3<Long, Double, Double>>() {
-                    @Override
-                    public Tuple3<Long, Double, Double> map(Tuple2<EPGMEdge, EPGMVertex> e) {
-                        EPGMVertex src = e.f1;
+        MapOperator<Tuple2<EPGMEdge, EPGMVertex>, Tuple3<Long, Double, Double>>
+            edgeMap = gcUnion.getEdges().join(gcUnion.getVertices()).where(new SourceId<>()).equalTo(new Id<>())
+            .map(new MapFunction<Tuple2<EPGMEdge, EPGMVertex>, Tuple3<Long, Double, Double>>() {
+                @Override
+                public Tuple3<Long, Double, Double> map(Tuple2<EPGMEdge, EPGMVertex> e) {
+                    EPGMVertex src = e.f1;
 
-                        long otherID = src.getPropertyValue("id").getLong();
-                        double loanBalance = src.getPropertyValue("sum_balance").getDouble();
-                        double loanAmount = src.getPropertyValue("sum_loanAmount").getDouble();
-                        return new Tuple3<>(otherID, loanBalance, loanAmount);
-                    }
+                    long otherID = src.getPropertyValue("id").getLong();
+                    double loanBalance = src.getPropertyValue("sum_balance").getDouble();
+                    double loanAmount = src.getPropertyValue("sum_loanAmount").getDouble();
+                    return new Tuple3<>(otherID, loanBalance, loanAmount);
+                }
 
-                });
+            });
 
-            windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
+        windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
 
 
         List<Tuple3<Long, Double, Double>> edges;
@@ -125,10 +126,11 @@ class ComplexRead2GradoopOperator implements
 
         List<ComplexRead2Result> complexRead2Results = new ArrayList<>();
 
-            for (Tuple3<Long, Double, Double> edge : edges) {
-                complexRead2Results.add(new ComplexRead2Result(edge.f0, roundToDecimalPlaces(edge.f1, 3), roundToDecimalPlaces(edge.f2, 3)));
-            }
+        for (Tuple3<Long, Double, Double> edge : edges) {
+            complexRead2Results.add(
+                new ComplexRead2Result(edge.f0, roundToDecimalPlaces(edge.f1, 3), roundToDecimalPlaces(edge.f2, 3)));
+        }
 
-            return complexRead2Results;
+        return complexRead2Results;
     }
 }

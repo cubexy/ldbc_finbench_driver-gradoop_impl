@@ -46,6 +46,7 @@ class ComplexRead9GradoopOperator implements
      * over sum of edge4), ratioTransfer (sum of edge3 over sum of edge4). Return -1 for ratioRepay if there
      * is no edge2 found. Return -1 for ratioDeposit and ratioTransfer if there is no edge4 found.
      * Note: There may be multiple loans that the given account is related to.
+     *
      * @param temporalGraph input graph
      * @return ratioRepay, ratioDeposit, ratioTransfer
      */

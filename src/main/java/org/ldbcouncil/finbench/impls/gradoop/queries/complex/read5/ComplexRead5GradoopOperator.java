@@ -43,6 +43,7 @@ class ComplexRead5GradoopOperator implements UnaryBaseGraphToValueOperator<Tempo
      * Note: Multiple edges of from the same src to the same dst should be seen as identical path. And
      * the resulting paths shall not include recurring accounts (cycles in the trace are not allowed). The
      * results may not be in a deterministic order since they are only sorted by the length of the path.
+     *
      * @param temporalGraph input graph
      * @return all the transfer traces
      */
@@ -109,8 +110,9 @@ class ComplexRead5GradoopOperator implements UnaryBaseGraphToValueOperator<Tempo
 
         try {
             result.collect().forEach(
-                tuple -> complexRead5Results.add(new ComplexRead5Result(CommonUtils.parsePath(Arrays.asList(tuple.f0, tuple.f1, tuple.f2,
-                    tuple.f3)))));
+                tuple -> complexRead5Results.add(
+                    new ComplexRead5Result(CommonUtils.parsePath(Arrays.asList(tuple.f0, tuple.f1, tuple.f2,
+                        tuple.f3)))));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

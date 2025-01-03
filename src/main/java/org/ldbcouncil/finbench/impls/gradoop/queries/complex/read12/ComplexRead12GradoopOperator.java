@@ -41,6 +41,7 @@ class ComplexRead12GradoopOperator implements
      * Given a Person and a specified time window between startTime and endTime, find all the company
      * accounts that s/he has transferred to. Return the ids of the companies’ accounts and the sum of
      * their transfer amount.
+     *
      * @param temporalGraph input graph
      * @return ids of the companies’ accounts and the sum of their transfer amount
      */
@@ -77,7 +78,7 @@ class ComplexRead12GradoopOperator implements
             .groupBy(1)
             .reduce(new ReduceFunction<Tuple2<Long, Double>>() {
                 @Override
-                public Tuple2<Long, Double> reduce(Tuple2<Long, Double> t1, Tuple2<Long, Double> t2){
+                public Tuple2<Long, Double> reduce(Tuple2<Long, Double> t1, Tuple2<Long, Double> t2) {
                     return new Tuple2<>(t1.f0, t1.f1 + t2.f1);
                 }
             });

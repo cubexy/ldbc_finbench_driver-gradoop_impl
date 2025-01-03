@@ -29,7 +29,8 @@ public class SimpleRead4CmdArgExecutor extends AbstractCmdArgExecutor<List<Simpl
 
     @Override
     public void init(FlinkCmdArg inputArgs) {
-        SimpleRead4 input = new SimpleRead4(inputArgs.getId(), inputArgs.getThreshold(), inputArgs.getStartTime(), inputArgs.getEndTime());
+        SimpleRead4 input = new SimpleRead4(inputArgs.getId(), inputArgs.getThreshold(), inputArgs.getStartTime(),
+            inputArgs.getEndTime());
         this.operator = new SimpleRead4GradoopOperator(input);
     }
 }

@@ -53,6 +53,7 @@ class ComplexRead4GradoopOperator implements
      * transferred money to src (edge3) in a specific time.
      * For each of these other accounts, return the id of the account, the sum and max of the transfer
      * amount (edge2 and edge3).
+     *
      * @param temporalGraph input graph
      * @return id of the account, the sum and max of the transfer amount (edge2 and edge3)
      */
@@ -73,7 +74,7 @@ class ComplexRead4GradoopOperator implements
                 if (currentVertex.hasProperty("id") && (
                     Objects.equals(currentVertex.getPropertyValue("id").getLong(), id_serializable)
                         || Objects.equals(currentVertex.getPropertyValue("id").getLong(), id2_serializable)
-                    )) {
+                )) {
                     currentVertex.removeProperty("id");
                 }
                 return currentVertex;
@@ -109,7 +110,8 @@ class ComplexRead4GradoopOperator implements
                         .map(
                             new MapFunction<Tuple2<TemporalEdge, TemporalVertex>, Tuple4<Long, Integer, Double, Double>>() {
                                 @Override
-                                public Tuple4<Long, Integer, Double, Double> map(Tuple2<TemporalEdge, TemporalVertex> e) {
+                                public Tuple4<Long, Integer, Double, Double> map(
+                                    Tuple2<TemporalEdge, TemporalVertex> e) {
                                     TemporalEdge edge3 = e.f0;
                                     TemporalVertex src = e.f1;
 
@@ -150,11 +152,14 @@ class ComplexRead4GradoopOperator implements
         }
 
         // if no results are found, there are no transfers between src and dst --> return empty list
-        if (edgeMap.isEmpty()) { return Collections.emptyList(); }
+        if (edgeMap.isEmpty()) {
+            return Collections.emptyList();
+        }
 
         List<ComplexRead4Result> complexRead4Results = new ArrayList<>();
         for (Tuple7<Long, Integer, Double, Double, Integer, Double, Double> edge : edgeMap) {
-            complexRead4Results.add(new ComplexRead4Result(edge.f0, edge.f1, edge.f2, edge.f3, edge.f4, edge.f5, edge.f6));
+            complexRead4Results.add(
+                new ComplexRead4Result(edge.f0, edge.f1, edge.f2, edge.f3, edge.f4, edge.f5, edge.f6));
         }
 
         return complexRead4Results;

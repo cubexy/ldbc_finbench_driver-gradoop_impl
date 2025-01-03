@@ -42,6 +42,7 @@ class ComplexRead1GradoopOperator implements
      * the id of the account, the distance from the account to given one, the id and type of the related
      * medium.
      * Note: The returned accounts may exist in different distance from the given one.
+     *
      * @param temporalGraph input graph
      * @return id of the account, the distance from the account to given one, the id and type of the related
      * medium

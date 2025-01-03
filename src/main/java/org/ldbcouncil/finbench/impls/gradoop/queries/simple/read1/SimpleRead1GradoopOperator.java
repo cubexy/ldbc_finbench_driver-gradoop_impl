@@ -24,6 +24,7 @@ public class SimpleRead1GradoopOperator implements
 
     /**
      * Given an id of an Account, find the properties of the specific Account.
+     *
      * @param temporalGraph input graph
      * @return created time, isBlocked status and type of the Account
      */

@@ -1,9 +1,6 @@
 package org.ldbcouncil.finbench.impls.gradoop.queries.complex.read1;
 
-import java.util.ArrayList;
 import java.util.List;
-import org.apache.flink.api.java.DataSet;
-import org.apache.flink.api.java.tuple.Tuple4;
 import org.ldbcouncil.finbench.driver.DbException;
 import org.ldbcouncil.finbench.driver.OperationHandler;
 import org.ldbcouncil.finbench.driver.ResultReporter;

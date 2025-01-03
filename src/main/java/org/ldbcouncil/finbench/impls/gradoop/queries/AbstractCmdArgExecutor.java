@@ -1,8 +1,9 @@
 package org.ldbcouncil.finbench.impls.gradoop.queries;
+
+import org.apache.logging.log4j.Logger;
 import org.ldbcouncil.finbench.driver.DbException;
 import org.ldbcouncil.finbench.impls.gradoop.FlinkCmdArg;
 import org.ldbcouncil.finbench.impls.gradoop.GradoopFinbenchBaseGraphState;
-import org.apache.logging.log4j.Logger;
 
 public abstract class AbstractCmdArgExecutor<R> implements CmdArgExecutor<R> {
 
@@ -18,6 +19,7 @@ public abstract class AbstractCmdArgExecutor<R> implements CmdArgExecutor<R> {
 
     /**
      * Executes the query
+     *
      * @param graph Input graph
      * @return query result
      * @throws DbException error while executing query
@@ -26,6 +28,7 @@ public abstract class AbstractCmdArgExecutor<R> implements CmdArgExecutor<R> {
 
     /**
      * Initializes the query
+     *
      * @param inputArgs input arguments
      */
     public abstract void init(FlinkCmdArg inputArgs);

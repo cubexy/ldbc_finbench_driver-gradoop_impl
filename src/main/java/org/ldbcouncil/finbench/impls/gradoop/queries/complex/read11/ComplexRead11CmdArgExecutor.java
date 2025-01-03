@@ -7,7 +7,6 @@ import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead1
 import org.ldbcouncil.finbench.impls.gradoop.FlinkCmdArg;
 import org.ldbcouncil.finbench.impls.gradoop.GradoopFinbenchBaseGraphState;
 import org.ldbcouncil.finbench.impls.gradoop.queries.AbstractCmdArgExecutor;
-import org.ldbcouncil.finbench.impls.gradoop.queries.complex.read11.ComplexRead11GradoopOperator;
 
 public class ComplexRead11CmdArgExecutor extends AbstractCmdArgExecutor<List<ComplexRead11Result>> {
 
@@ -30,7 +29,8 @@ public class ComplexRead11CmdArgExecutor extends AbstractCmdArgExecutor<List<Com
 
     @Override
     public void init(FlinkCmdArg inputArgs) {
-        ComplexRead11 input = new ComplexRead11(inputArgs.getId(), inputArgs.getStartTime(), inputArgs.getEndTime(), inputArgs.getTruncationLimit(), inputArgs.getTruncationOrder());
+        ComplexRead11 input = new ComplexRead11(inputArgs.getId(), inputArgs.getStartTime(), inputArgs.getEndTime(),
+            inputArgs.getTruncationLimit(), inputArgs.getTruncationOrder());
         this.operator = new ComplexRead11GradoopOperator(input);
     }
 }

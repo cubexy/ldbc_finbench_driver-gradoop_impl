@@ -1,6 +1,5 @@
 package org.ldbcouncil.finbench.impls.gradoop.queries.complex.read3;
 
-import java.util.List;
 import org.ldbcouncil.finbench.driver.DbException;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead3;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead3Result;
@@ -29,7 +28,8 @@ public class ComplexRead3CmdArgExecutor extends AbstractCmdArgExecutor<ComplexRe
 
     @Override
     public void init(FlinkCmdArg inputArgs) {
-        ComplexRead3 input = new ComplexRead3(inputArgs.getId(), inputArgs.getId2(), inputArgs.getStartTime(), inputArgs.getEndTime());
+        ComplexRead3 input =
+            new ComplexRead3(inputArgs.getId(), inputArgs.getId2(), inputArgs.getStartTime(), inputArgs.getEndTime());
         this.operator = new ComplexRead3GradoopOperator(input);
     }
 }

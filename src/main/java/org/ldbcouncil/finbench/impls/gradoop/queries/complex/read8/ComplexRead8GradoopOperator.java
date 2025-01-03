@@ -51,6 +51,7 @@ class ComplexRead8GradoopOperator implements
      * with the final ratio and distanceFromLoan.
      * Note: Upstream of an edge refers to the aggregated total amounts of all transfer-in edges of its
      * source Account.
+     *
      * @param temporalGraph input graph
      * @return all the accounts’ id in the downstream of loan with the final ratio and distanceFromLoan
      */
@@ -95,7 +96,8 @@ class ComplexRead8GradoopOperator implements
 
                         GradoopId loanGradoopId = m.get("loan");
 
-                        double loanAmount = graphTransaction.getVertexById(loanGradoopId).getPropertyValue("loanAmount").getDouble();
+                        double loanAmount =
+                            graphTransaction.getVertexById(loanGradoopId).getPropertyValue("loanAmount").getDouble();
                         double inflow = 0.0;
                         boolean valid = true;
 
@@ -115,8 +117,8 @@ class ComplexRead8GradoopOperator implements
                         GradoopId lastDstGradoopId = minAccountDistance > 2
                             ? m.get("dst3")
                             : minAccountDistance > 1
-                                ? m.get("dst2")
-                                : m.get("dst");
+                            ? m.get("dst2")
+                            : m.get("dst");
 
                         long lastDstId =
                             graphTransaction.getVertexById(lastDstGradoopId).getPropertyValue("id").getLong();
@@ -146,7 +148,7 @@ class ComplexRead8GradoopOperator implements
             List<Tuple4<Long, Float, Integer, Boolean>> resultList = result.collect();
 
             for (Tuple4<Long, Float, Integer, Boolean> tuple : resultList) {
-                    complexRead8Results.add(new ComplexRead8Result(tuple.f0, tuple.f1, tuple.f2));
+                complexRead8Results.add(new ComplexRead8Result(tuple.f0, tuple.f1, tuple.f2));
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

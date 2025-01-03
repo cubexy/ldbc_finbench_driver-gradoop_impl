@@ -51,6 +51,7 @@ class ComplexRead7GradoopOperator implements
      * in (edge1) and transfer-out (edge2) whose amount exceeds threshold. Return the count of src and
      * dst accounts and the ratio of transfer-in amount over transfer-out amount. The fast-in and fash-out
      * means a tight window between startTime and endTime. Return the ratio as -1 if there is no edge2
+     *
      * @param temporalGraph input graph
      * @return list count of src and dst accounts and the ratio of transfer-in amount over transfer-out amount
      */

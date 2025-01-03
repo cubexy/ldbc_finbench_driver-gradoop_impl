@@ -43,6 +43,7 @@ class ComplexRead11GradoopOperator implements
      * Given a Person and a specified time window between startTime and endTime, find all the persons
      * in the guarantee chain until end and their loans applied. Return the sum of loan amount and the
      * count of distinct loans.
+     *
      * @param temporalGraph input graph
      * @return sum of loan amount and the count of distinct loans
      * @implNote Implementation only supports path lengths of up to 5 Person nodes because Gradoop does not support
@@ -62,8 +63,8 @@ class ComplexRead11GradoopOperator implements
             )
             .union(
                 windowedGraph.temporalQuery(
-                "MATCH (p1:Person)-[:guarantee]->(p2:Person)-[:guarantee]->(p3:Person)-[:guarantee]->(p4:Person), (p2)-[:apply]->(:Loan), (p3)-[:apply]->(:Loan), (p4)-[:apply]->(:Loan) " +
-                    " WHERE p1.id = " + this.id + "L"
+                    "MATCH (p1:Person)-[:guarantee]->(p2:Person)-[:guarantee]->(p3:Person)-[:guarantee]->(p4:Person), (p2)-[:apply]->(:Loan), (p3)-[:apply]->(:Loan), (p4)-[:apply]->(:Loan) " +
+                        " WHERE p1.id = " + this.id + "L"
                 )
             )
             .union(
@@ -92,7 +93,9 @@ class ComplexRead11GradoopOperator implements
             .map(new MapFunction<TemporalVertex, Tuple2<Double, Integer>>() {
                 @Override
                 public Tuple2<Double, Integer> map(TemporalVertex temporalVertex) {
-                    double sumAmount = CommonUtils.roundToDecimalPlaces(temporalVertex.getPropertyValue("sum_loanAmount").getDouble(), 3);
+                    double sumAmount =
+                        CommonUtils.roundToDecimalPlaces(temporalVertex.getPropertyValue("sum_loanAmount").getDouble(),
+                            3);
                     int count = (int) temporalVertex.getPropertyValue("count").getLong();
                     return new Tuple2<>(sumAmount, count);
                 }

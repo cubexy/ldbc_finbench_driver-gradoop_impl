@@ -33,6 +33,7 @@ class SimpleRead6GradoopOperator implements UnaryBaseGraphToValueOperator<Tempor
     /**
      * Given an Account (account), find all the blocked Accounts (dstAccounts) that connect to a common
      * account (midAccount) with the given Account (account). Return all the accounts’ id.
+     *
      * @param temporalGraph input graph
      * @return all the accounts’ id
      */
@@ -42,12 +43,12 @@ class SimpleRead6GradoopOperator implements UnaryBaseGraphToValueOperator<Tempor
             .subgraph(new LabelIsIn<>("Account"), new LabelIsIn<>("transfer"))
             .fromTo(this.startTime.getTime(), this.endTime.getTime());
 
-            DataSet<GraphTransaction> accounts = windowedGraph.query(
-                    "MATCH (src:Account)<-[e1:transfer]-(mid:Account)-[e2:transfer]->(dst:Account) WHERE src <> dst AND src.id =" +
-                        this.id +
-                        "L AND dst.isBlocked = true")
-                .toGraphCollection()
-                .getGraphTransactions();
+        DataSet<GraphTransaction> accounts = windowedGraph.query(
+                "MATCH (src:Account)<-[e1:transfer]-(mid:Account)-[e2:transfer]->(dst:Account) WHERE src <> dst AND src.id =" +
+                    this.id +
+                    "L AND dst.isBlocked = true")
+            .toGraphCollection()
+            .getGraphTransactions();
 
         DataSet<Tuple1<Long>> dataSetResult = accounts
             .map(new MapFunction<GraphTransaction, Tuple1<Long>>() {

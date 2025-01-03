@@ -1,9 +1,6 @@
 package org.ldbcouncil.finbench.impls.gradoop.queries.complex.read4;
 
-import java.util.ArrayList;
 import java.util.List;
-import org.apache.flink.api.java.DataSet;
-import org.apache.flink.api.java.tuple.Tuple7;
 import org.ldbcouncil.finbench.driver.DbException;
 import org.ldbcouncil.finbench.driver.OperationHandler;
 import org.ldbcouncil.finbench.driver.ResultReporter;
@@ -18,7 +15,8 @@ public class ComplexRead4Handler implements OperationHandler<ComplexRead4, Grado
     public void executeOperation(ComplexRead4 cr4, GradoopFinbenchBaseGraphState connectionState,
                                  ResultReporter resultReporter) throws DbException {
         GradoopImpl.logger.info(cr4.toString());
-        List<ComplexRead4Result> complexRead4Results = new ComplexRead4GradoopOperator(cr4).execute(connectionState.getGraph());
+        List<ComplexRead4Result> complexRead4Results =
+            new ComplexRead4GradoopOperator(cr4).execute(connectionState.getGraph());
         resultReporter.report(complexRead4Results.size(), complexRead4Results, cr4);
     }
 }
