@@ -97,13 +97,13 @@ class ComplexRead12GradoopOperator implements
         try {
             loanEdgesList = companyAmounts.collect();
         } catch (Exception e) {
-            throw new RuntimeException("Error while collecting results for complex read 11: " + e);
+            throw new RuntimeException(e);
         }
 
         List<ComplexRead12Result> complexRead12Results = new ArrayList<>();
 
         for (Tuple2<Long, Double> edge : loanEdgesList) {
-            complexRead12Results.add(new ComplexRead12Result(edge.f0, edge.f1));
+            complexRead12Results.add(new ComplexRead12Result(edge.f0, CommonUtils.roundToDecimalPlaces(edge.f1, 3)));
         }
 
         return complexRead12Results;

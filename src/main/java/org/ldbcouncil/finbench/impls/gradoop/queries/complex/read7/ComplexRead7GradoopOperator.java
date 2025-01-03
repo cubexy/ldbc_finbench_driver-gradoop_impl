@@ -121,13 +121,13 @@ class ComplexRead7GradoopOperator implements
             }
         }
 
-        float inOutRatio = -1.0f;
+        double inOutRatio = -1.0f;
 
         if (edge2Sum > 0.0) {
-            inOutRatio = roundToDecimalPlaces(edge1Sum / edge2Sum, 3).floatValue();
+            inOutRatio = roundToDecimalPlaces(edge1Sum / edge2Sum, 3);
         }
 
-        complexRead7Results.add(new ComplexRead7Result(edge1Count, edge2Count, inOutRatio));
+        complexRead7Results.add(new ComplexRead7Result(edge1Count, edge2Count, (float) inOutRatio));
 
         return complexRead7Results;
     }

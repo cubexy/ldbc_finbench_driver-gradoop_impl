@@ -88,7 +88,7 @@ class ComplexRead10GradoopOperator implements UnaryBaseGraphToValueOperator<Temp
             throw new RuntimeException(e);
         }
 
-        float jaccardSimilarity = jaccardCoefficient.f1 == 0 ? 0.0f : (float) jaccardCoefficient.f0 / jaccardCoefficient.f1;
+        float jaccardSimilarity = CommonUtils.roundToDecimalPlaces(jaccardCoefficient.f1 == 0 ? 0.0f : (float) jaccardCoefficient.f0 / jaccardCoefficient.f1, 3);
 
 
         return Collections.singletonList(new ComplexRead10Result(jaccardSimilarity));

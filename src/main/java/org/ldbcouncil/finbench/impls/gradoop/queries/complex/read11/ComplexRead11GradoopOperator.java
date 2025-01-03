@@ -98,7 +98,7 @@ class ComplexRead11GradoopOperator implements
             .map(new MapFunction<TemporalVertex, Tuple2<Double, Integer>>() {
                 @Override
                 public Tuple2<Double, Integer> map(TemporalVertex temporalVertex) throws Exception {
-                    double sumAmount = temporalVertex.getPropertyValue("sum_loanAmount").getDouble();
+                    double sumAmount = CommonUtils.roundToDecimalPlaces(temporalVertex.getPropertyValue("sum_loanAmount").getDouble(), 3);
                     int count = (int) temporalVertex.getPropertyValue("count").getLong();
                     return new Tuple2<>(sumAmount, count);
                 }
@@ -110,7 +110,7 @@ class ComplexRead11GradoopOperator implements
         try {
             loanEdgesList = loanEdges.collect();
         } catch (Exception e) {
-            throw new RuntimeException("Error while collecting results for complex read 11: " + e);
+            throw new RuntimeException(e);
         }
 
         if (loanEdgesList.isEmpty()) {

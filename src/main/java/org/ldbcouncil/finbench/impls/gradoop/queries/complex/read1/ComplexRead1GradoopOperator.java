@@ -100,7 +100,7 @@ class ComplexRead1GradoopOperator implements
             result.collect().forEach(
                 tuple -> complexRead1Results.add(new ComplexRead1Result(tuple.f0, tuple.f1, tuple.f2, tuple.f3)));
         } catch (Exception e) {
-            throw new RuntimeException("Error while collecting results for complex read 1: " + e);
+            throw new RuntimeException(e);
         }
 
         return complexRead1Results;

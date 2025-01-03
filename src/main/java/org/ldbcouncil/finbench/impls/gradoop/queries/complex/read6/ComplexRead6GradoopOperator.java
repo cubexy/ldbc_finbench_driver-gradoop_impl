@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.Set;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
+import org.apache.flink.api.common.operators.Order;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.api.java.tuple.Tuple4;
@@ -94,6 +95,12 @@ class ComplexRead6GradoopOperator implements
                     return new Tuple3<>(t1.f0, t1.f1 + t2.f1, t1.f2 + t2.f2);
                 }
             });
+
+        windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
+
+        edges = edges
+            .sortPartition(2, Order.DESCENDING)
+            .sortPartition(0, Order.ASCENDING);
 
         List<Tuple3<Long, Double, Double>> edgesList = null;
         try {
