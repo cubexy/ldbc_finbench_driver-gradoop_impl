@@ -6,14 +6,14 @@ import org.apache.logging.log4j.Logger;
 public class FlinkQueryExecutor {
 
     /**
-     * Executes a query.
+     * Executes a singular query, independent of the FinBench driver.
      *
      * @param args: queryName: name of the query to execute
      *              dataPath: path to the Gradoop data
-     *              id: ID of the person to execute the query
-     *              id2: ID of the person to execute the query
-     *              personId: ID of the person to execute the query
-     *              personId2: ID of the person to execute the query
+     *              id: ID
+     *              id2: ID2
+     *              personId: ID of a person
+     *              personId2: ID of a person2
      *              startTime: start time of the query
      *              endTime: end time of the query
      *              threshold: threshold of the query

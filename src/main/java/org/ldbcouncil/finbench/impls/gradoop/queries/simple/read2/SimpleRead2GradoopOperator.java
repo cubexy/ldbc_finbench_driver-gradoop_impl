@@ -79,7 +79,7 @@ public class SimpleRead2GradoopOperator implements
                 .join(lg.getVertices()).where(new SourceId<>()).equalTo(new Id<>())
                 .map(new MapFunction<Tuple2<EPGMEdge, EPGMVertex>, Tuple4<Double, Double, Long, String>>() {
                     @Override
-                    public Tuple4<Double, Double, Long, String> map(Tuple2<EPGMEdge, EPGMVertex> e) throws Exception {
+                    public Tuple4<Double, Double, Long, String> map(Tuple2<EPGMEdge, EPGMVertex> e) {
                         EPGMEdge edge = e.f0;
                         EPGMVertex src = e.f1;
 

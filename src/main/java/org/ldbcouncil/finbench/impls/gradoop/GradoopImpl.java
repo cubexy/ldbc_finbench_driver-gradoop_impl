@@ -92,41 +92,19 @@ public class GradoopImpl extends Db {
 
         final String gradoopGraphDataPath = properties.get("gradoop_import_path");
         final String mode = properties.get("gradoop_import_mode");
-        final String execMode = properties.get("gradoop_cluster_execution");
-        final String flinkEndpoint = properties.get("gradoop_cluster_url");
-        final int flinkEndpointPort = Integer.parseInt(properties.get("gradoop_cluster_port"));
-        final String flinkQueryDistributorClassName = properties.get("gradoop_query_executor_class");
-        final String flinkQueryExecutorJar = properties.get("gradoop_query_executor_jar");
 
 
-        if (gradoopGraphDataPath == null || mode == null || execMode == null || mode.isEmpty() ||
-            gradoopGraphDataPath.isEmpty() || execMode.isEmpty()) {
+        if (gradoopGraphDataPath == null || mode == null || mode.isEmpty() ||
+            gradoopGraphDataPath.isEmpty()) {
             throw new DbException(
                 "gradoop_import_path, gradoop_import_mode or gradoop_execution_mode not set in properties file");
-        }
-
-        final boolean clusterExecution = execMode.equals("true");
-
-        if (clusterExecution &&
-            (flinkEndpoint == null || flinkQueryDistributorClassName == null || flinkQueryExecutorJar == null ||
-                flinkEndpoint.isEmpty() || flinkQueryDistributorClassName.isEmpty() ||
-                flinkQueryExecutorJar.isEmpty())) {
-            throw new DbException(
-                "Gradoop cluster execution enabled but flink_endpoint, flink_query_executor_jar or flink_query_distributor_class_name not set in properties file");
-        }
-
-        try {
-            FlinkQueryDistributor distributor =
-                new FlinkQueryDistributor(flinkEndpoint, flinkEndpointPort, flinkQueryDistributorClassName, flinkQueryExecutorJar, logger);
-        } catch (Exception e) {
-            throw new DbException("Cluster could not be initialized", e);
         }
 
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         TemporalGradoopConfig config = TemporalGradoopConfig.createConfig(env);
 
         TemporalGraph tg = getTemporalGraph(mode, gradoopGraphDataPath, config);
-        this.graph = new GradoopFinbenchBaseGraphState(tg, clusterExecution);
+        this.graph = new GradoopFinbenchBaseGraphState(tg);
 
         //complex reads go here
         registerOperationHandler(ComplexRead1.class, ComplexRead1Handler.class);

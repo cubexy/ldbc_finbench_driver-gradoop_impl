@@ -2,7 +2,6 @@ package org.ldbcouncil.finbench.impls.gradoop.queries.simple.read3;
 
 import static org.ldbcouncil.finbench.impls.gradoop.CommonUtils.roundToDecimalPlaces;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -73,7 +72,7 @@ public class SimpleRead3GradoopOperator
             .getVertices()
             .map(new MapFunction<TemporalVertex, Tuple2<Integer, Integer>>() {
                 @Override
-                public Tuple2<Integer, Integer> map(TemporalVertex temporalVertex) throws Exception {
+                public Tuple2<Integer, Integer> map(TemporalVertex temporalVertex) {
                     if (temporalVertex.getPropertyValue("isBlocked").getType() == null) { // dst account
                         return new Tuple2<>(0, 0);
                     }
@@ -85,13 +84,13 @@ public class SimpleRead3GradoopOperator
                 new ReduceFunction<Tuple2<Integer, Integer>>() {
                     @Override
                     public Tuple2<Integer, Integer> reduce(Tuple2<Integer, Integer> t1,
-                                                           Tuple2<Integer, Integer> t2) throws Exception {
+                                                           Tuple2<Integer, Integer> t2) {
                         return new Tuple2<>(t1.f0 + t2.f0, t1.f1 + t2.f1);
                     }
                 }
             );
 
-        Tuple2<Integer, Integer> blockedNonBlockedAccounts = null;
+        Tuple2<Integer, Integer> blockedNonBlockedAccounts;
 
         try {
             List<Tuple2<Integer, Integer>> accountList = accounts.collect();

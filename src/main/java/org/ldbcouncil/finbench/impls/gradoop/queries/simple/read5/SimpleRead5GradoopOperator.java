@@ -47,7 +47,7 @@ class SimpleRead5GradoopOperator implements
      * exceeds threshold in a specific time range between startTime and endTime. Return the count of
      * transfer-ins and the amount sum.
      * @param temporalGraph input graph
-     * @return count of transfer-ins and the amount sum
+     * @return list count of transfer-ins and the amount sum
      */
     @Override
     public List<SimpleRead5Result> execute(TemporalGraph temporalGraph) {
@@ -79,7 +79,7 @@ class SimpleRead5GradoopOperator implements
                 edgeMap = transfers.getEdges().join(transfers.getVertices()).where(new TargetId<>()).equalTo(new Id<>())
                 .map(new MapFunction<Tuple2<TemporalEdge, TemporalVertex>, Tuple3<Long, Integer, Double>>() {
                     @Override
-                    public Tuple3<Long, Integer, Double> map(Tuple2<TemporalEdge, TemporalVertex> e) throws Exception {
+                    public Tuple3<Long, Integer, Double> map(Tuple2<TemporalEdge, TemporalVertex> e) {
                         TemporalEdge edge = e.f0;
                         TemporalVertex dst = e.f1;
 

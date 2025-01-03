@@ -1,7 +1,5 @@
 package org.ldbcouncil.finbench.impls.gradoop.queries.simple.read6;
 
-import static org.ldbcouncil.finbench.impls.gradoop.CommonUtils.roundToDecimalPlaces;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -54,7 +52,7 @@ class SimpleRead6GradoopOperator implements UnaryBaseGraphToValueOperator<Tempor
         DataSet<Tuple1<Long>> dataSetResult = accounts
             .map(new MapFunction<GraphTransaction, Tuple1<Long>>() {
                 @Override
-                public Tuple1<Long> map(GraphTransaction graphTransaction) throws Exception {
+                public Tuple1<Long> map(GraphTransaction graphTransaction) {
                     Map<String, GradoopId> m = CommonUtils.getVariableMapping(graphTransaction);
 
                     GradoopId accountId = m.get("dst");

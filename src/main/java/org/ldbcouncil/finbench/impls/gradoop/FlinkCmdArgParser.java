@@ -160,8 +160,8 @@ public class FlinkCmdArgParser {
         TemporalGradoopConfig config = TemporalGradoopConfig.createConfig(env);
 
         TemporalGraph tg = getTemporalGraph(mode, gradoopDataPath, config);
-        return new GradoopFinbenchBaseGraphState(tg,
-            false); // this command is being executed inside a cluster -> don't call another cluster
+        return new GradoopFinbenchBaseGraphState(tg
+        ); // this command is being executed inside a cluster -> don't call another cluster
     }
 
     /**
