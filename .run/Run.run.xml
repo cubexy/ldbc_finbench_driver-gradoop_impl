@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run" type="Application" factoryName="Application">
+    <option name="ALTERNATIVE_JRE_PATH" value="1.8" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+    <option name="MAIN_CLASS_NAME" value="org.ldbcouncil.finbench.driver.driver.Driver" />
+    <module name="driver" />
+    <option name="PROGRAM_PARAMETERS" value="-P src/main/resources/gradoop/ldbc_finbench_driver_gradoop.properties" />
+    <option name="VM_PARAMETERS" value="-d64 -Xms512m -Xmx14g" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
