@@ -100,7 +100,8 @@ public class GradoopImpl extends Db {
                 "gradoop_import_path, gradoop_import_mode or gradoop_execution_mode not set in properties file");
         }
 
-        ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+        ExecutionEnvironment env = ExecutionEnvironment.createRemoteEnvironment("localhost", 8081,8, "target/driver-0.2.0-alpha.jar");
+
         TemporalGradoopConfig config = TemporalGradoopConfig.createConfig(env);
 
         TemporalGraph tg = getTemporalGraph(mode, gradoopGraphDataPath, config);

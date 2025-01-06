@@ -8,7 +8,6 @@ services:
     environment:
       - HADOOP_HOME=/opt/hadoop
     volumes:
-      - ./hadoop_namenode:/opt/hadoop/data/nameNode
       - ./hadoop_config:/opt/hadoop/etc/hadoop
       - ./start-hdfs.sh:/start-hdfs.sh
     ports:
@@ -26,7 +25,6 @@ services:
     environment:
       - HADOOP_HOME=/opt/hadoop
     volumes:
-      - ./hadoop_datanode:/opt/hadoop/data/dataNode
       - ./hadoop_config:/opt/hadoop/etc/hadoop
       - ./init-datanode.sh:/init-datanode.sh
     depends_on:
@@ -53,8 +51,6 @@ services:
       - hdfs-namenode
     networks:
       - flink-network
-    volumes:
-      - ./flink/hadoop-conf/core-site.xml:/opt/hadoop-2.8.5/etc/hadoop/core-site.xml
 
   taskmanager:
     build: ./flink

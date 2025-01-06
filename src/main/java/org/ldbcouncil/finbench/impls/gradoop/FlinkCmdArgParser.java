@@ -156,7 +156,7 @@ public class FlinkCmdArgParser {
      * @throws DbException error while initializing the database
      */
     private GradoopFinbenchBaseGraphState initDatabase(String gradoopDataPath, String mode) throws DbException {
-        ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+        ExecutionEnvironment env = ExecutionEnvironment.createRemoteEnvironment("localhost", 8081, 4, "target/driver-0.2.0-alpha.jar");
         TemporalGradoopConfig config = TemporalGradoopConfig.createConfig(env);
 
         TemporalGraph tg = getTemporalGraph(mode, gradoopDataPath, config);
