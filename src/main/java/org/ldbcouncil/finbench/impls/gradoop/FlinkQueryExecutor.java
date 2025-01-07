@@ -7,6 +7,7 @@ public class FlinkQueryExecutor {
 
     /**
      * Executes a singular query, independent of the FinBench driver.
+     * WARNING!: This class is for singular execution ONLY! This does not start the FinBench benchmark.
      *
      * @param args: queryName: name of the query to execute
      *              dataPath: path to the Gradoop data
