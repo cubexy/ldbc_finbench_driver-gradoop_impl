@@ -14,6 +14,7 @@ import java.util.TimeZone;
 import org.gradoop.common.model.impl.id.GradoopId;
 import org.gradoop.common.model.impl.properties.PropertyValue;
 import org.gradoop.flink.model.impl.layouts.transactional.tuples.GraphTransaction;
+import org.ldbcouncil.finbench.driver.DbConnectionState;
 import org.ldbcouncil.finbench.driver.result.Path;
 
 public class CommonUtils {
@@ -43,6 +44,10 @@ public class CommonUtils {
             p.addId(l);
         }
         return p;
+    }
+
+    public static void setInitialParallelism(GradoopFinbenchBaseGraphState connectionState) {
+        connectionState.getGraph().getConfig().getExecutionEnvironment().setParallelism(connectionState.getParallelism());
     }
 
     public static Double roundToDecimalPlaces(Double num, int decimalPlaces) {

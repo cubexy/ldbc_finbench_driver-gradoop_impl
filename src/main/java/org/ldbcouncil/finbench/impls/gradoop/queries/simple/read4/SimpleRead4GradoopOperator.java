@@ -63,9 +63,6 @@ public class SimpleRead4GradoopOperator implements
             .subgraph(new LabelIsIn<>("Account"), new LabelIsIn<>("transfer"))
             .fromTo(this.startTime.getTime(), this.endTime.getTime());
 
-        windowedGraph.getConfig().getExecutionEnvironment().setParallelism(this.parallelism);
-
-
         final long id_serializable =
             this.id; // this is necessary because this.id is not serializable, which is needed for the transformVertices function
         TemporalGraph transfers = windowedGraph.query(
