@@ -1,6 +1,7 @@
 package org.ldbcouncil.finbench.impls.gradoop.queries.simple.read6;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -23,11 +24,13 @@ class SimpleRead6GradoopOperator implements UnaryBaseGraphToValueOperator<Tempor
     private final Long id;
     private final Date startTime;
     private final Date endTime;
+    private final boolean useFlinkSort;
 
-    public SimpleRead6GradoopOperator(SimpleRead6 sr6) {
+    public SimpleRead6GradoopOperator(SimpleRead6 sr6, boolean useFlinkSort) {
         this.id = sr6.getId();
         this.startTime = sr6.getStartTime();
         this.endTime = sr6.getEndTime();
+        this.useFlinkSort = useFlinkSort;
     }
 
     /**
@@ -67,19 +70,32 @@ class SimpleRead6GradoopOperator implements UnaryBaseGraphToValueOperator<Tempor
             })
             .distinct(0);
 
-        windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
+        if (this.useFlinkSort) {
+            windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
 
-        dataSetResult = dataSetResult
-            .sortPartition(0, Order.ASCENDING);
+            dataSetResult = dataSetResult
+                .sortPartition(0, Order.ASCENDING);
+        }
 
-        List<SimpleRead6Result> simpleRead6Results = new ArrayList<>();
+        List<Tuple1<Long>> resultList;
 
         try {
-            dataSetResult.collect().forEach(
-                tuple -> simpleRead6Results.add(new SimpleRead6Result(tuple.f0)));
+            resultList = dataSetResult.collect();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
+        if (!this.useFlinkSort) {
+            resultList.sort(Comparator
+                .comparing(t -> t.f0));
+        }
+
+        List<SimpleRead6Result> simpleRead6Results = new ArrayList<>();
+
+        for (Tuple1<Long> result : resultList) {
+            simpleRead6Results.add(new SimpleRead6Result(result.f0));
+        }
+
         return simpleRead6Results;
     }
 }

@@ -6,6 +6,7 @@ import org.ldbcouncil.finbench.driver.OperationHandler;
 import org.ldbcouncil.finbench.driver.ResultReporter;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead1;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead1Result;
+import org.ldbcouncil.finbench.impls.gradoop.CommonUtils;
 import org.ldbcouncil.finbench.impls.gradoop.GradoopFinbenchBaseGraphState;
 import org.ldbcouncil.finbench.impls.gradoop.GradoopImpl;
 
@@ -14,6 +15,7 @@ public class SimpleRead1Handler implements OperationHandler<SimpleRead1, Gradoop
     public void executeOperation(SimpleRead1 sr1, GradoopFinbenchBaseGraphState connectionState,
                                  ResultReporter resultReporter) throws DbException {
         GradoopImpl.logger.info(sr1.toString());
+        CommonUtils.setInitialParallelism(connectionState);
         List<SimpleRead1Result> simpleRead1Results =
             new SimpleRead1GradoopOperator(sr1).execute(connectionState.getGraph());
         resultReporter.report(simpleRead1Results.size(), simpleRead1Results, sr1);

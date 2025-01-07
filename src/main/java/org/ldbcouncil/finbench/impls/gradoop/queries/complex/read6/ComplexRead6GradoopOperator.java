@@ -3,6 +3,7 @@ package org.ldbcouncil.finbench.impls.gradoop.queries.complex.read6;
 import static org.ldbcouncil.finbench.impls.gradoop.CommonUtils.roundToDecimalPlaces;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,8 +33,9 @@ class ComplexRead6GradoopOperator implements
     private final boolean isTruncationOrderAscending;
     private final double threshold1;
     private final double threshold2;
+    private final boolean useFlinkSort;
 
-    public ComplexRead6GradoopOperator(ComplexRead6 cr6) {
+    public ComplexRead6GradoopOperator(ComplexRead6 cr6, boolean useFlinkSort) {
         this.id = cr6.getId();
         this.startTime = cr6.getStartTime().getTime();
         this.endTime = cr6.getEndTime().getTime();
@@ -42,6 +44,7 @@ class ComplexRead6GradoopOperator implements
         this.isTruncationOrderAscending = truncationOrder == TruncationOrder.TIMESTAMP_ASCENDING;
         this.threshold1 = cr6.getThreshold1();
         this.threshold2 = cr6.getThreshold2();
+        this.useFlinkSort = useFlinkSort;
     }
 
     /**
@@ -102,17 +105,25 @@ class ComplexRead6GradoopOperator implements
                 }
             });
 
-        windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
+        if (this.useFlinkSort) {
+            windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
 
-        edges = edges
-            .sortPartition(2, Order.DESCENDING)
-            .sortPartition(0, Order.ASCENDING);
+            edges = edges
+                .sortPartition(2, Order.DESCENDING)
+                .sortPartition(0, Order.ASCENDING);
+        }
 
         List<Tuple3<Long, Double, Double>> edgesList;
         try {
             edgesList = edges.collect();
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+
+        if (!this.useFlinkSort) {
+            edgesList.sort(Comparator
+                .comparing((Tuple3<Long, Double, Double> t) -> t.f2, Comparator.reverseOrder())
+                .thenComparing(t -> t.f0));
         }
 
         List<ComplexRead6Result> complexRead6Results = new ArrayList<>();

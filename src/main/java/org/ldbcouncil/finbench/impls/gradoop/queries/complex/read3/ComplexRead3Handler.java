@@ -7,6 +7,7 @@ import org.ldbcouncil.finbench.driver.OperationHandler;
 import org.ldbcouncil.finbench.driver.ResultReporter;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead3;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead3Result;
+import org.ldbcouncil.finbench.impls.gradoop.CommonUtils;
 import org.ldbcouncil.finbench.impls.gradoop.GradoopFinbenchBaseGraphState;
 import org.ldbcouncil.finbench.impls.gradoop.GradoopImpl;
 
@@ -16,6 +17,7 @@ public class ComplexRead3Handler implements OperationHandler<ComplexRead3, Grado
     public void executeOperation(ComplexRead3 cr3, GradoopFinbenchBaseGraphState connectionState,
                                  ResultReporter resultReporter) throws DbException {
         GradoopImpl.logger.info(cr3.toString());
+        CommonUtils.setInitialParallelism(connectionState);
         List<ComplexRead3Result> complexRead3Results =
             Collections.singletonList(new ComplexRead3GradoopOperator(cr3).execute(connectionState.getGraph()));
         resultReporter.report(complexRead3Results.size(), complexRead3Results, cr3);

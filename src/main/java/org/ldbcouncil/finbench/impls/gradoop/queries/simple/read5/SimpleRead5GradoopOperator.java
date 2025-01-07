@@ -4,12 +4,13 @@ import static org.ldbcouncil.finbench.impls.gradoop.CommonUtils.roundToDecimalPl
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.operators.Order;
-import org.apache.flink.api.java.operators.MapOperator;
+import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
@@ -34,12 +35,14 @@ class SimpleRead5GradoopOperator implements
     private final Date startTime;
     private final Date endTime;
     private final Double threshold;
+    private final boolean useFlinkSort;
 
-    public SimpleRead5GradoopOperator(SimpleRead5 sr5) {
+    public SimpleRead5GradoopOperator(SimpleRead5 sr5, boolean useFlinkSort) {
         this.id = sr5.getId();
         this.threshold = sr5.getThreshold();
         this.startTime = sr5.getStartTime();
         this.endTime = sr5.getEndTime();
+        this.useFlinkSort = useFlinkSort;
     }
 
     /**
@@ -56,60 +59,69 @@ class SimpleRead5GradoopOperator implements
             .subgraph(new LabelIsIn<>("Account"), new LabelIsIn<>("transfer"))
             .fromTo(this.startTime.getTime(), this.endTime.getTime());
 
-        try {
-            final long id_serializable =
-                this.id; // this is necessary because this.id is not serializable, which is needed for the transformVertices function
-            TemporalGraph transfers = windowedGraph.query(
-                    "MATCH (dst:Account)<-[transferIn:transfer]-(src:Account) WHERE src <> dst AND dst.id =" +
-                        id_serializable +
-                        "L AND transferIn.amount > " + this.threshold)
-                .reduce(new ReduceCombination<>())
-                .transformVertices((currentVertex, transformedVertex) -> {
-                    if (currentVertex.hasProperty("id") &&
-                        Objects.equals(currentVertex.getPropertyValue("id").getLong(), id_serializable)) {
-                        currentVertex.removeProperty("id");
-                    }
-                    return currentVertex;
-                }).callForGraph(
-                    new KeyedGrouping<>(Arrays.asList(GroupingKeys.label(), GroupingKeys.property("id")),
-                        null, null,
-                        Arrays.asList(new Count("count"), new SumProperty("amount")))
-                );
+        final long id_serializable =
+            this.id; // this is necessary because this.id is not serializable, which is needed for the transformVertices function
+        TemporalGraph transfers = windowedGraph.query(
+                "MATCH (dst:Account)<-[transferIn:transfer]-(src:Account) WHERE src <> dst AND dst.id =" +
+                    id_serializable +
+                    "L AND transferIn.amount > " + this.threshold)
+            .reduce(new ReduceCombination<>())
+            .transformVertices((currentVertex, transformedVertex) -> {
+                if (currentVertex.hasProperty("id") &&
+                    Objects.equals(currentVertex.getPropertyValue("id").getLong(), id_serializable)) {
+                    currentVertex.removeProperty("id");
+                }
+                return currentVertex;
+            }).callForGraph(
+                new KeyedGrouping<>(Arrays.asList(GroupingKeys.label(), GroupingKeys.property("id")),
+                    null, null,
+                    Arrays.asList(new Count("count"), new SumProperty("amount")))
+            );
 
-            MapOperator<Tuple2<TemporalEdge, TemporalVertex>, Tuple3<Long, Integer, Double>>
-                edgeMap = transfers.getEdges().join(transfers.getVertices()).where(new TargetId<>()).equalTo(new Id<>())
-                .map(new MapFunction<Tuple2<TemporalEdge, TemporalVertex>, Tuple3<Long, Integer, Double>>() {
-                    @Override
-                    public Tuple3<Long, Integer, Double> map(Tuple2<TemporalEdge, TemporalVertex> e) {
-                        TemporalEdge edge = e.f0;
-                        TemporalVertex dst = e.f1;
+        DataSet<Tuple3<Long, Integer, Double>>
+            edgeMap = transfers.getEdges().join(transfers.getVertices()).where(new TargetId<>()).equalTo(new Id<>())
+            .map(new MapFunction<Tuple2<TemporalEdge, TemporalVertex>, Tuple3<Long, Integer, Double>>() {
+                @Override
+                public Tuple3<Long, Integer, Double> map(Tuple2<TemporalEdge, TemporalVertex> e) {
+                    TemporalEdge edge = e.f0;
+                    TemporalVertex dst = e.f1;
 
-                        long dstId = dst.getPropertyValue("id").getLong(); //error here
-                        int numEdges = (int) edge.getPropertyValue("count").getLong();
-                        double sumAmount = roundToDecimalPlaces(edge.getPropertyValue("sum_amount").getDouble(), 3);
+                    long dstId = dst.getPropertyValue("id").getLong(); //error here
+                    int numEdges = (int) edge.getPropertyValue("count").getLong();
+                    double sumAmount = roundToDecimalPlaces(edge.getPropertyValue("sum_amount").getDouble(), 3);
 
-                        return new Tuple3<>(dstId, numEdges, sumAmount);
-                    }
+                    return new Tuple3<>(dstId, numEdges, sumAmount);
+                }
 
-                });
+            });
 
+        if (this.useFlinkSort) {
             windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
 
-            List<Tuple3<Long, Integer, Double>> edges = edgeMap
+            edgeMap = edgeMap
                 .sortPartition(2, Order.DESCENDING)
-                .sortPartition(0, Order.ASCENDING)
-                .collect();
+                .sortPartition(0, Order.ASCENDING);
+        }
 
-            List<SimpleRead5Result> simpleRead5Results = new ArrayList<>();
-
-            for (Tuple3<Long, Integer, Double> edge : edges) {
-                simpleRead5Results.add(new SimpleRead5Result(edge.f0, edge.f1, roundToDecimalPlaces(edge.f2, 3)));
-            }
-
-            return simpleRead5Results;
-
+        List<Tuple3<Long, Integer, Double>> edges;
+        try {
+            edges = edgeMap.collect();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
+        if (!this.useFlinkSort) {
+            edges.sort(Comparator
+                .comparing((Tuple3<Long, Integer, Double> t) -> t.f2, Comparator.reverseOrder())
+                .thenComparing(t -> t.f0));
+        }
+
+        List<SimpleRead5Result> simpleRead5Results = new ArrayList<>();
+
+        for (Tuple3<Long, Integer, Double> edge : edges) {
+            simpleRead5Results.add(new SimpleRead5Result(edge.f0, edge.f1, roundToDecimalPlaces(edge.f2, 3)));
+        }
+
+        return simpleRead5Results;
     }
 }

@@ -3,6 +3,7 @@ package org.ldbcouncil.finbench.impls.gradoop.queries.complex.read8;
 import static org.ldbcouncil.finbench.impls.gradoop.CommonUtils.roundToDecimalPlaces;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,8 +32,9 @@ class ComplexRead8GradoopOperator implements
     private final int truncationLimit;
     private final boolean isTruncationOrderAscending;
     private final double threshold;
+    private final boolean useFlinkSort;
 
-    public ComplexRead8GradoopOperator(ComplexRead8 cr8) {
+    public ComplexRead8GradoopOperator(ComplexRead8 cr8, boolean useFlinkSort) {
         this.id = cr8.getId();
         this.startTime = cr8.getStartTime().getTime();
         this.endTime = cr8.getEndTime().getTime();
@@ -40,6 +42,7 @@ class ComplexRead8GradoopOperator implements
         final TruncationOrder truncationOrder = cr8.getTruncationOrder();
         this.isTruncationOrderAscending = truncationOrder == TruncationOrder.TIMESTAMP_ASCENDING;
         this.threshold = cr8.getThreshold();
+        this.useFlinkSort = useFlinkSort;
     }
 
     /**
@@ -135,23 +138,34 @@ class ComplexRead8GradoopOperator implements
                     }
                 });
 
-        windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
+        if (this.useFlinkSort) {
+            windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
 
-        result = result
-            .sortPartition(2, Order.DESCENDING)
-            .sortPartition(1, Order.DESCENDING)
-            .sortPartition(0, Order.ASCENDING);
+            result = result
+                .sortPartition(2, Order.DESCENDING)
+                .sortPartition(1, Order.DESCENDING)
+                .sortPartition(0, Order.ASCENDING);
+        }
+
+        List<Tuple4<Long, Float, Integer, Boolean>> resultList;
+
+        try {
+            resultList = result.collect();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        if (!this.useFlinkSort) {
+            resultList.sort(Comparator
+                .comparing((Tuple4<Long, Float, Integer, Boolean> t) -> t.f2, Comparator.reverseOrder())
+                .thenComparing((Tuple4<Long, Float, Integer, Boolean> t) -> t.f1, Comparator.reverseOrder())
+                .thenComparing(t -> t.f0));
+        }
 
         List<ComplexRead8Result> complexRead8Results = new ArrayList<>();
 
-        try {
-            List<Tuple4<Long, Float, Integer, Boolean>> resultList = result.collect();
-
-            for (Tuple4<Long, Float, Integer, Boolean> tuple : resultList) {
-                complexRead8Results.add(new ComplexRead8Result(tuple.f0, tuple.f1, tuple.f2));
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        for (Tuple4<Long, Float, Integer, Boolean> tuple : resultList) {
+            complexRead8Results.add(new ComplexRead8Result(tuple.f0, tuple.f1, tuple.f2));
         }
 
         return complexRead8Results;

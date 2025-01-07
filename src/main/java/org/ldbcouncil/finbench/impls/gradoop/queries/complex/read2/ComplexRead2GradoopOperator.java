@@ -4,10 +4,11 @@ import static org.ldbcouncil.finbench.impls.gradoop.CommonUtils.roundToDecimalPl
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.operators.Order;
-import org.apache.flink.api.java.operators.MapOperator;
+import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.gradoop.common.model.impl.pojo.EPGMEdge;
@@ -35,14 +36,16 @@ class ComplexRead2GradoopOperator implements
     private final long endTime;
     private final int truncationLimit;
     private final boolean isTruncationOrderAscending;
+    private final boolean useFlinkSort;
 
-    public ComplexRead2GradoopOperator(ComplexRead2 complexRead2) {
+    public ComplexRead2GradoopOperator(ComplexRead2 complexRead2, boolean useFlinkSort) {
         this.id = complexRead2.getId();
         this.startTime = complexRead2.getStartTime().getTime();
         this.endTime = complexRead2.getEndTime().getTime();
         this.truncationLimit = complexRead2.getTruncationLimit();
         final TruncationOrder truncationOrder = complexRead2.getTruncationOrder();
         this.isTruncationOrderAscending = truncationOrder == TruncationOrder.TIMESTAMP_ASCENDING;
+        this.useFlinkSort = useFlinkSort;
     }
 
     /**
@@ -96,7 +99,7 @@ class ComplexRead2GradoopOperator implements
                     null)
             );
 
-        MapOperator<Tuple2<EPGMEdge, EPGMVertex>, Tuple3<Long, Double, Double>>
+        DataSet<Tuple3<Long, Double, Double>>
             edgeMap = gcUnion.getEdges().join(gcUnion.getVertices()).where(new SourceId<>()).equalTo(new Id<>())
             .map(new MapFunction<Tuple2<EPGMEdge, EPGMVertex>, Tuple3<Long, Double, Double>>() {
                 @Override
@@ -111,17 +114,25 @@ class ComplexRead2GradoopOperator implements
 
             });
 
-        windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
+        if (this.useFlinkSort) {
+            windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
 
+            edgeMap = edgeMap
+                .sortPartition(1, Order.DESCENDING)
+                .sortPartition(0, Order.ASCENDING);
+        }
 
         List<Tuple3<Long, Double, Double>> edges;
         try {
-            edges = edgeMap
-                .sortPartition(1, Order.DESCENDING)
-                .sortPartition(0, Order.ASCENDING)
-                .collect();
+            edges = edgeMap.collect();
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+
+        if (!this.useFlinkSort) {
+            edges.sort(Comparator
+                .comparing((Tuple3<Long, Double, Double> t) -> t.f1, Comparator.reverseOrder())
+                .thenComparing(t -> t.f0));
         }
 
         List<ComplexRead2Result> complexRead2Results = new ArrayList<>();

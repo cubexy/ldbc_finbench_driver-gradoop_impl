@@ -2,6 +2,7 @@ package org.ldbcouncil.finbench.impls.gradoop.queries.complex.read5;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import org.apache.flink.api.common.functions.MapFunction;
@@ -25,14 +26,16 @@ class ComplexRead5GradoopOperator implements UnaryBaseGraphToValueOperator<Tempo
     private final long endTime;
     private final int truncationLimit;
     private final boolean isTruncationOrderAscending;
+    private final boolean useFlinkSort;
 
-    public ComplexRead5GradoopOperator(ComplexRead5 cr5) {
+    public ComplexRead5GradoopOperator(ComplexRead5 cr5, boolean useFlinkSort) {
         this.id = cr5.getId();
         this.startTime = cr5.getStartTime().getTime();
         this.endTime = cr5.getEndTime().getTime();
         this.truncationLimit = cr5.getTruncationLimit();
         final TruncationOrder truncationOrder = cr5.getTruncationOrder();
         this.isTruncationOrderAscending = truncationOrder == TruncationOrder.TIMESTAMP_ASCENDING;
+        this.useFlinkSort = useFlinkSort;
     }
 
     /**
@@ -101,20 +104,32 @@ class ComplexRead5GradoopOperator implements UnaryBaseGraphToValueOperator<Tempo
                 }
             }).distinct(0, 1, 2, 3);
 
-        windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
+        if (this.useFlinkSort) {
+            windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
 
-        result = result
-            .sortPartition(1, Order.DESCENDING);
+            result = result
+                .sortPartition(4, Order.DESCENDING);
+        }
+
+        List<Tuple5<Long, Long, Long, Long, Integer>> resultList;
+
+        try {
+            resultList = result.collect();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        if (!this.useFlinkSort) {
+            resultList.sort(Comparator
+                .comparing((Tuple5<Long, Long, Long, Long, Integer> t) -> t.f4, Comparator.reverseOrder()));
+        }
 
         List<ComplexRead5Result> complexRead5Results = new ArrayList<>();
 
-        try {
-            result.collect().forEach(
-                tuple -> complexRead5Results.add(
-                    new ComplexRead5Result(CommonUtils.parsePath(Arrays.asList(tuple.f0, tuple.f1, tuple.f2,
-                        tuple.f3)))));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        for (Tuple5<Long, Long, Long, Long, Integer> tuple5 : resultList) {
+            complexRead5Results.add(
+                new ComplexRead5Result(CommonUtils.parsePath(Arrays.asList(tuple5.f0, tuple5.f1, tuple5.f2,
+                    tuple5.f3))));
         }
 
         return complexRead5Results;

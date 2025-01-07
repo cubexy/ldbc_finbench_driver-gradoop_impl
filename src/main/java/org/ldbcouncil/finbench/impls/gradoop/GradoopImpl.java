@@ -57,8 +57,17 @@ public class GradoopImpl extends Db {
     public static Logger logger = LogManager.getLogger("GradoopImpl");
     private GradoopFinbenchBaseGraphState graph;
 
-    protected static TemporalGraph getTemporalGraph(String mode, String gradoopGraphDataPath,
-                                                    TemporalGradoopConfig config) throws DbException {
+    /**
+     * Initializes the TemporalGraph based on the specified import mode.
+     *
+     * @param mode                 import mode (csv | indexed-csv | parquet | parquet-protobuf)
+     * @param gradoopGraphDataPath path to the Gradoop data
+     * @param config               TemporalGradoopConfig
+     * @return TemporalGraph
+     * @throws DbException error while initializing the TemporalGraph
+     */
+    public static TemporalGraph getTemporalGraph(String mode, String gradoopGraphDataPath,
+                                                 TemporalGradoopConfig config) throws DbException {
         final TemporalDataSource dataSource;
         switch (mode) {
             case "csv":
@@ -86,13 +95,21 @@ public class GradoopImpl extends Db {
         return tg;
     }
 
+    /**
+     * Initializes the Gradoop implementation and registers all the available operations.
+     *
+     * @param properties     Input properties
+     * @param loggingService Logging service
+     * @throws DbException Error while initializing the Gradoop implementation
+     */
     @Override
-    protected void onInit(Map<String, String> properties, LoggingService loggingService) throws DbException {
+    public void onInit(Map<String, String> properties, LoggingService loggingService) throws DbException {
         logger.info("Initializing Gradoop");
 
         final String gradoopGraphDataPath = properties.get("gradoop_import_path");
         final String mode = properties.get("gradoop_import_mode");
-
+        final boolean useFlinkSort = Boolean.parseBoolean(properties.get("use_flink_sort"));
+        final int parallelism = Integer.parseInt(properties.get("parallelism"));
 
         if (gradoopGraphDataPath == null || mode == null || mode.isEmpty() ||
             gradoopGraphDataPath.isEmpty()) {
@@ -100,12 +117,14 @@ public class GradoopImpl extends Db {
                 "gradoop_import_path, gradoop_import_mode or gradoop_execution_mode not set in properties file");
         }
 
-        ExecutionEnvironment env = ExecutionEnvironment.createRemoteEnvironment("localhost", 8081,8, "target/driver-0.2.0-alpha.jar");
+        ExecutionEnvironment env =
+            ExecutionEnvironment.createRemoteEnvironment("localhost", 8081, parallelism,
+                "target/driver-0.2.0-alpha.jar");
 
         TemporalGradoopConfig config = TemporalGradoopConfig.createConfig(env);
 
         TemporalGraph tg = getTemporalGraph(mode, gradoopGraphDataPath, config);
-        this.graph = new GradoopFinbenchBaseGraphState(tg);
+        this.graph = new GradoopFinbenchBaseGraphState(tg, useFlinkSort, parallelism);
 
         //complex reads go here
         registerOperationHandler(ComplexRead1.class, ComplexRead1Handler.class);
@@ -120,6 +139,7 @@ public class GradoopImpl extends Db {
         registerOperationHandler(ComplexRead10.class, ComplexRead10Handler.class);
         registerOperationHandler(ComplexRead11.class, ComplexRead11Handler.class);
         registerOperationHandler(ComplexRead12.class, ComplexRead12Handler.class);
+
         //simple reads go here
         registerOperationHandler(SimpleRead1.class, SimpleRead1Handler.class);
         registerOperationHandler(SimpleRead2.class, SimpleRead2Handler.class);
@@ -130,13 +150,21 @@ public class GradoopImpl extends Db {
         logger.info("Gradoop initialization complete");
     }
 
+    /**
+     * Closes the Gradoop implementation. (not used/needed)
+     */
     @Override
-    protected void onClose() {
+    public void onClose() {
         logger.info("Waiting for all tasks to finish...");
     }
 
+    /**
+     * Returns the graph state.
+     *
+     * @return graph state
+     */
     @Override
-    protected DbConnectionState getConnectionState() {
+    public DbConnectionState getConnectionState() {
         return graph;
     }
 }

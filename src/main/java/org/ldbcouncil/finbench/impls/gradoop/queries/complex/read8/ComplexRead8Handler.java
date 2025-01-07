@@ -6,6 +6,7 @@ import org.ldbcouncil.finbench.driver.OperationHandler;
 import org.ldbcouncil.finbench.driver.ResultReporter;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead8;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead8Result;
+import org.ldbcouncil.finbench.impls.gradoop.CommonUtils;
 import org.ldbcouncil.finbench.impls.gradoop.GradoopFinbenchBaseGraphState;
 import org.ldbcouncil.finbench.impls.gradoop.GradoopImpl;
 
@@ -15,8 +16,9 @@ public class ComplexRead8Handler implements OperationHandler<ComplexRead8, Grado
     public void executeOperation(ComplexRead8 cr8, GradoopFinbenchBaseGraphState connectionState,
                                  ResultReporter resultReporter) throws DbException {
         GradoopImpl.logger.info(cr8.toString());
+        CommonUtils.setInitialParallelism(connectionState);
         List<ComplexRead8Result> complexRead8Results =
-            new ComplexRead8GradoopOperator(cr8).execute(connectionState.getGraph());
+            new ComplexRead8GradoopOperator(cr8, connectionState.isFlinkSort()).execute(connectionState.getGraph());
         resultReporter.report(complexRead8Results.size(), complexRead8Results, cr8);
     }
 }
