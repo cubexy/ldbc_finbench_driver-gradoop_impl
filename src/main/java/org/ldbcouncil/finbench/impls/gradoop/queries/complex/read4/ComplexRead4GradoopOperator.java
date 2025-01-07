@@ -165,7 +165,8 @@ class ComplexRead4GradoopOperator implements
 
         if (!this.useFlinkSort) {
             edgeMap.sort(Comparator
-                .comparing((Tuple7<Long, Integer, Double, Double, Integer, Double, Double> t) -> t.f2, Comparator.reverseOrder())
+                .comparing((Tuple7<Long, Integer, Double, Double, Integer, Double, Double> t) -> t.f2,
+                    Comparator.reverseOrder())
                 .thenComparing(t -> t.f5)
                 .thenComparing(t -> t.f0));
         }
