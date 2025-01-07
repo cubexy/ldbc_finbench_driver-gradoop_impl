@@ -92,7 +92,8 @@ public class GradoopImpl extends Db {
 
         final String gradoopGraphDataPath = properties.get("gradoop_import_path");
         final String mode = properties.get("gradoop_import_mode");
-
+        final boolean useFlinkSort = Boolean.parseBoolean(properties.get("use_flink_sort"));
+        final int parallelism = Integer.parseInt(properties.get("parallelism"));
 
         if (gradoopGraphDataPath == null || mode == null || mode.isEmpty() ||
             gradoopGraphDataPath.isEmpty()) {
@@ -105,7 +106,7 @@ public class GradoopImpl extends Db {
         TemporalGradoopConfig config = TemporalGradoopConfig.createConfig(env);
 
         TemporalGraph tg = getTemporalGraph(mode, gradoopGraphDataPath, config);
-        this.graph = new GradoopFinbenchBaseGraphState(tg);
+        this.graph = new GradoopFinbenchBaseGraphState(tg, useFlinkSort, parallelism);
 
         //complex reads go here
         registerOperationHandler(ComplexRead1.class, ComplexRead1Handler.class);

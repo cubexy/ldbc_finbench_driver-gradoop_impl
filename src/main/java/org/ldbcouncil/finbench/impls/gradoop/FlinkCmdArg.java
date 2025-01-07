@@ -10,6 +10,8 @@ public class FlinkCmdArg {
     private String mode;
     private String queryName;
     private String dataPath;
+    private int parallelism;
+    private boolean useClusterSort = false;
     private long id;
     private long id2;
     private long personId;
@@ -40,7 +42,7 @@ public class FlinkCmdArg {
      * @param cmd command line arguments
      */
     private void initializeFromArgs(CommandLine cmd, Set<String> availableQueryNames) {
-        if (!cmd.hasOption("d") || !cmd.hasOption("q") || !cmd.hasOption("m")) {
+        if (!cmd.hasOption("d") || !cmd.hasOption("q") || !cmd.hasOption("m") || !cmd.hasOption("p")) {
             throw new RuntimeException("Missing required arguments");
         }
         if (cmd.hasOption("q_id")) {
@@ -57,6 +59,12 @@ public class FlinkCmdArg {
         }
         if (cmd.hasOption("m")) {
             setMode(cmd.getOptionValue("m"));
+        }
+        if (cmd.hasOption("cs")) {
+            setClusterSort(true);
+        }
+        if (cmd.hasOption("parallelism")) {
+            setParallelism(Integer.parseInt(cmd.getOptionValue("parallelism")));
         }
         if (cmd.hasOption("q_pid1")) {
             setPersonId(cmd.getOptionValue("q_pid1"));
@@ -107,6 +115,15 @@ public class FlinkCmdArg {
 
         this.queryName = queryName;
     }
+
+    public boolean isClusterSort() {
+        return useClusterSort;
+    }
+
+    public void setClusterSort(boolean useClusterSort) {
+        this.useClusterSort = useClusterSort;
+    }
+
 
     public long getId() {
         return id;
@@ -195,5 +212,13 @@ public class FlinkCmdArg {
 
     public void setDataPath(String dataPath) {
         this.dataPath = dataPath;
+    }
+
+    public int getParallelism() {
+        return parallelism;
+    }
+
+    public void setParallelism(int parallelism) {
+        this.parallelism = parallelism;
     }
 }

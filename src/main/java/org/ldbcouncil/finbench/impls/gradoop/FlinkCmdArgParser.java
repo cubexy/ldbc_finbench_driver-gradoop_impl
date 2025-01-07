@@ -67,7 +67,7 @@ public class FlinkCmdArgParser {
         logger.info("FlinkCmdArgParser initialized.");
 
         logger.info("Initializing temporal graph...");
-        final GradoopFinbenchBaseGraphState graph = initDatabase(inputArgs.getDataPath(), inputArgs.getMode());
+        final GradoopFinbenchBaseGraphState graph = initDatabase(inputArgs.getDataPath(), inputArgs.getMode(), inputArgs.isClusterSort(), inputArgs.getParallelism());
         logger.info("FlinkCmdArgParser graph initialized.");
 
         logger.info("Executing query...");
@@ -101,6 +101,8 @@ public class FlinkCmdArgParser {
         options.addOption("q", "query", true, "Query to execute (simple_read_1..6 | complex_read_1..12)");
         options.addOption("m", "mode", true, "Import mode to use (csv | indexed-csv | parquet | parquet-protobuf)");
         options.addOption("d", "data_path", true, "gradoop data path");
+        options.addOption("cs", "cluster_sort", false, "Sort mode (use arg to enable cluster sort)");
+        options.addOption("p", "parallelism", true, "Parallelism on cluster");
         options.addOption("q_id", "id", true, "[query arg] ID");
         options.addOption("q_id2", "id2", true, "[query arg] ID 2");
         options.addOption("q_pid1", "p_id_1", true, "[query arg] person ID 1");
@@ -152,16 +154,16 @@ public class FlinkCmdArgParser {
      *
      * @param gradoopDataPath path to the Gradoop data
      * @param mode            import mode (csv | indexed-csv | parquet | parquet-protobuf)
+     * @param clusterSort
      * @return GradoopFinbenchBaseGraphState
      * @throws DbException error while initializing the database
      */
-    private GradoopFinbenchBaseGraphState initDatabase(String gradoopDataPath, String mode) throws DbException {
+    private GradoopFinbenchBaseGraphState initDatabase(String gradoopDataPath, String mode, boolean clusterSort, int parallelism) throws DbException {
         ExecutionEnvironment env = ExecutionEnvironment.createRemoteEnvironment("localhost", 8081, 4, "target/driver-0.2.0-alpha.jar");
         TemporalGradoopConfig config = TemporalGradoopConfig.createConfig(env);
 
         TemporalGraph tg = getTemporalGraph(mode, gradoopDataPath, config);
-        return new GradoopFinbenchBaseGraphState(tg
-        ); // this command is being executed inside a cluster -> don't call another cluster
+        return new GradoopFinbenchBaseGraphState(tg, clusterSort, parallelism);
     }
 
     /**
