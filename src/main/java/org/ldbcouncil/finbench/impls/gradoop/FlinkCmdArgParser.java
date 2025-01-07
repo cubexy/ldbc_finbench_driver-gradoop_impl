@@ -154,12 +154,13 @@ public class FlinkCmdArgParser {
      *
      * @param gradoopDataPath path to the Gradoop data
      * @param mode            import mode (csv | indexed-csv | parquet | parquet-protobuf)
-     * @param clusterSort
+     * @param clusterSort     sort mode (true = cluster sort, false = local sort)
+     * @param parallelism     parallelism on cluster
      * @return GradoopFinbenchBaseGraphState
      * @throws DbException error while initializing the database
      */
     private GradoopFinbenchBaseGraphState initDatabase(String gradoopDataPath, String mode, boolean clusterSort, int parallelism) throws DbException {
-        ExecutionEnvironment env = ExecutionEnvironment.createRemoteEnvironment("localhost", 8081, 4, "target/driver-0.2.0-alpha.jar");
+        ExecutionEnvironment env = ExecutionEnvironment.createRemoteEnvironment("localhost", 8081, parallelism, "target/driver-0.2.0-alpha.jar");
         TemporalGradoopConfig config = TemporalGradoopConfig.createConfig(env);
 
         TemporalGraph tg = getTemporalGraph(mode, gradoopDataPath, config);
