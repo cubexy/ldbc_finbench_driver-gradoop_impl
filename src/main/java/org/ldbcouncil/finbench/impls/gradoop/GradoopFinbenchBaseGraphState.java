@@ -10,6 +10,13 @@ public class GradoopFinbenchBaseGraphState extends DbConnectionState {
     private final boolean useFlinkSort;
     private final int parallelism;
 
+    /**
+     * GraphBaseState that holds the TemporalGraph and the parallelism.
+     *
+     * @param graph        Finbench graph
+     * @param useFlinkSort use flink sort or java sort
+     * @param parallelism  parallelism
+     */
     public GradoopFinbenchBaseGraphState(TemporalGraph graph, boolean useFlinkSort, int parallelism) {
         this.graph = graph;
         this.useFlinkSort = useFlinkSort;

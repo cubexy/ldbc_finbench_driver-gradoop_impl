@@ -57,8 +57,17 @@ public class GradoopImpl extends Db {
     public static Logger logger = LogManager.getLogger("GradoopImpl");
     private GradoopFinbenchBaseGraphState graph;
 
-    protected static TemporalGraph getTemporalGraph(String mode, String gradoopGraphDataPath,
-                                                    TemporalGradoopConfig config) throws DbException {
+    /**
+     * Initializes the TemporalGraph based on the specified import mode.
+     *
+     * @param mode                 import mode (csv | indexed-csv | parquet | parquet-protobuf)
+     * @param gradoopGraphDataPath path to the Gradoop data
+     * @param config               TemporalGradoopConfig
+     * @return TemporalGraph
+     * @throws DbException error while initializing the TemporalGraph
+     */
+    public static TemporalGraph getTemporalGraph(String mode, String gradoopGraphDataPath,
+                                                 TemporalGradoopConfig config) throws DbException {
         final TemporalDataSource dataSource;
         switch (mode) {
             case "csv":
@@ -86,8 +95,15 @@ public class GradoopImpl extends Db {
         return tg;
     }
 
+    /**
+     * Initializes the Gradoop implementation and registers all the available operations.
+     *
+     * @param properties     Input properties
+     * @param loggingService Logging service
+     * @throws DbException Error while initializing the Gradoop implementation
+     */
     @Override
-    protected void onInit(Map<String, String> properties, LoggingService loggingService) throws DbException {
+    public void onInit(Map<String, String> properties, LoggingService loggingService) throws DbException {
         logger.info("Initializing Gradoop");
 
         final String gradoopGraphDataPath = properties.get("gradoop_import_path");
@@ -102,7 +118,8 @@ public class GradoopImpl extends Db {
         }
 
         ExecutionEnvironment env =
-            ExecutionEnvironment.createRemoteEnvironment("localhost", 8081, parallelism, "target/driver-0.2.0-alpha.jar");
+            ExecutionEnvironment.createRemoteEnvironment("localhost", 8081, parallelism,
+                "target/driver-0.2.0-alpha.jar");
 
         TemporalGradoopConfig config = TemporalGradoopConfig.createConfig(env);
 
@@ -133,13 +150,21 @@ public class GradoopImpl extends Db {
         logger.info("Gradoop initialization complete");
     }
 
+    /**
+     * Closes the Gradoop implementation. (not used/needed)
+     */
     @Override
-    protected void onClose() {
+    public void onClose() {
         logger.info("Waiting for all tasks to finish...");
     }
 
+    /**
+     * Returns the graph state.
+     *
+     * @return graph state
+     */
     @Override
-    protected DbConnectionState getConnectionState() {
+    public DbConnectionState getConnectionState() {
         return graph;
     }
 }
