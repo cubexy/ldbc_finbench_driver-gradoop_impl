@@ -18,7 +18,7 @@ public class SimpleRead4Handler implements OperationHandler<SimpleRead4, Gradoop
         GradoopImpl.logger.info(sr4.toString());
         CommonUtils.setInitialParallelism(connectionState);
         List<SimpleRead4Result> simpleRead4Results =
-            new SimpleRead4GradoopOperator(sr4, connectionState.getParallelism(), connectionState.isFlinkSort()).execute(connectionState.getGraph());
+            new SimpleRead4GradoopOperator(sr4, connectionState.isFlinkSort()).execute(connectionState.getGraph());
         resultReporter.report(simpleRead4Results.size(), simpleRead4Results, sr4);
     }
 }

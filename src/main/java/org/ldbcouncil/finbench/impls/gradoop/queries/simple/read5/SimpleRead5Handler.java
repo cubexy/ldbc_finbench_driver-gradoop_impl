@@ -18,7 +18,7 @@ public class SimpleRead5Handler implements OperationHandler<SimpleRead5, Gradoop
         GradoopImpl.logger.info(sr5.toString());
         CommonUtils.setInitialParallelism(connectionState);
         List<SimpleRead5Result> simpleRead5Results =
-            new SimpleRead5GradoopOperator(sr5).execute(connectionState.getGraph());
+            new SimpleRead5GradoopOperator(sr5, connectionState.isFlinkSort()).execute(connectionState.getGraph());
         resultReporter.report(simpleRead5Results.size(), simpleRead5Results, sr5);
     }
 }

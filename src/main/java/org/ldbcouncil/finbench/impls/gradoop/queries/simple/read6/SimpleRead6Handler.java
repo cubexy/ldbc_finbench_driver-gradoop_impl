@@ -18,7 +18,7 @@ public class SimpleRead6Handler implements OperationHandler<SimpleRead6, Gradoop
         GradoopImpl.logger.info(sr6.toString());
         CommonUtils.setInitialParallelism(connectionState);
         List<SimpleRead6Result> simpleRead6Results =
-            new SimpleRead6GradoopOperator(sr6).execute(connectionState.getGraph());
+            new SimpleRead6GradoopOperator(sr6, connectionState.isFlinkSort()).execute(connectionState.getGraph());
         resultReporter.report(simpleRead6Results.size(), simpleRead6Results, sr6);
     }
 }

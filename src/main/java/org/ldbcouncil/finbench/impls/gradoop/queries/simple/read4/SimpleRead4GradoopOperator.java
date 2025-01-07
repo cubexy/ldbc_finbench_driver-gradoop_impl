@@ -37,15 +37,13 @@ public class SimpleRead4GradoopOperator implements
     private final Date startTime;
     private final Date endTime;
     private final Double threshold;
-    private final int parallelism;
     private final boolean useFlinkSort;
 
-    public SimpleRead4GradoopOperator(SimpleRead4 sr4, int parallelism, boolean useFlinkSort) {
+    public SimpleRead4GradoopOperator(SimpleRead4 sr4, boolean useFlinkSort) {
         this.id = sr4.getId();
         this.startTime = sr4.getStartTime();
         this.endTime = sr4.getEndTime();
         this.threshold = sr4.getThreshold();
-        this.parallelism = parallelism;
         this.useFlinkSort = useFlinkSort;
     }
 
@@ -99,15 +97,15 @@ public class SimpleRead4GradoopOperator implements
 
             });
 
-        windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
-
         if (this.useFlinkSort) {
+            windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
+
             edgeMap = edgeMap
                 .sortPartition(2, Order.DESCENDING)
                 .sortPartition(0, Order.ASCENDING);
         }
 
-        List<Tuple3<Long, Integer, Double>> edges = null;
+        List<Tuple3<Long, Integer, Double>> edges;
         try {
             edges = edgeMap.collect();
         } catch (Exception e) {

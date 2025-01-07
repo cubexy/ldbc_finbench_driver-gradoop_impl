@@ -30,6 +30,6 @@ public class SimpleRead6CmdArgExecutor extends AbstractCmdArgExecutor<List<Simpl
     @Override
     public void init(FlinkCmdArg inputArgs) {
         SimpleRead6 input = new SimpleRead6(inputArgs.getId(), inputArgs.getStartTime(), inputArgs.getEndTime());
-        this.operator = new SimpleRead6GradoopOperator(input);
+        this.operator = new SimpleRead6GradoopOperator(input, inputArgs.isClusterSort());
     }
 }
