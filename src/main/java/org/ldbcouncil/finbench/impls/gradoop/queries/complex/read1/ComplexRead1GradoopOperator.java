@@ -1,6 +1,7 @@
 package org.ldbcouncil.finbench.impls.gradoop.queries.complex.read1;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import org.apache.flink.api.common.functions.MapFunction;
@@ -25,14 +26,16 @@ class ComplexRead1GradoopOperator implements
     private final long endTime;
     private final int truncationLimit;
     private final boolean isTruncationOrderAscending;
+    private final boolean useFlinkSort;
 
-    public ComplexRead1GradoopOperator(ComplexRead1 complexRead1) {
+    public ComplexRead1GradoopOperator(ComplexRead1 complexRead1, boolean useFlinkSort) {
         this.id = complexRead1.getId();
         this.startTime = complexRead1.getStartTime().getTime();
         this.endTime = complexRead1.getEndTime().getTime();
         this.truncationLimit = complexRead1.getTruncationLimit();
         final TruncationOrder truncationOrder = complexRead1.getTruncationOrder();
         this.isTruncationOrderAscending = truncationOrder == TruncationOrder.TIMESTAMP_ASCENDING;
+        this.useFlinkSort = useFlinkSort;
     }
 
     /**
@@ -76,7 +79,7 @@ class ComplexRead1GradoopOperator implements
             .toGraphCollection()
             .getGraphTransactions();
 
-        DataSet<Tuple4<Long, Integer, Long, String>> result =
+        DataSet<Tuple4<Long, Integer, Long, String>> mapResult =
             gtxLength1.union(gtxLength2).union(gtxLength3)
                 .map(new MapFunction<GraphTransaction, Tuple4<Long, Integer, Long, String>>() {
                     @Override
@@ -98,20 +101,34 @@ class ComplexRead1GradoopOperator implements
                     }
                 }).distinct(0, 1, 2, 3);
 
-        windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
+        if (this.useFlinkSort) {
+            windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
 
-        result = result
-            .sortPartition(1, Order.ASCENDING)
-            .sortPartition(0, Order.ASCENDING)
-            .sortPartition(3, Order.ASCENDING);
+            mapResult = mapResult
+                .sortPartition(1, Order.ASCENDING)
+                .sortPartition(0, Order.ASCENDING)
+                .sortPartition(3, Order.ASCENDING);
+        }
+
+        List<Tuple4<Long, Integer, Long, String>> resultList;
+
+        try {
+            resultList = mapResult.collect();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        if (!this.useFlinkSort) {
+            resultList.sort(Comparator
+                .comparing((Tuple4<Long, Integer, Long, String> t) -> t.f1)
+                .thenComparing(t -> t.f0)
+                .thenComparing(t -> t.f3));
+        }
 
         List<ComplexRead1Result> complexRead1Results = new ArrayList<>();
 
-        try {
-            result.collect().forEach(
-                tuple -> complexRead1Results.add(new ComplexRead1Result(tuple.f0, tuple.f1, tuple.f2, tuple.f3)));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        for (Tuple4<Long, Integer, Long, String> result : resultList) {
+            complexRead1Results.add(new ComplexRead1Result(result.f0, result.f1, result.f2, result.f3));
         }
 
         return complexRead1Results;

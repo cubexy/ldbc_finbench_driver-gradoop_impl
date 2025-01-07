@@ -18,7 +18,7 @@ public class ComplexRead5Handler implements OperationHandler<ComplexRead5, Grado
         GradoopImpl.logger.info(cr5.toString());
         CommonUtils.setInitialParallelism(connectionState);
         List<ComplexRead5Result> complexRead5Results =
-            new ComplexRead5GradoopOperator(cr5).execute(connectionState.getGraph());
+            new ComplexRead5GradoopOperator(cr5, connectionState.isFlinkSort()).execute(connectionState.getGraph());
         resultReporter.report(complexRead5Results.size(), complexRead5Results, cr5);
     }
 }

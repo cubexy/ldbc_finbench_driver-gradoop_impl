@@ -32,6 +32,6 @@ public class ComplexRead6CmdArgExecutor extends AbstractCmdArgExecutor<List<Comp
         ComplexRead6 input = new ComplexRead6(inputArgs.getId(), inputArgs.getThreshold(), inputArgs.getThreshold2(),
             inputArgs.getStartTime(), inputArgs.getEndTime(), inputArgs.getTruncationLimit(),
             inputArgs.getTruncationOrder());
-        this.operator = new ComplexRead6GradoopOperator(input);
+        this.operator = new ComplexRead6GradoopOperator(input, inputArgs.isClusterSort());
     }
 }

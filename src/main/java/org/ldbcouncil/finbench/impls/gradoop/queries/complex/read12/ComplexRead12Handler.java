@@ -18,7 +18,7 @@ public class ComplexRead12Handler implements OperationHandler<ComplexRead12, Gra
         GradoopImpl.logger.info(cr12.toString());
         CommonUtils.setInitialParallelism(connectionState);
         List<ComplexRead12Result> complexRead12Results =
-            new ComplexRead12GradoopOperator(cr12).execute(connectionState.getGraph());
+            new ComplexRead12GradoopOperator(cr12, connectionState.isFlinkSort()).execute(connectionState.getGraph());
         resultReporter.report(complexRead12Results.size(), complexRead12Results, cr12);
     }
 }

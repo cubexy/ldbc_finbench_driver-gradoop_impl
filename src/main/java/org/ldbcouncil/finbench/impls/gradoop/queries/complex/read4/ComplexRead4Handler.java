@@ -18,7 +18,7 @@ public class ComplexRead4Handler implements OperationHandler<ComplexRead4, Grado
         GradoopImpl.logger.info(cr4.toString());
         CommonUtils.setInitialParallelism(connectionState);
         List<ComplexRead4Result> complexRead4Results =
-            new ComplexRead4GradoopOperator(cr4).execute(connectionState.getGraph());
+            new ComplexRead4GradoopOperator(cr4, connectionState.isFlinkSort()).execute(connectionState.getGraph());
         resultReporter.report(complexRead4Results.size(), complexRead4Results, cr4);
     }
 }

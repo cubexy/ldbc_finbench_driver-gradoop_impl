@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.operators.MapOperator;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
@@ -81,7 +82,7 @@ class ComplexRead7GradoopOperator implements
                     null, null,
                     Arrays.asList(new Count("count"), new SumProperty("amount"))));
 
-        MapOperator<Tuple2<TemporalEdge, TemporalVertex>, Tuple3<String, Integer, Double>>
+        DataSet<Tuple3<String, Integer, Double>>
             edgeValues = tg.getEdges()
             .join(tg.getVertices()).where(new SourceId<>()).equalTo(new Id<>())
             .map(new MapFunction<Tuple2<TemporalEdge, TemporalVertex>, Tuple3<String, Integer, Double>>() {

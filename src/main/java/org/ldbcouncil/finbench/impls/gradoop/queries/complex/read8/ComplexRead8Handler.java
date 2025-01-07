@@ -18,7 +18,7 @@ public class ComplexRead8Handler implements OperationHandler<ComplexRead8, Grado
         GradoopImpl.logger.info(cr8.toString());
         CommonUtils.setInitialParallelism(connectionState);
         List<ComplexRead8Result> complexRead8Results =
-            new ComplexRead8GradoopOperator(cr8).execute(connectionState.getGraph());
+            new ComplexRead8GradoopOperator(cr8, connectionState.isFlinkSort()).execute(connectionState.getGraph());
         resultReporter.report(complexRead8Results.size(), complexRead8Results, cr8);
     }
 }

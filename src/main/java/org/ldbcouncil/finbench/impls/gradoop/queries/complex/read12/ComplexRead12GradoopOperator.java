@@ -1,6 +1,7 @@
 package org.ldbcouncil.finbench.impls.gradoop.queries.complex.read12;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import org.apache.flink.api.common.functions.MapFunction;
@@ -27,14 +28,16 @@ class ComplexRead12GradoopOperator implements
     private final long endTime;
     private final int truncationLimit;
     private final boolean isTruncationOrderAscending;
+    private final boolean useFlinkSort;
 
-    public ComplexRead12GradoopOperator(ComplexRead12 cr12) {
+    public ComplexRead12GradoopOperator(ComplexRead12 cr12, boolean useFlinkSort) {
         this.id = cr12.getId();
         this.startTime = cr12.getStartTime().getTime();
         this.endTime = cr12.getEndTime().getTime();
         this.truncationLimit = cr12.getTruncationLimit();
         final TruncationOrder truncationOrder = cr12.getTruncationOrder();
         this.isTruncationOrderAscending = truncationOrder == TruncationOrder.TIMESTAMP_ASCENDING;
+        this.useFlinkSort = useFlinkSort;
     }
 
     /**
@@ -83,11 +86,13 @@ class ComplexRead12GradoopOperator implements
                 }
             });
 
-        windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
+        if (this.useFlinkSort) {
+            windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
 
-        companyAmounts = companyAmounts
-            .sortPartition(1, Order.DESCENDING)
-            .sortPartition(0, Order.ASCENDING);
+            companyAmounts = companyAmounts
+                .sortPartition(1, Order.DESCENDING)
+                .sortPartition(0, Order.ASCENDING);
+        }
 
         List<Tuple2<Long, Double>> loanEdgesList;
 
@@ -95,6 +100,12 @@ class ComplexRead12GradoopOperator implements
             loanEdgesList = companyAmounts.collect();
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+
+        if (!this.useFlinkSort) {
+            loanEdgesList.sort(Comparator
+                .comparing((Tuple2<Long, Double> t) -> t.f1, Comparator.reverseOrder())
+                .thenComparing(t -> t.f0));
         }
 
         List<ComplexRead12Result> complexRead12Results = new ArrayList<>();

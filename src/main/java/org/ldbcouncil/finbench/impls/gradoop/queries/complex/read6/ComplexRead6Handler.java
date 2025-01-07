@@ -18,7 +18,7 @@ public class ComplexRead6Handler implements OperationHandler<ComplexRead6, Grado
         GradoopImpl.logger.info(cr6.toString());
         CommonUtils.setInitialParallelism(connectionState);
         List<ComplexRead6Result> complexRead6Results =
-            new ComplexRead6GradoopOperator(cr6).execute(connectionState.getGraph());
+            new ComplexRead6GradoopOperator(cr6, connectionState.isFlinkSort()).execute(connectionState.getGraph());
         resultReporter.report(complexRead6Results.size(), complexRead6Results, cr6);
     }
 }

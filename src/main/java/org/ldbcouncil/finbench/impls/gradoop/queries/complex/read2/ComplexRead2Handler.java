@@ -18,7 +18,7 @@ public class ComplexRead2Handler implements OperationHandler<ComplexRead2, Grado
         GradoopImpl.logger.info(cr2.toString());
         CommonUtils.setInitialParallelism(connectionState);
         List<ComplexRead2Result> complexRead2Results =
-            new ComplexRead2GradoopOperator(cr2).execute(connectionState.getGraph());
+            new ComplexRead2GradoopOperator(cr2, connectionState.isFlinkSort()).execute(connectionState.getGraph());
         resultReporter.report(complexRead2Results.size(), complexRead2Results, cr2);
     }
 }

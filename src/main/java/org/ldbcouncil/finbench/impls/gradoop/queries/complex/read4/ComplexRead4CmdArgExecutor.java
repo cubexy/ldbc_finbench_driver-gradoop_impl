@@ -31,6 +31,6 @@ public class ComplexRead4CmdArgExecutor extends AbstractCmdArgExecutor<List<Comp
     public void init(FlinkCmdArg inputArgs) {
         ComplexRead4 input =
             new ComplexRead4(inputArgs.getId(), inputArgs.getId2(), inputArgs.getStartTime(), inputArgs.getEndTime());
-        this.operator = new ComplexRead4GradoopOperator(input);
+        this.operator = new ComplexRead4GradoopOperator(input, inputArgs.isClusterSort());
     }
 }

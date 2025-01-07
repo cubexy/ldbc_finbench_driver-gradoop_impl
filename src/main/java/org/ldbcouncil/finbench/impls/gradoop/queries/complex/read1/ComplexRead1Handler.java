@@ -16,7 +16,7 @@ public class ComplexRead1Handler implements OperationHandler<ComplexRead1, Grado
                                  ResultReporter resultReporter) throws DbException {
         GradoopImpl.logger.info(cr1.toString());
         CommonUtils.setInitialParallelism(connectionState);
-        List<ComplexRead1Result> complexRead1Results = new ComplexRead1GradoopOperator(cr1).execute(connectionState.getGraph());
+        List<ComplexRead1Result> complexRead1Results = new ComplexRead1GradoopOperator(cr1, connectionState.isFlinkSort()).execute(connectionState.getGraph());
         resultReporter.report(complexRead1Results.size(), complexRead1Results, cr1);
     }
 }
