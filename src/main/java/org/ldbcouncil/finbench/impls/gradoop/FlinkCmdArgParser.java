@@ -67,7 +67,9 @@ public class FlinkCmdArgParser {
         logger.info("FlinkCmdArgParser initialized.");
 
         logger.info("Initializing temporal graph...");
-        final GradoopFinbenchBaseGraphState graph = initDatabase(inputArgs.getDataPath(), inputArgs.getMode(), inputArgs.isClusterSort(), inputArgs.getParallelism());
+        final GradoopFinbenchBaseGraphState graph =
+            initDatabase(inputArgs.getDataPath(), inputArgs.getMode(), inputArgs.isClusterSort(),
+                inputArgs.getParallelism());
         logger.info("FlinkCmdArgParser graph initialized.");
 
         logger.info("Executing query...");
@@ -159,8 +161,10 @@ public class FlinkCmdArgParser {
      * @return GradoopFinbenchBaseGraphState
      * @throws DbException error while initializing the database
      */
-    private GradoopFinbenchBaseGraphState initDatabase(String gradoopDataPath, String mode, boolean clusterSort, int parallelism) throws DbException {
-        ExecutionEnvironment env = ExecutionEnvironment.createRemoteEnvironment("localhost", 8081, parallelism, "target/driver-0.2.0-alpha.jar");
+    private GradoopFinbenchBaseGraphState initDatabase(String gradoopDataPath, String mode, boolean clusterSort,
+                                                       int parallelism) throws DbException {
+        ExecutionEnvironment env = ExecutionEnvironment.createRemoteEnvironment("localhost", 8081, parallelism,
+            "target/driver-0.2.0-alpha.jar");
         TemporalGradoopConfig config = TemporalGradoopConfig.createConfig(env);
 
         TemporalGraph tg = getTemporalGraph(mode, gradoopDataPath, config);

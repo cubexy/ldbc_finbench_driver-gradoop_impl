@@ -101,7 +101,8 @@ public class GradoopImpl extends Db {
                 "gradoop_import_path, gradoop_import_mode or gradoop_execution_mode not set in properties file");
         }
 
-        ExecutionEnvironment env = ExecutionEnvironment.createRemoteEnvironment("localhost", 8081,8, "target/driver-0.2.0-alpha.jar");
+        ExecutionEnvironment env =
+            ExecutionEnvironment.createRemoteEnvironment("localhost", 8081, parallelism, "target/driver-0.2.0-alpha.jar");
 
         TemporalGradoopConfig config = TemporalGradoopConfig.createConfig(env);
 
@@ -121,6 +122,7 @@ public class GradoopImpl extends Db {
         registerOperationHandler(ComplexRead10.class, ComplexRead10Handler.class);
         registerOperationHandler(ComplexRead11.class, ComplexRead11Handler.class);
         registerOperationHandler(ComplexRead12.class, ComplexRead12Handler.class);
+
         //simple reads go here
         registerOperationHandler(SimpleRead1.class, SimpleRead1Handler.class);
         registerOperationHandler(SimpleRead2.class, SimpleRead2Handler.class);
