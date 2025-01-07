@@ -1,5 +1,6 @@
 package org.ldbcouncil.finbench.impls.gradoop;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -25,7 +26,8 @@ public class FlinkQueryExecutor {
     public static void main(String[] args) {
         Logger logger = LogManager.getLogger("FlinkQueryExecutor");
 
-        logger.log(org.apache.logging.log4j.Level.INFO, "Starting Flink query executor");
+        logger.log(Level.INFO, "Starting Flink query executor");
+        logger.log(Level.WARN, "NOTE: This class is for singular execution ONLY!");
 
         FlinkCmdArgParser parser = new FlinkCmdArgParser(args, logger); // initialize parser
         try {
