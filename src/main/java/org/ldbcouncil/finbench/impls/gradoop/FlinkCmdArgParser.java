@@ -163,7 +163,7 @@ public class FlinkCmdArgParser {
      */
     private GradoopFinbenchBaseGraphState initDatabase(String gradoopDataPath, String mode, boolean clusterSort,
                                                        int parallelism) throws DbException {
-        ExecutionEnvironment env = ExecutionEnvironment.createRemoteEnvironment("localhost", 8081, parallelism,
+        ExecutionEnvironment env = ExecutionEnvironment.createRemoteEnvironment("localhost", 8081, 1,
             "target/driver-0.2.0-alpha.jar");
         TemporalGradoopConfig config = TemporalGradoopConfig.createConfig(env);
 
@@ -180,6 +180,7 @@ public class FlinkCmdArgParser {
     private void executeQuery(FlinkCmdArg inputArgs, GradoopFinbenchBaseGraphState graph) throws DbException {
         try {
             CmdArgExecutor<?> executor = this.executorRegistry.getCmdArgExecutorByTitle(inputArgs.getQueryName());
+            graph.getGraph().getConfig().getExecutionEnvironment().setParallelism(graph.getParallelism());
             executor.execute(inputArgs, graph, logger);
         } catch (Exception e) {
             logger.error("Error executing query", e);
