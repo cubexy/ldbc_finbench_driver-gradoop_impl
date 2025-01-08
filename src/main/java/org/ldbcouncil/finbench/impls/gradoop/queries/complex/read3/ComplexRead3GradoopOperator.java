@@ -71,7 +71,7 @@ class ComplexRead3GradoopOperator implements UnaryBaseGraphToValueOperator<Tempo
         try {
             dst = SSSPGraph.getVertices()
                 .filter(ver -> ver.hasProperty("id"))
-                .filter(ver -> (long) ver.getPropertyValue("distance").getDouble() == serializableId2).collect();
+                .filter(ver -> ver.getPropertyValue("id").getLong() == serializableId2).collect();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
