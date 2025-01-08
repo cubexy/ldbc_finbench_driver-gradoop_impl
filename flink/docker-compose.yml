@@ -58,10 +58,10 @@ services:
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: jobmanager
-        taskmanager.numberOfTaskSlots: 4
+        taskmanager.numberOfTaskSlots: 2
     command: taskmanager
     deploy:
-      replicas: 2
+      replicas: 4
     depends_on:
       - jobmanager
       - hdfs-namenode
