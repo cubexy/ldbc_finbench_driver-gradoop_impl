@@ -132,9 +132,9 @@ class ComplexRead9GradoopOperator implements
             throw new RuntimeException(e);
         }
 
-        double ratioRepay = CommonUtils.roundToDecimalPlaces(data.f1.equals(0.0) ? data.f0 / data.f1 : -1.0, 3);
-        double ratioDeposit = CommonUtils.roundToDecimalPlaces(data.f3.equals(0.0) ? data.f0 / data.f3 : -1.0, 3);
-        double ratioTransfer = CommonUtils.roundToDecimalPlaces(data.f3.equals(0.0) ? data.f2 / data.f3 : -1.0, 3);
+        double ratioRepay = data.f1.equals(0.0) ? CommonUtils.roundToDecimalPlaces(data.f0 / data.f1, 3) : -1.0;
+        double ratioDeposit = data.f3.equals(0.0) ? CommonUtils.roundToDecimalPlaces(data.f0 / data.f3, 3) : -1.0;
+        double ratioTransfer = data.f3.equals(0.0) ? CommonUtils.roundToDecimalPlaces(data.f2 / data.f3, 3) : -1.0;
 
         return Collections.singletonList(new ComplexRead9Result((float) ratioRepay, (float) ratioDeposit,
             (float) ratioTransfer));

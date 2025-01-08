@@ -10,6 +10,7 @@ services:
     volumes:
       - ./hadoop_config:/opt/hadoop/etc/hadoop
       - ./start-hdfs.sh:/start-hdfs.sh
+      - ./finbench_datasets:/finbench_datasets
     ports:
       - "9870:9870"
       - "9000:9000"
@@ -58,10 +59,10 @@ services:
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: jobmanager
-        taskmanager.numberOfTaskSlots: 4
+        taskmanager.numberOfTaskSlots: 2
     command: taskmanager
     deploy:
-      replicas: 2
+      replicas: 4
     depends_on:
       - jobmanager
       - hdfs-namenode
