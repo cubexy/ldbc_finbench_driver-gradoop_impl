@@ -12,8 +12,8 @@ services:
       - ./start-hdfs.sh:/start-hdfs.sh
       - ./finbench_datasets:/finbench_datasets
     ports:
-      - "9870:9870"
-      - "9000:9000"
+      - "9870:9870" # web ui
+      - "9000:9000" # metadata protocol - ipc
     command: [ "/bin/bash", "/start-hdfs.sh" ]
     networks:
       - flink-network
@@ -31,7 +31,7 @@ services:
     depends_on:
       - hdfs-namenode    
     ports:
-      - "9864:9864"
+      - "9864:9864" # web ui
     command: [ "/bin/bash", "/init-datanode.sh" ]
     networks:
       - flink-network
