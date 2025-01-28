@@ -89,7 +89,7 @@ public class SimpleRead2GradoopOperator implements
                         double sumAmount = edge.getPropertyValue("sum_amount").getDouble();
                         double maxAmount = edge.getPropertyValue("max_amount").getDouble();
                         long count = edge.getPropertyValue("count").getLong();
-                        String type = src.getPropertyValue("id").is(Long.class) ? "transfer-out" : "transfer-in";
+                        String type = src.getPropertyValue("id").is(Long.class) ? "transfer-out" : "transfer-in"; // If source edge has id, it has to be transfer-out
 
 
                         if (maxAmount == 0.0f) {
@@ -113,7 +113,7 @@ public class SimpleRead2GradoopOperator implements
             Tuple3<Double, Double, Long> transferIns = new Tuple3<>(0.0, -1.0, 0L); // edges.get(0);
             Tuple3<Double, Double, Long> transferOuts = new Tuple3<>(0.0, -1.0, 0L); // edges.get(1);
 
-            for (Tuple4<Double, Double, Long, String> edge : edges) {
+            for (Tuple4<Double, Double, Long, String> edge : edges) { // We do not know which edge is transfer-in and which is transfer-out, so we have to do it this way
                 if (edge.f3.equals("transfer-out")) {
                     transferOuts = new Tuple3<>(edge.f0, edge.f1, edge.f2);
                 } else if (edge.f3.equals("transfer-in")) {
