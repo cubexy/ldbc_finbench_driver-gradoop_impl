@@ -56,7 +56,7 @@ class ComplexRead2GradoopOperator implements
      * the sum of distinct loan balance and the count of distinct loans.
      *
      * @param temporalGraph input graph
-     * @return sum of distinct loan amount, the sum of distinct loan balance and the count of distinct loans
+     * @return ID of other account, sum of loan amount, sum of loan balance
      */
     @Override
     public List<ComplexRead2Result> execute(TemporalGraph temporalGraph) {
@@ -100,16 +100,14 @@ class ComplexRead2GradoopOperator implements
             );
 
         DataSet<Tuple3<Long, Double, Double>>
-            edgeMap = gcUnion.getEdges().join(gcUnion.getVertices()).where(new SourceId<>()).equalTo(new Id<>())
-            .map(new MapFunction<Tuple2<EPGMEdge, EPGMVertex>, Tuple3<Long, Double, Double>>() {
+            edgeMap = gcUnion.getVertices().filter(new LabelIsIn<>("Loan"))
+            .map(new MapFunction<EPGMVertex, Tuple3<Long, Double, Double>>() {
                 @Override
-                public Tuple3<Long, Double, Double> map(Tuple2<EPGMEdge, EPGMVertex> e) {
-                    EPGMVertex src = e.f1;
-
+                public Tuple3<Long, Double, Double> map(EPGMVertex src) {
                     long otherID = src.getPropertyValue("id").getLong();
-                    double loanBalance = src.getPropertyValue("sum_balance").getDouble();
                     double loanAmount = src.getPropertyValue("sum_loanAmount").getDouble();
-                    return new Tuple3<>(otherID, loanBalance, loanAmount);
+                    double loanBalance = src.getPropertyValue("sum_balance").getDouble();
+                    return new Tuple3<>(otherID, loanAmount, loanBalance);
                 }
 
             });
