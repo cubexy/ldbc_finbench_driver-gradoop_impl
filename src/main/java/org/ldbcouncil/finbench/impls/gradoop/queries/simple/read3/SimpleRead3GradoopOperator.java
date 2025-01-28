@@ -78,7 +78,7 @@ public class SimpleRead3GradoopOperator
                         return new Tuple2<>(0, 0);
                     }
                     final boolean isBlocked = temporalVertex.getPropertyValue("isBlocked").getBoolean();
-                    return isBlocked ? new Tuple2<>(0, 1) : new Tuple2<>(1, 0);
+                    return isBlocked ? new Tuple2<>(1, 1) : new Tuple2<>(0, 1);
                 }
             })
             .reduce(
