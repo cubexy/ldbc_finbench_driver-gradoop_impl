@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.api.java.tuple.Tuple4;
@@ -56,7 +57,6 @@ public class SimpleRead2GradoopOperator implements
             .subgraph(new LabelIsIn<>("Account"), new LabelIsIn<>("transfer"))
             .fromTo(this.startTime.getTime(), this.endTime.getTime()); // Get all transfers between start and end time
 
-        try {
             final Long id = this.id;
             LogicalGraph lg = windowedGraph.query(
                     "MATCH (src:Account)-[edge1:transfer]->(dst1:Account) WHERE src <> dst1 AND src.id =" + this.id + "L")
@@ -75,7 +75,7 @@ public class SimpleRead2GradoopOperator implements
                         Arrays.asList(new Count("count"), new SumProperty("amount"), new MaxProperty("amount")))
                 ).toLogicalGraph();
 
-            List<Tuple4<Double, Double, Long, String>> edges = lg
+            DataSet<Tuple4<Double, Double, Long, String>> edgeSet = lg
                 .getEdges()
                 .join(lg.getVertices()).where(new SourceId<>()).equalTo(new Id<>())
                 .map(new MapFunction<Tuple2<EPGMEdge, EPGMVertex>, Tuple4<Double, Double, Long, String>>() {
@@ -96,10 +96,17 @@ public class SimpleRead2GradoopOperator implements
 
                         return new Tuple4<>(sumAmount, maxAmount, count, type);
                     }
-                })
-                .collect();
+                });
 
-            List<SimpleRead2Result> simpleRead2Results = new ArrayList<>();
+        List<Tuple4<Double, Double, Long, String>> edges = null;
+        try {
+            edges = edgeSet.collect();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+
+        List<SimpleRead2Result> simpleRead2Results = new ArrayList<>();
 
             Tuple3<Double, Double, Long> transferIns = new Tuple3<>(0.0, -1.0, 0L); // edges.get(0);
             Tuple3<Double, Double, Long> transferOuts = new Tuple3<>(0.0, -1.0, 0L); // edges.get(1);
@@ -119,8 +126,5 @@ public class SimpleRead2GradoopOperator implements
                     transferIns.f2));
 
             return simpleRead2Results;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 }
