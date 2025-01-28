@@ -1,8 +1,10 @@
 package org.ldbcouncil.finbench.impls.gradoop;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Set;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
 import org.ldbcouncil.finbench.driver.truncation.TruncationOrder;
 
 public class FlinkCmdArg {
@@ -63,8 +65,8 @@ public class FlinkCmdArg {
         if (cmd.hasOption("cs")) {
             setClusterSort(true);
         }
-        if (cmd.hasOption("parallelism")) {
-            setParallelism(Integer.parseInt(cmd.getOptionValue("parallelism")));
+        if (cmd.hasOption("p")) {
+            setParallelism(Integer.parseInt(cmd.getOptionValue("p")));
         }
         if (cmd.hasOption("q_pid1")) {
             setPersonId(cmd.getOptionValue("q_pid1"));
@@ -79,7 +81,7 @@ public class FlinkCmdArg {
             setEndTime(cmd.getOptionValue("q_et"));
         }
         if (cmd.hasOption("q_ts")) {
-            setThreshold(cmd.getOptionValue("q_st"));
+            setThreshold(cmd.getOptionValue("q_ts"));
         }
         if (cmd.hasOption("q_ts2")) {
             setThreshold2(cmd.getOptionValue("q_ts2"));
