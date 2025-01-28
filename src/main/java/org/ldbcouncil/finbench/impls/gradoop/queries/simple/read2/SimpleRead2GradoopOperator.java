@@ -26,6 +26,8 @@ import org.gradoop.flink.model.impl.operators.combination.ReduceCombination;
 import org.gradoop.flink.model.impl.operators.keyedgrouping.GroupingKeys;
 import org.gradoop.flink.model.impl.operators.keyedgrouping.KeyedGrouping;
 import org.gradoop.temporal.model.impl.TemporalGraph;
+import org.gradoop.temporal.model.impl.pojo.TemporalEdge;
+import org.gradoop.temporal.model.impl.pojo.TemporalVertex;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead2;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead2Result;
 
@@ -58,7 +60,7 @@ public class SimpleRead2GradoopOperator implements
             .fromTo(this.startTime.getTime(), this.endTime.getTime()); // Get all transfers between start and end time
 
             final Long id = this.id;
-            LogicalGraph lg = windowedGraph.query(
+            TemporalGraph lg = windowedGraph.query(
                     "MATCH (src:Account)-[edge1:transfer]->(dst1:Account) WHERE src <> dst1 AND src.id =" + this.id + "L")
                 .union(windowedGraph.query(
                     "MATCH (dst2:Account)-[edge2:transfer]->(src:Account) WHERE src <> dst2 AND src.id =" + this.id +
@@ -73,16 +75,16 @@ public class SimpleRead2GradoopOperator implements
                 }).callForGraph(
                     new KeyedGrouping<>(Arrays.asList(GroupingKeys.label(), GroupingKeys.property("id")), null, null,
                         Arrays.asList(new Count("count"), new SumProperty("amount"), new MaxProperty("amount")))
-                ).toLogicalGraph();
+                );
 
             DataSet<Tuple4<Double, Double, Long, String>> edgeSet = lg
                 .getEdges()
                 .join(lg.getVertices()).where(new SourceId<>()).equalTo(new Id<>())
-                .map(new MapFunction<Tuple2<EPGMEdge, EPGMVertex>, Tuple4<Double, Double, Long, String>>() {
+                .map(new MapFunction<Tuple2<TemporalEdge, TemporalVertex>, Tuple4<Double, Double, Long, String>>() {
                     @Override
-                    public Tuple4<Double, Double, Long, String> map(Tuple2<EPGMEdge, EPGMVertex> e) {
-                        EPGMEdge edge = e.f0;
-                        EPGMVertex src = e.f1;
+                    public Tuple4<Double, Double, Long, String> map(Tuple2<TemporalEdge, TemporalVertex> e) {
+                        TemporalEdge edge = e.f0;
+                        TemporalVertex src = e.f1;
 
                         double sumAmount = edge.getPropertyValue("sum_amount").getDouble();
                         double maxAmount = edge.getPropertyValue("max_amount").getDouble();
