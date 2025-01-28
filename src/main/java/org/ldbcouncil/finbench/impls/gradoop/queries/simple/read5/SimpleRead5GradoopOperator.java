@@ -86,7 +86,7 @@ class SimpleRead5GradoopOperator implements
                     TemporalEdge edge = e.f0;
                     TemporalVertex dst = e.f1;
 
-                    long dstId = dst.getPropertyValue("id").getLong(); //error here
+                    long dstId = dst.getPropertyValue("id").getLong();
                     int numEdges = (int) edge.getPropertyValue("count").getLong();
                     double sumAmount = roundToDecimalPlaces(edge.getPropertyValue("sum_amount").getDouble(), 3);
 
