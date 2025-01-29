@@ -68,12 +68,7 @@ public class SimpleRead3GradoopOperator
                     // each transaction looks like this:
                     // srcAccount - transfer -> dstAccount
                     Map<String, GradoopId> m = CommonUtils.getVariableMapping(graphTransaction);
-
-                    GradoopId srcAccount = m.get("src");
-
-                    EPGMEdge edge = graphTransaction.getEdges().stream().findFirst().get(); // only one edge in each transaction --> extract it
-                    EPGMVertex src = graphTransaction.getVertexById(srcAccount);
-
+                    EPGMVertex src = graphTransaction.getVertexById(m.get("src"));
                     final boolean isBlocked = src.getPropertyValue("isBlocked").getBoolean();
                     return isBlocked ? new Tuple2<>(1, 1) : new Tuple2<>(0, 1);
                 }
@@ -92,7 +87,7 @@ public class SimpleRead3GradoopOperator
 
         try {
             List<Tuple2<Integer, Integer>> accountList = accounts.collect();
-            if (accountList.isEmpty()) {
+            if (accountList.isEmpty() || accountList.get(0).f0 == 0 && accountList.get(0).f1 == 0) {
                 return Collections.singletonList(new SimpleRead3Result(-1.0f));
             }
             blockedNonBlockedAccounts = accountList.get(0);
