@@ -4,10 +4,10 @@ import static org.ldbcouncil.finbench.impls.gradoop.CommonUtils.roundToDecimalPl
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.operators.Order;
 import org.apache.flink.api.java.DataSet;
@@ -66,14 +66,8 @@ class SimpleRead5GradoopOperator implements
                     id_serializable +
                     "L AND transferIn.amount > " + this.threshold)
             .reduce(new ReduceCombination<>())
-            .transformVertices((currentVertex, transformedVertex) -> {
-                if (currentVertex.hasProperty("id") &&
-                    Objects.equals(currentVertex.getPropertyValue("id").getLong(), id_serializable)) {
-                    currentVertex.removeProperty("id");
-                }
-                return currentVertex;
-            }).callForGraph(
-                new KeyedGrouping<>(Arrays.asList(GroupingKeys.label(), GroupingKeys.property("id")),
+            .callForGraph(
+                new KeyedGrouping<>(Collections.singletonList(GroupingKeys.property("id")),
                     null, null,
                     Arrays.asList(new Count("count"), new SumProperty("amount")))
             );
