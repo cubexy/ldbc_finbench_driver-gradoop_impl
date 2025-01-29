@@ -2,25 +2,24 @@ package org.ldbcouncil.finbench.impls.gradoop.queries.simple.read3;
 
 import static org.ldbcouncil.finbench.impls.gradoop.CommonUtils.roundToDecimalPlaces;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.gradoop.common.model.impl.id.GradoopId;
+import org.gradoop.common.model.impl.pojo.EPGMEdge;
+import org.gradoop.common.model.impl.pojo.EPGMVertex;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
 import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
-import org.gradoop.flink.model.impl.operators.aggregation.functions.count.Count;
-import org.gradoop.flink.model.impl.operators.combination.ReduceCombination;
-import org.gradoop.flink.model.impl.operators.keyedgrouping.GroupingKeys;
-import org.gradoop.flink.model.impl.operators.keyedgrouping.KeyedGrouping;
+import org.gradoop.flink.model.impl.layouts.transactional.tuples.GraphTransaction;
 import org.gradoop.temporal.model.impl.TemporalGraph;
-import org.gradoop.temporal.model.impl.pojo.TemporalVertex;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead3;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.SimpleRead3Result;
+import org.ldbcouncil.finbench.impls.gradoop.CommonUtils;
 
 public class SimpleRead3GradoopOperator
     implements UnaryBaseGraphToValueOperator<TemporalGraph, List<SimpleRead3Result>> {
@@ -54,30 +53,28 @@ public class SimpleRead3GradoopOperator
         final long id_serializable =
             this.id; // this is necessary because this.id is not serializable, which is needed for the transformVertices function
 
-        DataSet<Tuple2<Integer, Integer>> accounts = windowedGraph.query(
-                "MATCH (src:Account)-[transferIn:transfer]->(dst:Account) WHERE src <> person AND dst.id =" +
+        DataSet<GraphTransaction> accountBaseGraph = windowedGraph.query(
+                "MATCH (src:Account)-[edge:transfer]->(dst:Account) WHERE dst.id =" +
                     id_serializable +
-                    "L AND transferIn.amount > " + this.threshold)
-            .reduce(new ReduceCombination<>())
-            .transformVertices((currentVertex, transformedVertex) -> {
-                if (currentVertex.hasProperty("id") &&
-                    Objects.equals(currentVertex.getPropertyValue("id").getLong(), id_serializable)) {
-                    currentVertex.removeProperty("isBlocked");
-                }
-                return currentVertex;
-            }).callForGraph(
-                new KeyedGrouping<>(Arrays.asList(GroupingKeys.label(), GroupingKeys.property("isBlocked")),
-                    Collections.singletonList(new Count("count")), null,
-                    null)
-            )
-            .getVertices()
-            .map(new MapFunction<TemporalVertex, Tuple2<Integer, Integer>>() {
+                    "L AND edge.amount > " + this.threshold)
+            .toGraphCollection()
+            .getGraphTransactions();
+
+
+        DataSet<Tuple2<Integer, Integer>> accounts = accountBaseGraph
+            .map(new MapFunction<GraphTransaction, Tuple2<Integer, Integer>>() {
                 @Override
-                public Tuple2<Integer, Integer> map(TemporalVertex temporalVertex) {
-                    if (temporalVertex.getPropertyValue("isBlocked").getType() == null) { // dst account
-                        return new Tuple2<>(0, 0);
-                    }
-                    final boolean isBlocked = temporalVertex.getPropertyValue("isBlocked").getBoolean();
+                public Tuple2<Integer, Integer> map(GraphTransaction graphTransaction) {
+                    // each transaction looks like this:
+                    // srcAccount - transfer -> dstAccount
+                    Map<String, GradoopId> m = CommonUtils.getVariableMapping(graphTransaction);
+
+                    GradoopId srcAccount = m.get("src");
+
+                    EPGMEdge edge = graphTransaction.getEdges().stream().findFirst().get(); // only one edge in each transaction --> extract it
+                    EPGMVertex src = graphTransaction.getVertexById(srcAccount);
+
+                    final boolean isBlocked = src.getPropertyValue("isBlocked").getBoolean();
                     return isBlocked ? new Tuple2<>(1, 1) : new Tuple2<>(0, 1);
                 }
             })
