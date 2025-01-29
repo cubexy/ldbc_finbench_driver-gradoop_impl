@@ -12,10 +12,7 @@ import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.api.java.tuple.Tuple4;
-import org.gradoop.common.model.impl.pojo.EPGMEdge;
-import org.gradoop.common.model.impl.pojo.EPGMVertex;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
-import org.gradoop.flink.model.impl.epgm.LogicalGraph;
 import org.gradoop.flink.model.impl.functions.epgm.Id;
 import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
 import org.gradoop.flink.model.impl.functions.epgm.SourceId;
@@ -59,46 +56,45 @@ public class SimpleRead2GradoopOperator implements
             .subgraph(new LabelIsIn<>("Account"), new LabelIsIn<>("transfer"))
             .fromTo(this.startTime.getTime(), this.endTime.getTime()); // Get all transfers between start and end time
 
-            final Long id = this.id;
-            TemporalGraph lg = windowedGraph.query(
-                    "MATCH (src:Account)-[edge1:transfer]->(dst1:Account) WHERE src <> dst1 AND src.id =" + this.id + "L")
-                .union(windowedGraph.query(
-                    "MATCH (dst2:Account)-[edge2:transfer]->(src:Account) WHERE src <> dst2 AND src.id =" + this.id +
-                        "L"))
-                .reduce(new ReduceCombination<>())
-                .transformVertices((currentVertex, transformedVertex) -> {
-                    if (currentVertex.hasProperty("id") &&
-                        !Objects.equals(currentVertex.getPropertyValue("id").getLong(), id)) {
-                        currentVertex.removeProperty("id");
+        final Long id = this.id;
+        TemporalGraph lg = windowedGraph.query(
+                "MATCH (dst2:Account)-[edge2:transfer]->(src:Account)-[edge1:transfer]->(dst1:Account) WHERE src.id =" +
+                    this.id + "L")
+            .reduce(new ReduceCombination<>())
+            .transformVertices((currentVertex, transformedVertex) -> {
+                if (currentVertex.hasProperty("id") &&
+                    !Objects.equals(currentVertex.getPropertyValue("id").getLong(), id)) {
+                    currentVertex.removeProperty("id");
+                }
+                return currentVertex;
+            }).callForGraph(
+                new KeyedGrouping<>(Arrays.asList(GroupingKeys.label(), GroupingKeys.property("id")), null, null,
+                    Arrays.asList(new Count("count"), new SumProperty("amount"), new MaxProperty("amount")))
+            );
+
+        DataSet<Tuple4<Double, Double, Long, String>> edgeSet = lg
+            .getEdges()
+            .join(lg.getVertices()).where(new SourceId<>()).equalTo(new Id<>())
+            .map(new MapFunction<Tuple2<TemporalEdge, TemporalVertex>, Tuple4<Double, Double, Long, String>>() {
+                @Override
+                public Tuple4<Double, Double, Long, String> map(Tuple2<TemporalEdge, TemporalVertex> e) {
+                    TemporalEdge edge = e.f0;
+                    TemporalVertex src = e.f1;
+
+                    double sumAmount = edge.getPropertyValue("sum_amount").getDouble();
+                    double maxAmount = edge.getPropertyValue("max_amount").getDouble();
+                    long count = edge.getPropertyValue("count").getLong();
+                    String type = src.getPropertyValue("id").is(Long.class) ? "transfer-out" :
+                        "transfer-in"; // If source edge has id, it has to be transfer-out
+
+
+                    if (maxAmount == 0.0f) {
+                        maxAmount = -1.0f;
                     }
-                    return currentVertex;
-                }).callForGraph(
-                    new KeyedGrouping<>(Arrays.asList(GroupingKeys.label(), GroupingKeys.property("id")), null, null,
-                        Arrays.asList(new Count("count"), new SumProperty("amount"), new MaxProperty("amount")))
-                );
 
-            DataSet<Tuple4<Double, Double, Long, String>> edgeSet = lg
-                .getEdges()
-                .join(lg.getVertices()).where(new SourceId<>()).equalTo(new Id<>())
-                .map(new MapFunction<Tuple2<TemporalEdge, TemporalVertex>, Tuple4<Double, Double, Long, String>>() {
-                    @Override
-                    public Tuple4<Double, Double, Long, String> map(Tuple2<TemporalEdge, TemporalVertex> e) {
-                        TemporalEdge edge = e.f0;
-                        TemporalVertex src = e.f1;
-
-                        double sumAmount = edge.getPropertyValue("sum_amount").getDouble();
-                        double maxAmount = edge.getPropertyValue("max_amount").getDouble();
-                        long count = edge.getPropertyValue("count").getLong();
-                        String type = src.getPropertyValue("id").is(Long.class) ? "transfer-out" : "transfer-in"; // If source edge has id, it has to be transfer-out
-
-
-                        if (maxAmount == 0.0f) {
-                            maxAmount = -1.0f;
-                        }
-
-                        return new Tuple4<>(sumAmount, maxAmount, count, type);
-                    }
-                });
+                    return new Tuple4<>(sumAmount, maxAmount, count, type);
+                }
+            });
 
         List<Tuple4<Double, Double, Long, String>> edges = null;
         try {
@@ -110,23 +106,23 @@ public class SimpleRead2GradoopOperator implements
 
         List<SimpleRead2Result> simpleRead2Results = new ArrayList<>();
 
-            Tuple3<Double, Double, Long> transferIns = new Tuple3<>(0.0, -1.0, 0L); // edges.get(0);
-            Tuple3<Double, Double, Long> transferOuts = new Tuple3<>(0.0, -1.0, 0L); // edges.get(1);
+        Tuple3<Double, Double, Long> transferIns = new Tuple3<>(0.0, -1.0, 0L); // edges.get(0);
+        Tuple3<Double, Double, Long> transferOuts = new Tuple3<>(0.0, -1.0, 0L); // edges.get(1);
 
-            for (Tuple4<Double, Double, Long, String> edge : edges) { // We do not know which edge is transfer-in and which is transfer-out, so we have to do it this way
-                if (edge.f3.equals("transfer-out")) {
-                    transferOuts = new Tuple3<>(edge.f0, edge.f1, edge.f2);
-                } else if (edge.f3.equals("transfer-in")) {
-                    transferIns = new Tuple3<>(edge.f0, edge.f1, edge.f2);
-                }
+        for (Tuple4<Double, Double, Long, String> edge : edges) { // We do not know which edge is transfer-in and which is transfer-out, so we have to do it this way
+            if (edge.f3.equals("transfer-out")) {
+                transferOuts = new Tuple3<>(edge.f0, edge.f1, edge.f2);
+            } else if (edge.f3.equals("transfer-in")) {
+                transferIns = new Tuple3<>(edge.f0, edge.f1, edge.f2);
             }
+        }
 
-            simpleRead2Results.add(
-                new SimpleRead2Result(roundToDecimalPlaces(transferOuts.f0, 3),
-                    roundToDecimalPlaces(transferOuts.f1, 3), transferOuts.f2, roundToDecimalPlaces(transferIns.f0, 3),
-                    roundToDecimalPlaces(transferIns.f1, 3),
-                    transferIns.f2));
+        simpleRead2Results.add(
+            new SimpleRead2Result(roundToDecimalPlaces(transferOuts.f0, 3),
+                roundToDecimalPlaces(transferOuts.f1, 3), transferOuts.f2, roundToDecimalPlaces(transferIns.f0, 3),
+                roundToDecimalPlaces(transferIns.f1, 3),
+                transferIns.f2));
 
-            return simpleRead2Results;
+        return simpleRead2Results;
     }
 }
