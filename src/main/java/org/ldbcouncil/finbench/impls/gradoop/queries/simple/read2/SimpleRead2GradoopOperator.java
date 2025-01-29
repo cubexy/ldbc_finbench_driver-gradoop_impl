@@ -59,7 +59,7 @@ public class SimpleRead2GradoopOperator implements
         final Long id = this.id;
         TemporalGraph lg = windowedGraph.query(
                 "MATCH (dst2:Account)-[edge2:transfer]->(src:Account)-[edge1:transfer]->(dst1:Account) WHERE src.id =" +
-                    this.id + "L")
+                    this.id + "L AND dst2 <> src AND dst1 <> src")
             .reduce(new ReduceCombination<>())
             .transformVertices((currentVertex, transformedVertex) -> {
                 if (currentVertex.hasProperty("id") &&
@@ -86,7 +86,6 @@ public class SimpleRead2GradoopOperator implements
                     long count = edge.getPropertyValue("count").getLong();
                     String type = src.getPropertyValue("id").is(Long.class) ? "transfer-out" :
                         "transfer-in"; // If source edge has id, it has to be transfer-out
-
 
                     if (maxAmount == 0.0f) {
                         maxAmount = -1.0f;
