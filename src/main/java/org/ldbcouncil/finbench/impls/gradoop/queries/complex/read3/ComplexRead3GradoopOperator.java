@@ -40,7 +40,8 @@ class ComplexRead3GradoopOperator implements UnaryBaseGraphToValueOperator<Tempo
 
         TemporalGraph weightedGraph = temporalGraph
             .subgraph(new LabelIsIn<>("Account"), new LabelIsIn<>("transfer"))
-            .fromTo(this.startTime, this.endTime).transformEdges((e1, e2) -> {
+            .fromTo(this.startTime, this.endTime)
+            .transformEdges((e1, e2) -> {
                 e1.setProperty("weight", 1);
                 return e1;
             });
