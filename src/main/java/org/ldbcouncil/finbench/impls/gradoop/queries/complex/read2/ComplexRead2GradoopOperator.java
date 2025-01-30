@@ -14,10 +14,8 @@ import org.apache.flink.api.java.tuple.Tuple4;
 import org.gradoop.common.model.impl.id.GradoopId;
 import org.gradoop.common.model.impl.pojo.EPGMVertex;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
-import org.gradoop.flink.model.impl.epgm.GraphCollection;
 import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
 import org.gradoop.flink.model.impl.layouts.transactional.tuples.GraphTransaction;
-import org.gradoop.flink.model.impl.operators.combination.ReduceCombination;
 import org.gradoop.temporal.model.impl.TemporalGraph;
 import org.ldbcouncil.finbench.driver.truncation.TruncationOrder;
 import org.ldbcouncil.finbench.driver.workloads.transaction.queries.ComplexRead2;
@@ -61,32 +59,31 @@ class ComplexRead2GradoopOperator implements
             .subgraph(new LabelIsIn<>("Account", "Loan", "Person"), new LabelIsIn<>("transfer", "own", "deposit"))
             .fromTo(this.startTime, this.endTime);
 
-        GraphCollection gtxLength1 = windowedGraph
+        DataSet<GraphTransaction> gtxLength1 = windowedGraph
             .temporalQuery(
                 "MATCH (p:Person)-[e1:own]->(a:Account)<-[e2:transfer]-(other:Account)<-[e3:deposit]-(loan:Loan)" +
                     " WHERE p.id = " + this.id + "L")
-            .toGraphCollection();
+            .toGraphCollection()
+            .getGraphTransactions();
 
-        GraphCollection gtxLength2 = windowedGraph
+        DataSet<GraphTransaction> gtxLength2 = windowedGraph
             .temporalQuery(
                 "MATCH (p:Person)-[e1:own]->(a:Account)<-[t1:transfer]-(:Account)<-[e2:transfer]-(other:Account)<-[e3:deposit]-(loan:Loan)" +
                     " WHERE p.id = " + this.id + "L AND e2.val_from.before(t1.val_from)")
-            .toGraphCollection();
+            .toGraphCollection()
+            .getGraphTransactions();
 
-        GraphCollection gtxLength3 = windowedGraph
+        DataSet<GraphTransaction> gtxLength3 = windowedGraph
             .temporalQuery(
                 "MATCH (p:Person)-[e1:own]->(a:Account)<-[t2:transfer]-(:Account)<-[t1:transfer]-(:Account)<-[e2:transfer]-(other:Account)<-[e3:deposit]-(loan:Loan)" +
                     " WHERE p.id = " + this.id +
                     "L AND e2.val_from.before(t1.val_from) AND t1.val_from.before(t2.val_from)")
-            .toGraphCollection();
-
-        DataSet<GraphTransaction> gtUnion =
-            gtxLength1.union(gtxLength2).union(gtxLength3).reduce(new ReduceCombination<>())
-                .query("MATCH (other:Account)<-[e3:deposit]-(loan:Loan)") // get last part of unioned query
-                .getGraphTransactions();
+            .toGraphCollection()
+            .getGraphTransactions();
 
         DataSet<Tuple4<Long, Double, Double, Long>>
-            edgeMap = gtUnion.map(new MapFunction<GraphTransaction, Tuple4<Long, Double, Double, Long>>() {
+            edgeMap = gtxLength1.union(gtxLength2).union(gtxLength3)
+            .map(new MapFunction<GraphTransaction, Tuple4<Long, Double, Double, Long>>() {
                 @Override
                 public Tuple4<Long, Double, Double, Long> map(GraphTransaction graphTransaction) {
                     Map<String, GradoopId> m = CommonUtils.getVariableMapping(graphTransaction);
@@ -96,11 +93,11 @@ class ComplexRead2GradoopOperator implements
                     long otherID = other.getPropertyValue("id").getLong();
                     double loanAmount = loan.getPropertyValue("loanAmount").getDouble();
                     double loanBalance = loan.getPropertyValue("balance").getDouble();
-                    long loanID = loan.getPropertyValue("id").getLong();
+                    long loanID = loan.getPropertyValue("id").getLong(); // for distinct
                     return new Tuple4<>(otherID, loanAmount, loanBalance, loanID);
                 }
 
-            }).distinct(0, 3)
+            }).distinct(0, 3) // Only get distinct combinations of account and loans
             .groupBy(0)
             .reduce(new ReduceFunction<Tuple4<Long, Double, Double, Long>>() {
                 @Override
@@ -108,7 +105,7 @@ class ComplexRead2GradoopOperator implements
                                                                  Tuple4<Long, Double, Double, Long> t2) {
                     return new Tuple4<>(t1.f0, t1.f1 + t2.f1, t1.f2 + t2.f2, 0L);
                 }
-            });
+            }); // Aggregate the loan amounts and balances for each account
 
         if (this.useFlinkSort) {
             windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
