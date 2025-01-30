@@ -64,20 +64,20 @@ class ComplexRead2GradoopOperator implements
         GraphCollection gtxLength1 = windowedGraph
             .temporalQuery(
                 "MATCH (p:Person)-[e1:own]->(a:Account)<-[e2:transfer]-(other:Account)<-[e3:deposit]-(loan:Loan)" +
-                    " WHERE p.id = " + this.id + "L AND a <> other")
+                    " WHERE p.id = " + this.id + "L")
             .toGraphCollection();
 
         GraphCollection gtxLength2 = windowedGraph
             .temporalQuery(
                 "MATCH (p:Person)-[e1:own]->(a:Account)<-[t1:transfer]-(:Account)<-[e2:transfer]-(other:Account)<-[e3:deposit]-(loan:Loan)" +
-                    " WHERE p.id = " + this.id + "L AND e2.val_from.before(t1.val_from) AND a <> other")
+                    " WHERE p.id = " + this.id + "L AND e2.val_from.before(t1.val_from)")
             .toGraphCollection();
 
         GraphCollection gtxLength3 = windowedGraph
             .temporalQuery(
                 "MATCH (p:Person)-[e1:own]->(a:Account)<-[t2:transfer]-(:Account)<-[t1:transfer]-(:Account)<-[e2:transfer]-(other:Account)<-[e3:deposit]-(loan:Loan)" +
                     " WHERE p.id = " + this.id +
-                    "L AND e2.val_from.before(t1.val_from) AND t1.val_from.before(t2.val_from) AND a <> other")
+                    "L AND e2.val_from.before(t1.val_from) AND t1.val_from.before(t2.val_from)")
             .toGraphCollection();
 
         LogicalGraph gcUnion = gtxLength1.union(gtxLength2).union(gtxLength3).reduce(new ReduceCombination<>())
