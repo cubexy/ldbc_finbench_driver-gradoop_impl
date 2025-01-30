@@ -71,7 +71,7 @@ class ComplexRead4GradoopOperator implements
 
         TemporalGraph otherAccounts = windowedGraph.query(
                 "MATCH (src:Account)-[edge1:transfer]->(dst:Account), (src)<-[edge2:transfer]-(other:Account)<-[edge3:transfer]-(dst) WHERE src.id = " +
-                    this.id1 + "L AND dst.id = " + this.id2 + "L")
+                    this.id1 + "L AND dst.id = " + this.id2 + "L") // edge1 has to exist -> first condition from query met
             .reduce(new ReduceCombination<>())
             .transformVertices((currentVertex, transformedVertex) -> {
                 if (currentVertex.hasProperty("id") && (
@@ -83,17 +83,14 @@ class ComplexRead4GradoopOperator implements
                 return currentVertex;
             })
             .callForGraph(
-                new KeyedGrouping<>(Arrays.asList(GroupingKeys.label(), GroupingKeys.property("id")),
+                new KeyedGrouping<>(Collections.singletonList(GroupingKeys.property("id")),
                     null, null,
                     Arrays.asList(new Count("count"), new SumProperty("amount"), new MaxProperty("amount")))
             );
 
-        List<Tuple7<Long, Integer, Double, Double, Integer, Double, Double>> edgeMap;
-
-
         DataSet<Tuple7<Long, Integer, Double, Double, Integer, Double, Double>>
             edges = otherAccounts.getEdges()
-            .join(otherAccounts.getVertices()).where(new SourceId<>()).equalTo(new Id<>())
+            .join(otherAccounts.getVertices()).where(new SourceId<>()).equalTo(new Id<>()) // get all edges and their source vertices -> transfer from other to src
             .map(new MapFunction<Tuple2<TemporalEdge, TemporalVertex>, Tuple4<Long, Integer, Double, Double>>() {
                 @Override
                 public Tuple4<Long, Integer, Double, Double> map(Tuple2<TemporalEdge, TemporalVertex> e) {
@@ -109,7 +106,7 @@ class ComplexRead4GradoopOperator implements
                 }
             }).join(
                 otherAccounts.getEdges()
-                    .join(otherAccounts.getVertices()).where(new TargetId<>()).equalTo(new Id<>())
+                    .join(otherAccounts.getVertices()).where(new TargetId<>()).equalTo(new Id<>()) // get edges and their target vertices -> transfer from dst to other
                     .map(
                         new MapFunction<Tuple2<TemporalEdge, TemporalVertex>, Tuple4<Long, Integer, Double, Double>>() {
                             @Override
@@ -128,7 +125,7 @@ class ComplexRead4GradoopOperator implements
                                 return new Tuple4<>(otherID, numEdges, sumAmount, maxAmount);
                             }
                         })
-            ).where(0)
+            ).where(0) // join the two together to get full result set -> join on otherID
             .equalTo(0)
             .map(
                 new MapFunction<Tuple2<Tuple4<Long, Integer, Double, Double>, Tuple4<Long, Integer, Double, Double>>, Tuple7<Long, Integer, Double, Double, Integer, Double, Double>>() {
@@ -151,9 +148,10 @@ class ComplexRead4GradoopOperator implements
                 .sortPartition(0, Order.ASCENDING);
         }
 
+        List<Tuple7<Long, Integer, Double, Double, Integer, Double, Double>> edgeMap;
+
         try {
-            edgeMap = edges
-                .collect();
+            edgeMap = edges.collect();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
