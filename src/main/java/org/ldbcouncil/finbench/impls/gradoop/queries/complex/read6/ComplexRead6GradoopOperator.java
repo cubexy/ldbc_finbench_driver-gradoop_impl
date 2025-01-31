@@ -110,7 +110,7 @@ class ComplexRead6GradoopOperator implements
             .filter(new FilterFunction<Tuple4<Long, Double, Double, Integer>>() {
                 @Override
                 public boolean filter(Tuple4<Long, Double, Double, Integer> t) {
-                    return t.f3 > 3;
+                    return t.f3 > 3; // check if over 3 accounts exceed threshold
                 }
             });
 
