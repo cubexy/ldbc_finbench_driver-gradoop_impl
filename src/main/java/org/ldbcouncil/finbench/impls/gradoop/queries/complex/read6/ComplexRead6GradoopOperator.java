@@ -69,7 +69,7 @@ class ComplexRead6GradoopOperator implements
 
         DataSet<Tuple4<Long, Double, Double, Integer>> edges = windowedGraph.query(
                 "MATCH (src1:Account)-[edge1:transfer]->(mid:Account)-[edge2:withdraw]->(dstCard:Account) WHERE dstCard.id = " +
-                    this.id + "L AND dstCard.type = 'card' AND edge1.amount > " + this.threshold2)
+                    this.id + "L AND dstCard.type = 'card' AND edge2.amount > " + this.threshold2)
             .toGraphCollection()
             .getGraphTransactions()
             .map(new MapFunction<GraphTransaction, Tuple4<Long, Double, Double, Integer>>() {
