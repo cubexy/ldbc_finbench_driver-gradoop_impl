@@ -65,9 +65,13 @@ class ComplexRead7GradoopOperator implements
             .fromTo(this.startTime, this.endTime);
 
         TemporalGraph tg = windowedGraph.query(
-                "MATCH (src:Account)-[edge1:transfer]->(mid:Account)-[edge2:transfer]->(dst:Account) WHERE mid.id = " +
-                    this.id + "L AND edge1.amount > " + this.threshold + " AND edge2.amount > " +
-                    this.threshold)
+                "MATCH (src:Account)-[edge1:transfer]->(mid:Account) WHERE mid.id = " +
+                    this.id + "L AND edge1.amount > " + this.threshold)
+            .union(
+                windowedGraph.query(
+                    "MATCH (mid:Account)-[edge2:transfer]->(dst:Account) WHERE mid.id = " +
+                        this.id + "L AND edge2.amount > " + this.threshold)
+            )
             .reduce(new ReduceCombination<>())
             .transformVertices((currentVertex, transformedVertex) -> {
                 if (currentVertex.hasProperty("id") &&
@@ -116,7 +120,7 @@ class ComplexRead7GradoopOperator implements
         int edge1Count = 0;
         int edge2Count = 0;
 
-        for (Tuple3<String, Integer, Double> edge : edgeValuesList) {
+        for (Tuple3<String, Integer, Double> edge : edgeValuesList) { // only two edges after filtering
             if (edge.f0.equals("src")) {
                 edge1Count = edge.f1;
                 edge1Sum = edge.f2;
