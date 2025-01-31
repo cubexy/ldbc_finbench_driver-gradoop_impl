@@ -56,6 +56,8 @@ class ComplexRead11GradoopOperator implements
             .subgraph(new LabelIsIn<>("Person", "Loan"), new LabelIsIn<>("guarantee", "apply"))
             .fromTo(this.startTime, this.endTime);
 
+        // path length of up to 5 Person nodes because Gradoop does not support variable length paths
+
         DataSet<Tuple2<Double, Integer>> loanEdges = windowedGraph
             .temporalQuery(
                 "MATCH (p1:Person)-[:guarantee]->(p2:Person)-[:guarantee]->(p3:Person)-[:guarantee]->(p4:Person)-[:guarantee]->(p5:Person), (p2)-[:apply]->(:Loan), (p3)-[:apply]->(:Loan), (p4)-[:apply]->(:Loan), (p5)-[:apply]->(:Loan) " +
@@ -81,8 +83,7 @@ class ComplexRead11GradoopOperator implements
                     )
             )
             .reduce(new ReduceCombination<>())
-            .query("MATCH (:Loan)")
-            .reduce(new ReduceCombination<>())
+            .subgraph(new LabelIsIn<>("Loan"), null)
             .callForGraph(
                 new KeyedGrouping<>(Collections.singletonList(GroupingKeys.label()),
                     Arrays.asList(new Count("count"), new SumProperty("loanAmount")),
