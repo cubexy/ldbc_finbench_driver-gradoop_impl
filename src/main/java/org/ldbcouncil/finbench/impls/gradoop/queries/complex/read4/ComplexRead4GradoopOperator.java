@@ -90,7 +90,7 @@ class ComplexRead4GradoopOperator implements
 
         DataSet<Tuple7<Long, Integer, Double, Double, Integer, Double, Double>>
             edges = otherAccounts.getEdges()
-            .join(otherAccounts.getVertices()).where(new SourceId<>()).equalTo(new Id<>()) // get all edges and their source vertices -> transfer from other to src
+            .join(otherAccounts.getVertices()).where(new SourceId<>()).equalTo(new Id<>())// get all edges and their source vertices -> transfer from other to src
             .map(new MapFunction<Tuple2<TemporalEdge, TemporalVertex>, Tuple4<Long, Integer, Double, Double>>() {
                 @Override
                 public Tuple4<Long, Integer, Double, Double> map(Tuple2<TemporalEdge, TemporalVertex> e) {
