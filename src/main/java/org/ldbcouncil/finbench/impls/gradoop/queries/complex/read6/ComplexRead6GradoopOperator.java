@@ -12,7 +12,6 @@ import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.common.operators.Order;
 import org.apache.flink.api.java.DataSet;
-import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.api.java.tuple.Tuple5;
 import org.gradoop.common.model.impl.id.GradoopId;
 import org.gradoop.common.model.impl.pojo.EPGMEdge;
@@ -105,8 +104,9 @@ class ComplexRead6GradoopOperator implements
             .groupBy(0, 1)
             .reduce(new ReduceFunction<Tuple5<Long, GradoopId, Double, Double, Integer>>() {
                 @Override
-                public Tuple5<Long, GradoopId, Double, Double, Integer> reduce(Tuple5<Long, GradoopId, Double, Double, Integer> t1,
-                                                                    Tuple5<Long, GradoopId, Double, Double, Integer> t2) {
+                public Tuple5<Long, GradoopId, Double, Double, Integer> reduce(
+                    Tuple5<Long, GradoopId, Double, Double, Integer> t1,
+                    Tuple5<Long, GradoopId, Double, Double, Integer> t2) {
                     return new Tuple5<>(t1.f0, t1.f1, t1.f2 + t2.f2, t1.f3, t1.f4 + t2.f4);
                 }
             })
@@ -119,8 +119,9 @@ class ComplexRead6GradoopOperator implements
             .groupBy(0)
             .reduce(new ReduceFunction<Tuple5<Long, GradoopId, Double, Double, Integer>>() {
                 @Override
-                public Tuple5<Long, GradoopId, Double, Double, Integer> reduce(Tuple5<Long, GradoopId, Double, Double, Integer> t1,
-                                                                               Tuple5<Long, GradoopId, Double, Double, Integer> t2) {
+                public Tuple5<Long, GradoopId, Double, Double, Integer> reduce(
+                    Tuple5<Long, GradoopId, Double, Double, Integer> t1,
+                    Tuple5<Long, GradoopId, Double, Double, Integer> t2) {
                     return new Tuple5<>(t1.f0, null, t1.f2 + t2.f2, t1.f3 + t2.f3, t1.f4 + t2.f4);
                 }
             });
@@ -130,7 +131,7 @@ class ComplexRead6GradoopOperator implements
             windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
 
             edges = edges
-                .sortPartition(2, Order.DESCENDING)
+                .sortPartition(3, Order.DESCENDING)
                 .sortPartition(0, Order.ASCENDING);
         }
 
