@@ -7,11 +7,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.common.operators.Order;
 import org.apache.flink.api.java.DataSet;
-import org.apache.flink.api.java.tuple.Tuple3;
+import org.apache.flink.api.java.tuple.Tuple4;
 import org.gradoop.common.model.impl.id.GradoopId;
 import org.gradoop.common.model.impl.pojo.EPGMEdge;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
@@ -59,21 +60,21 @@ class ComplexRead6GradoopOperator implements
      */
     @Override
     public List<ComplexRead6Result> execute(TemporalGraph temporalGraph) {
+        final double threshold1Serialized = this.threshold1;
 
         // TODO: implement truncation strategy
         TemporalGraph windowedGraph = temporalGraph
             .subgraph(new LabelIsIn<>("Account"), new LabelIsIn<>("transfer", "withdraw"))
             .fromTo(this.startTime, this.endTime);
 
-        DataSet<Tuple3<Long, Double, Double>> edges = windowedGraph.query(
+        DataSet<Tuple4<Long, Double, Double, Integer>> edges = windowedGraph.query(
                 "MATCH (src1:Account)-[edge1:transfer]->(mid:Account)-[edge2:withdraw]->(dstCard:Account) WHERE dstCard.id = " +
-                    this.id + "L AND dstCard.type = 'card' AND edge1.amount > " + this.threshold1 + " AND edge2.amount > " +
-                    this.threshold2)
+                    this.id + "L AND dstCard.type = 'card' AND edge1.amount > " + this.threshold1)
             .toGraphCollection()
             .getGraphTransactions()
-            .map(new MapFunction<GraphTransaction, Tuple3<Long, Double, Double>>() {
+            .map(new MapFunction<GraphTransaction, Tuple4<Long, Double, Double, Integer>>() {
                 @Override
-                public Tuple3<Long, Double, Double> map(GraphTransaction graphTransaction) {
+                public Tuple4<Long, Double, Double, Integer> map(GraphTransaction graphTransaction) {
                     Map<String, GradoopId> m = CommonUtils.getVariableMapping(graphTransaction);
 
                     GradoopId midGradoopId = m.get("mid");
@@ -91,17 +92,26 @@ class ComplexRead6GradoopOperator implements
                         }
                     }
 
+                    boolean exceedsThreshold = edge1Amount > threshold1Serialized;
+
                     Long midId =
                         graphTransaction.getVertexById(midGradoopId).getPropertyValue("id").getLong();
-                    return new Tuple3<>(midId, edge1Amount, edge2Amount);
+                    return new Tuple4<>(midId, edge1Amount, edge2Amount, exceedsThreshold ? 1 : 0);
                 }
             })
             .groupBy(0)
-            .reduce(new ReduceFunction<Tuple3<Long, Double, Double>>() {
+            .reduce(new ReduceFunction<Tuple4<Long, Double, Double, Integer>>() {
                 @Override
-                public Tuple3<Long, Double, Double> reduce(Tuple3<Long, Double, Double> t1,
-                                                           Tuple3<Long, Double, Double> t2) {
-                    return new Tuple3<>(t1.f0, t1.f1 + t2.f1, t1.f2 + t2.f2);
+                public Tuple4<Long, Double, Double, Integer> reduce(Tuple4<Long, Double, Double, Integer> t1,
+                                                                    Tuple4<Long, Double, Double, Integer> t2) {
+                    return new Tuple4<>(t1.f0, t1.f1 + t2.f1, t1.f2 + t2.f2, t1.f3 + t2.f3);
+                }
+            })
+            .filter(new FilterFunction<Tuple4<Long, Double, Double, Integer>>() {
+                @Override
+                public boolean filter(Tuple4<Long, Double, Double, Integer> longDoubleDoubleIntegerTuple4)
+                    throws Exception {
+                    return longDoubleDoubleIntegerTuple4.f3 > 3;
                 }
             });
 
@@ -113,7 +123,7 @@ class ComplexRead6GradoopOperator implements
                 .sortPartition(0, Order.ASCENDING);
         }
 
-        List<Tuple3<Long, Double, Double>> edgesList;
+        List<Tuple4<Long, Double, Double, Integer>> edgesList;
         try {
             edgesList = edges.collect();
         } catch (Exception e) {
@@ -122,12 +132,12 @@ class ComplexRead6GradoopOperator implements
 
         if (!this.useFlinkSort) {
             edgesList.sort(Comparator
-                .comparing((Tuple3<Long, Double, Double> t) -> t.f2, Comparator.reverseOrder())
+                .comparing((Tuple4<Long, Double, Double, Integer> t) -> t.f2, Comparator.reverseOrder())
                 .thenComparing(t -> t.f0));
         }
 
         List<ComplexRead6Result> complexRead6Results = new ArrayList<>();
-        for (Tuple3<Long, Double, Double> edge : edgesList) {
+        for (Tuple4<Long, Double, Double, Integer> edge : edgesList) {
             complexRead6Results.add(
                 new ComplexRead6Result(edge.f0, roundToDecimalPlaces(edge.f1, 3), roundToDecimalPlaces(edge.f2, 3)));
         }
