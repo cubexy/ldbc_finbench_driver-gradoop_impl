@@ -109,9 +109,8 @@ class ComplexRead6GradoopOperator implements
             })
             .filter(new FilterFunction<Tuple4<Long, Double, Double, Integer>>() {
                 @Override
-                public boolean filter(Tuple4<Long, Double, Double, Integer> longDoubleDoubleIntegerTuple4)
-                    throws Exception {
-                    return longDoubleDoubleIntegerTuple4.f3 > 3;
+                public boolean filter(Tuple4<Long, Double, Double, Integer> t) {
+                    return t.f3 > 3;
                 }
             });
 
