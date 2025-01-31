@@ -13,6 +13,7 @@ import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.common.operators.Order;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.tuple.Tuple4;
+import org.apache.flink.api.java.tuple.Tuple5;
 import org.gradoop.common.model.impl.id.GradoopId;
 import org.gradoop.common.model.impl.pojo.EPGMEdge;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
@@ -67,19 +68,20 @@ class ComplexRead6GradoopOperator implements
             .subgraph(new LabelIsIn<>("Account"), new LabelIsIn<>("transfer", "withdraw"))
             .fromTo(this.startTime, this.endTime);
 
-        DataSet<Tuple4<Long, Double, Double, Integer>> edges = windowedGraph.query(
+        DataSet<Tuple5<Long, GradoopId, Double, Double, Integer>> edges = windowedGraph.query(
                 "MATCH (src1:Account)-[edge1:transfer]->(mid:Account)-[edge2:withdraw]->(dstCard:Account) WHERE dstCard.id = " +
                     this.id + "L AND dstCard.type = 'card' AND edge2.amount > " + this.threshold2)
             .toGraphCollection()
             .getGraphTransactions()
-            .map(new MapFunction<GraphTransaction, Tuple4<Long, Double, Double, Integer>>() {
+            .map(new MapFunction<GraphTransaction, Tuple5<Long, GradoopId, Double, Double, Integer>>() {
                 @Override
-                public Tuple4<Long, Double, Double, Integer> map(GraphTransaction graphTransaction) {
+                public Tuple5<Long, GradoopId, Double, Double, Integer> map(GraphTransaction graphTransaction) {
                     Map<String, GradoopId> m = CommonUtils.getVariableMapping(graphTransaction);
 
                     GradoopId midGradoopId = m.get("mid");
 
                     double edge1Amount = 0;
+                    GradoopId edge2Id = null;
                     double edge2Amount = 0;
 
                     Set<EPGMEdge> edges = graphTransaction.getEdges();
@@ -89,6 +91,7 @@ class ComplexRead6GradoopOperator implements
                             edge1Amount = edge.getPropertyValue("amount").getDouble();
                         } else if (edge.getLabel().equals("withdraw")) {
                             edge2Amount = edge.getPropertyValue("amount").getDouble();
+                            edge2Id = edge.getId();
                         }
                     }
 
@@ -96,23 +99,32 @@ class ComplexRead6GradoopOperator implements
 
                     Long midId =
                         graphTransaction.getVertexById(midGradoopId).getPropertyValue("id").getLong();
-                    return new Tuple4<>(midId, edge1Amount, edge2Amount, exceedsThreshold ? 1 : 0);
+                    return new Tuple5<>(midId, edge2Id, edge1Amount, edge2Amount, exceedsThreshold ? 1 : 0);
+                }
+            })
+            .groupBy(0, 1)
+            .reduce(new ReduceFunction<Tuple5<Long, GradoopId, Double, Double, Integer>>() {
+                @Override
+                public Tuple5<Long, GradoopId, Double, Double, Integer> reduce(Tuple5<Long, GradoopId, Double, Double, Integer> t1,
+                                                                    Tuple5<Long, GradoopId, Double, Double, Integer> t2) {
+                    return new Tuple5<>(t1.f0, t1.f1, t1.f2 + t2.f2, t1.f3, t1.f4 + t2.f4);
+                }
+            })
+            .filter(new FilterFunction<Tuple5<Long, GradoopId, Double, Double, Integer>>() {
+                @Override
+                public boolean filter(Tuple5<Long, GradoopId, Double, Double, Integer> t) {
+                    return t.f3 > 3; // check if over 3 accounts exceed threshold
                 }
             })
             .groupBy(0)
-            .reduce(new ReduceFunction<Tuple4<Long, Double, Double, Integer>>() {
+            .reduce(new ReduceFunction<Tuple5<Long, GradoopId, Double, Double, Integer>>() {
                 @Override
-                public Tuple4<Long, Double, Double, Integer> reduce(Tuple4<Long, Double, Double, Integer> t1,
-                                                                    Tuple4<Long, Double, Double, Integer> t2) {
-                    return new Tuple4<>(t1.f0, t1.f1 + t2.f1, t1.f2 + t2.f2, t1.f3 + t2.f3);
-                }
-            })
-            .filter(new FilterFunction<Tuple4<Long, Double, Double, Integer>>() {
-                @Override
-                public boolean filter(Tuple4<Long, Double, Double, Integer> t) {
-                    return t.f3 > 3; // check if over 3 accounts exceed threshold
+                public Tuple5<Long, GradoopId, Double, Double, Integer> reduce(Tuple5<Long, GradoopId, Double, Double, Integer> t1,
+                                                                               Tuple5<Long, GradoopId, Double, Double, Integer> t2) {
+                    return new Tuple5<>(t1.f0, null, t1.f2 + t2.f2, t1.f3 + t2.f3, t1.f4 + t2.f4);
                 }
             });
+
 
         if (this.useFlinkSort) {
             windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);
@@ -122,7 +134,7 @@ class ComplexRead6GradoopOperator implements
                 .sortPartition(0, Order.ASCENDING);
         }
 
-        List<Tuple4<Long, Double, Double, Integer>> edgesList;
+        List<Tuple5<Long, GradoopId, Double, Double, Integer>> edgesList;
         try {
             edgesList = edges.collect();
         } catch (Exception e) {
@@ -131,14 +143,14 @@ class ComplexRead6GradoopOperator implements
 
         if (!this.useFlinkSort) {
             edgesList.sort(Comparator
-                .comparing((Tuple4<Long, Double, Double, Integer> t) -> t.f2, Comparator.reverseOrder())
+                .comparing((Tuple5<Long, GradoopId, Double, Double, Integer> t) -> t.f3, Comparator.reverseOrder())
                 .thenComparing(t -> t.f0));
         }
 
         List<ComplexRead6Result> complexRead6Results = new ArrayList<>();
-        for (Tuple4<Long, Double, Double, Integer> edge : edgesList) {
+        for (Tuple5<Long, GradoopId, Double, Double, Integer> edge : edgesList) {
             complexRead6Results.add(
-                new ComplexRead6Result(edge.f0, roundToDecimalPlaces(edge.f1, 3), roundToDecimalPlaces(edge.f2, 3)));
+                new ComplexRead6Result(edge.f0, roundToDecimalPlaces(edge.f2, 3), roundToDecimalPlaces(edge.f3, 3)));
         }
 
         return complexRead6Results;
