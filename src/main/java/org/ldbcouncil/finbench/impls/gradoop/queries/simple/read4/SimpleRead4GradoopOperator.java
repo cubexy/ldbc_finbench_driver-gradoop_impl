@@ -68,7 +68,7 @@ public class SimpleRead4GradoopOperator implements
                     "L AND transferOut.amount > " + this.threshold)
             .reduce(new ReduceCombination<>())
             .callForGraph(
-                new KeyedGrouping<>(Collections.singletonList(GroupingKeys.property("id")),
+                new KeyedGrouping<>(Arrays.asList(GroupingKeys.label(), GroupingKeys.property("id")),
                     null, null,
                     Arrays.asList(new Count("count"), new SumProperty("amount")))
             );
