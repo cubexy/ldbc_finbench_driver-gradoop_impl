@@ -2,14 +2,15 @@ package org.ldbcouncil.finbench.impls.gradoop.queries.complex.read7;
 
 import static org.ldbcouncil.finbench.impls.gradoop.CommonUtils.roundToDecimalPlaces;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.api.java.tuple.Tuple3;
+import org.apache.flink.api.java.tuple.Tuple4;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
 import org.gradoop.flink.model.impl.functions.epgm.Id;
 import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
@@ -85,61 +86,52 @@ class ComplexRead7GradoopOperator implements
                     null, null,
                     Arrays.asList(new Count("count"), new SumProperty("amount"))));
 
-        DataSet<Tuple3<String, Integer, Double>>
+        DataSet<Tuple4<Integer, Double, Integer, Double>>
             edgeValues = tg.getEdges()
             .join(tg.getVertices()).where(new SourceId<>()).equalTo(new Id<>())
-            .map(new MapFunction<Tuple2<TemporalEdge, TemporalVertex>, Tuple3<String, Integer, Double>>() {
+            .map(new MapFunction<Tuple2<TemporalEdge, TemporalVertex>, Tuple4<Integer, Double, Integer, Double>>() {
                 @Override
-                public Tuple3<String, Integer, Double> map(Tuple2<TemporalEdge, TemporalVertex> e) {
+                public Tuple4<Integer, Double, Integer, Double> map(Tuple2<TemporalEdge, TemporalVertex> e) {
                     TemporalEdge edge = e.f0;
                     TemporalVertex srcVertex = e.f1;
 
-                    String srcTag = "src";
-                    if (srcVertex.getPropertyValue("id").is(Long.class)) {
-                        srcTag = "mid";
-                    }
-
+                    boolean isEdge2 = srcVertex.getPropertyValue("id").is(Long.class);
                     int edgeCount = (int) edge.getPropertyValue("count").getLong();
                     double edgeSum = edge.getPropertyValue("sum_amount").getDouble();
 
-                    return new Tuple3<>(srcTag, edgeCount, edgeSum);
+                    return isEdge2 ?
+                        new Tuple4<>(0, 0.0, edgeCount, edgeSum) // edge2
+                        : new Tuple4<>(edgeCount, edgeSum, 0, 0.0); // edge1
+                }
+            })
+            .reduce(new ReduceFunction<Tuple4<Integer, Double, Integer, Double>>() {
+                @Override
+                public Tuple4<Integer, Double, Integer, Double> reduce(Tuple4<Integer, Double, Integer, Double> t1,
+                                                                       Tuple4<Integer, Double, Integer, Double> t2) {
+                    return new Tuple4<>(t1.f0 + t2.f0, t1.f1 + t2.f1, t1.f2 + t2.f2, t1.f3 + t2.f3);
                 }
             });
 
-        List<Tuple3<String, Integer, Double>> edgeValuesList;
+        List<Tuple4<Integer, Double, Integer, Double>> edgeValuesList;
         try {
             edgeValuesList = edgeValues.collect();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
-        List<ComplexRead7Result> complexRead7Results = new ArrayList<>();
-
-        double edge1Sum = 0.0;
-        double edge2Sum = 0.0;
-        int edge1Count = 0;
-        int edge2Count = 0;
-
-        for (Tuple3<String, Integer, Double> edge : edgeValuesList) { // only two edges after filtering
-            if (edge.f0.equals("src")) {
-                edge1Count = edge.f1;
-                edge1Sum = edge.f2;
-                continue;
-            }
-            if (edge.f0.equals("mid")) {
-                edge2Count = edge.f1;
-                edge2Sum = edge.f2;
-            }
+        if (edgeValuesList.isEmpty()) {
+            return Collections.singletonList(new ComplexRead7Result(0, 0, 0));
         }
 
-        double inOutRatio = -1.0f;
+        Tuple4<Integer, Double, Integer, Double> resultTuple = edgeValuesList.get(0);
 
-        if (edge2Sum > 0.0) {
-            inOutRatio = roundToDecimalPlaces(edge1Sum / edge2Sum, 3);
-        }
+        int edge1Count = resultTuple.f0;
+        double edge1Sum = resultTuple.f1;
+        int edge2Count = resultTuple.f2;
+        double edge2Sum = resultTuple.f3;
 
-        complexRead7Results.add(new ComplexRead7Result(edge1Count, edge2Count, (float) inOutRatio));
+        double inOutRatio = edge2Sum > 0.0 ? roundToDecimalPlaces(edge1Sum / edge2Sum, 3) : -1.0f;
 
-        return complexRead7Results;
+        return Collections.singletonList(new ComplexRead7Result(edge1Count, edge2Count, (float) inOutRatio));
     }
 }
