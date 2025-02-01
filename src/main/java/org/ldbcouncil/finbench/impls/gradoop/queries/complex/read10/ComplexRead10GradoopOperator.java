@@ -57,22 +57,21 @@ class ComplexRead10GradoopOperator implements UnaryBaseGraphToValueOperator<Temp
                         long pId = graphTransaction.getVertexById(m.get("p")).getPropertyValue("id").getLong();
                         long comId = graphTransaction.getVertexById(m.get("com")).getPropertyValue("id").getLong();
 
-                        return new Tuple2<>(pId, comId);
+                        return new Tuple2<>(pId, comId); // Get each pair of (pId, comId)
                     }
                 })
-                .distinct(0, 1)
-                .groupBy(1)
+                .distinct(0, 1) // Only keep distinct pairs
+                .groupBy(1) // Group by company ID
                 .reduce(new ReduceFunction<Tuple2<Long, Long>>() {
                     @Override
                     public Tuple2<Long, Long> reduce(Tuple2<Long, Long> t1, Tuple2<Long, Long> t2) {
-                        Long f0 = t1.f0.equals(t2.f0) ? t1.f0 : 0L;
-                        return new Tuple2<>(f0, t1.f1);
+                        return new Tuple2<>(0L, t1.f1); // If reduce is called, the company has to be linked to both persons -> replace person ID with 0
                     }
                 })
                 .map(new MapFunction<Tuple2<Long, Long>, Tuple2<Integer, Integer>>() {
                     @Override
                     public Tuple2<Integer, Integer> map(Tuple2<Long, Long> t) {
-                        return new Tuple2<>(1, t.f0.equals(0L) ? 1 : 0);
+                        return new Tuple2<>(1, t.f0.equals(0L) ? 1 : 0); // Tuple is (total number of companies, number of companies that both persons invested in)
                     }
                 })
                 .reduce(
@@ -80,7 +79,7 @@ class ComplexRead10GradoopOperator implements UnaryBaseGraphToValueOperator<Temp
                         @Override
                         public Tuple2<Integer, Integer> reduce(Tuple2<Integer, Integer> t1,
                                                                Tuple2<Integer, Integer> t2) {
-                            return new Tuple2<>(t1.f0 + t2.f0, t1.f1 + t2.f1);
+                            return new Tuple2<>(t1.f0 + t2.f0, t1.f1 + t2.f1); // aggregate the results
                         }
                     }
                 );

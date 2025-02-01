@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.common.operators.Order;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.tuple.Tuple4;
@@ -109,9 +110,7 @@ class ComplexRead8GradoopOperator implements
                                 continue;
                             }
                             double amount = edge.getPropertyValue("amount").getDouble();
-
                             valid = amount > inflow * thresholdSerializable;
-
                             if (edge.getLabel().equals("transfer")) {
                                 inflow += amount;
                             }
@@ -135,6 +134,16 @@ class ComplexRead8GradoopOperator implements
                     @Override
                     public boolean filter(Tuple4<Long, Float, Integer, Boolean> tuple) {
                         return tuple.f3;
+                    }
+                })
+                .groupBy(1)
+                .reduce(new ReduceFunction<Tuple4<Long, Float, Integer, Boolean>>() {
+                    @Override
+                    public Tuple4<Long, Float, Integer, Boolean> reduce(
+                        Tuple4<Long, Float, Integer, Boolean> t1,
+                        Tuple4<Long, Float, Integer, Boolean> t2) {
+                        int minAccountDistance = Math.min(t1.f2, t2.f2);
+                        return minAccountDistance == t1.f2 ? t1 : t2;
                     }
                 });
 

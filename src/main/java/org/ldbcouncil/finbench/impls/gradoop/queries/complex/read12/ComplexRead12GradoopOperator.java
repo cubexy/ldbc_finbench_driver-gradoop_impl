@@ -78,7 +78,7 @@ class ComplexRead12GradoopOperator implements
                     return new Tuple2<>(compAccId, amount);
                 }
             })
-            .groupBy(1)
+            .groupBy(0)
             .reduce(new ReduceFunction<Tuple2<Long, Double>>() {
                 @Override
                 public Tuple2<Long, Double> reduce(Tuple2<Long, Double> t1, Tuple2<Long, Double> t2) {
