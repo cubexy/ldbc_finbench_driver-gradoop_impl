@@ -42,7 +42,7 @@ class ComplexRead3GradoopOperator implements UnaryBaseGraphToValueOperator<Tempo
             .subgraph(new LabelIsIn<>("Account"), new LabelIsIn<>("transfer"))
             .fromTo(this.startTime, this.endTime)
             .transformEdges((e1, e2) -> {
-                e1.setProperty("weight", 1);
+                e1.setProperty("weight", 1); // Add weight property to edges
                 return e1;
             });
 
@@ -53,13 +53,13 @@ class ComplexRead3GradoopOperator implements UnaryBaseGraphToValueOperator<Tempo
                 weightedGraph.getVertices()
                     .filter(ver -> ver.hasProperty("id"))
                     .filter(ver -> ver.getPropertyValue("id").getLong() == serializableId1).collect()
-                    .get(0);
+                    .get(0); // Get account vertex (findFirst instead of filter would be more efficient)
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
         TemporalGraph SSSPGraph = weightedGraph.callForGraph(
-            new SingleSourceShortestPaths<>(
+            new SingleSourceShortestPaths<>( // Apply SSSP algorithm
                 src.getId(),
                 "weight",
                 100,
@@ -72,12 +72,12 @@ class ComplexRead3GradoopOperator implements UnaryBaseGraphToValueOperator<Tempo
         try {
             dst = SSSPGraph.getVertices()
                 .filter(ver -> ver.hasProperty("id"))
-                .filter(ver -> ver.getPropertyValue("id").getLong() == serializableId2).collect();
+                .filter(ver -> ver.getPropertyValue("id").getLong() == serializableId2).collect(); // Get vertex and distance
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
-        if (dst.isEmpty()) {
+        if (dst.isEmpty()) { // not connected
             return new ComplexRead3Result(-1);
         }
 

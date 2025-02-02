@@ -64,7 +64,7 @@ class ComplexRead5GradoopOperator implements UnaryBaseGraphToValueOperator<Tempo
                 "L AND edge2.val_from.before(edge3.val_from) AND edge3.val_from.before(edge4" +
                 ".val_from) AND src <> dst1 AND src <> dst2 AND src <> dst3 AND dst1 <> dst2 AND dst1 <> dst3 AND dst2 <> dst3")
             .toGraphCollection()
-            .getGraphTransactions();
+            .getGraphTransactions(); // Get trace over four edges
 
         DataSet<GraphTransaction> gtxLength2 = windowedGraph
             .temporalQuery("MATCH (p:Person)-[:own]->(src:Account)-[edge2:transfer]->(dst1:Account)" +
@@ -72,14 +72,14 @@ class ComplexRead5GradoopOperator implements UnaryBaseGraphToValueOperator<Tempo
                 " WHERE p.id = " + this.id +
                 "L AND edge2.val_from.before(edge3.val_from) AND src <> dst1 AND src <> dst2 AND dst1 <> dst2")
             .toGraphCollection()
-            .getGraphTransactions();
+            .getGraphTransactions(); // Get trace over three edges
 
         DataSet<GraphTransaction> gtxLength1 = windowedGraph
             .temporalQuery("MATCH (p:Person)-[:own]->(src:Account)-[edge2:transfer]->(dst1:Account)" +
                 " WHERE p.id = " + this.id +
                 "L AND src <> dst1")
             .toGraphCollection()
-            .getGraphTransactions();
+            .getGraphTransactions(); // Get trace over two edges
 
         DataSet<Tuple5<Long, Long, Long, Long, Integer>> result = gtxLength1.union(gtxLength2).union(gtxLength3)
             .map(new MapFunction<GraphTransaction, Tuple5<Long, Long, Long, Long, Integer>>() {
@@ -89,18 +89,18 @@ class ComplexRead5GradoopOperator implements UnaryBaseGraphToValueOperator<Tempo
 
                     long srcId = graphTransaction.getVertexById(m.get("src")).getPropertyValue("id").getLong();
                     long dst1Id = graphTransaction.getVertexById(m.get("dst1")).getPropertyValue("id").getLong();
-                    int accountDistance = graphTransaction.getEdges().size() - 1;
+                    int accountDistance = graphTransaction.getEdges().size() - 1; // / Get account distance by edge count
 
                     if (accountDistance > 1) {
                         long dst2Id = graphTransaction.getVertexById(m.get("dst2")).getPropertyValue("id").getLong();
                         if (accountDistance > 2) {
                             long dst3Id =
-                                graphTransaction.getVertexById(m.get("dst3")).getPropertyValue("id").getLong();
+                                graphTransaction.getVertexById(m.get("dst3")).getPropertyValue("id").getLong(); // Get appropriate vertex
                             return new Tuple5<>(srcId, dst1Id, dst2Id, dst3Id, accountDistance);
                         }
                         return new Tuple5<>(srcId, dst1Id, dst2Id, -1L, accountDistance);
                     }
-                    return new Tuple5<>(srcId, dst1Id, -1L, -1L, accountDistance);
+                    return new Tuple5<>(srcId, dst1Id, -1L, -1L, accountDistance); // Return with account distance for sorting
                 }
             }).distinct(0, 1, 2, 3);
 

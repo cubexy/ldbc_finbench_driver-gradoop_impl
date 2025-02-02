@@ -71,7 +71,7 @@ class ComplexRead7GradoopOperator implements
             .union(
                 windowedGraph.query(
                     "MATCH (mid:Account)-[edge2:transfer]->(dst:Account) WHERE mid.id = " +
-                        this.id + "L AND edge2.amount > " + this.threshold)
+                        this.id + "L AND edge2.amount > " + this.threshold) // Match incoming and outgoing seperately to also get accouts with only one of both
             )
             .reduce(new ReduceCombination<>())
             .transformVertices((currentVertex, transformedVertex) -> {

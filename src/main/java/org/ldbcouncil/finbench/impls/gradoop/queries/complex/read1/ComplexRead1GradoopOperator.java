@@ -64,27 +64,27 @@ class ComplexRead1GradoopOperator implements
                 " WHERE a.id = " + this.id + "L AND t1.val_from.before(t2.val_from) AND t2.val_from.before(t3" +
                 ".val_from) AND m.isBlocked = true")
             .toGraphCollection()
-            .getGraphTransactions();
+            .getGraphTransactions(); // Get transfers over three edges
 
         DataSet<GraphTransaction> gtxLength2 = windowedGraph
             .temporalQuery(
                 "MATCH (a:Account)-[t1:transfer]->(:Account)-[t2:transfer]->(other:Account)<-[s:signIn]-(m:Medium)" +
                     " WHERE a.id = " + this.id + "L AND t1.val_from.before(t2.val_from) AND m.isBlocked = true")
             .toGraphCollection()
-            .getGraphTransactions();
+            .getGraphTransactions(); // Get transfers over two edges
 
         DataSet<GraphTransaction> gtxLength1 = windowedGraph
             .temporalQuery("MATCH (a:Account)-[t1:transfer]->(other:Account)<-[s:signIn]-(m:Medium)" +
                 " WHERE a.id = " + this.id + "L AND m.isBlocked = true")
             .toGraphCollection()
-            .getGraphTransactions();
+            .getGraphTransactions(); // Get transfers over one edge
 
         DataSet<Tuple4<Long, Integer, Long, String>> mapResult =
             gtxLength1.union(gtxLength2).union(gtxLength3)
                 .map(new MapFunction<GraphTransaction, Tuple4<Long, Integer, Long, String>>() {
                     @Override
                     public Tuple4<Long, Integer, Long, String> map(GraphTransaction graphTransaction) {
-                        Map<String, GradoopId> m = CommonUtils.getVariableMapping(graphTransaction);
+                        Map<String, GradoopId> m = CommonUtils.getVariableMapping(graphTransaction); // Get variable mapping
 
                         GradoopId otherGradoopId = m.get("other");
                         GradoopId mediumGradoopId = m.get("m");
@@ -97,9 +97,9 @@ class ComplexRead1GradoopOperator implements
                         String mediumType =
                             graphTransaction.getVertexById(mediumGradoopId).getPropertyValue("type").getString();
                         return new Tuple4<>(otherId, accountDistance, mediumId,
-                            mediumType);
+                            mediumType); // Read tuples
                     }
-                }).distinct(0, 1, 2, 3);
+                }).distinct(0, 1, 2, 3); // Remove duplicates with same distance, account ID and medium ID
 
         if (this.useFlinkSort) {
             windowedGraph.getConfig().getExecutionEnvironment().setParallelism(1);

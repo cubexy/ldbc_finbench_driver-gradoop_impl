@@ -64,14 +64,14 @@ class ComplexRead2GradoopOperator implements
                 "MATCH (p:Person)-[e1:own]->(a:Account)<-[e2:transfer]-(other:Account)<-[e3:deposit]-(loan:Loan)" +
                     " WHERE p.id = " + this.id + "L")
             .toGraphCollection()
-            .getGraphTransactions();
+            .getGraphTransactions(); // Get transfers over one edge
 
         DataSet<GraphTransaction> gtxLength2 = windowedGraph
             .temporalQuery(
                 "MATCH (p:Person)-[e1:own]->(a:Account)<-[t1:transfer]-(:Account)<-[e2:transfer]-(other:Account)<-[e3:deposit]-(loan:Loan)" +
                     " WHERE p.id = " + this.id + "L AND e2.val_from.before(t1.val_from)")
             .toGraphCollection()
-            .getGraphTransactions();
+            .getGraphTransactions();  // Get transfers over two edges
 
         DataSet<GraphTransaction> gtxLength3 = windowedGraph
             .temporalQuery(
@@ -79,7 +79,7 @@ class ComplexRead2GradoopOperator implements
                     " WHERE p.id = " + this.id +
                     "L AND e2.val_from.before(t1.val_from) AND t1.val_from.before(t2.val_from)")
             .toGraphCollection()
-            .getGraphTransactions();
+            .getGraphTransactions(); // Get transfers over three edges
 
         DataSet<Tuple4<Long, Double, Double, Long>>
             edgeMap = gtxLength1.union(gtxLength2).union(gtxLength3)

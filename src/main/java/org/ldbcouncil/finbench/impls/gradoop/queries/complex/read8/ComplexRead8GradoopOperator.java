@@ -113,6 +113,7 @@ class ComplexRead8GradoopOperator implements
                             valid = amount > inflow * thresholdSerializable;
                             if (edge.getLabel().equals("transfer")) {
                                 inflow += amount;
+                                // aggregate all transfer amounts (upstream)
                             }
                         }
 
@@ -135,6 +136,7 @@ class ComplexRead8GradoopOperator implements
                     public boolean filter(Tuple4<Long, Float, Integer, Boolean> tuple) {
                         return tuple.f3;
                     }
+                    // only keep valid tuples
                 })
                 .groupBy(1)
                 .reduce(new ReduceFunction<Tuple4<Long, Float, Integer, Boolean>>() {

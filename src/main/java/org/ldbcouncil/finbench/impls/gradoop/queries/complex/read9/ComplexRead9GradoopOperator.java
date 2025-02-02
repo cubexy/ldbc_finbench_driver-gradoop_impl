@@ -81,6 +81,8 @@ class ComplexRead9GradoopOperator implements
             .toGraphCollection()
             .getGraphTransactions();
 
+        // get all transfers seperately
+
         DataSet<Tuple4<Double, Double, Double, Double>> result =
             edge1gt.union(edge2gt).union(edge3gt).union(edge4gt).map(
                     new MapFunction<GraphTransaction, Tuple4<Double, Double, Double, Double>>() {
