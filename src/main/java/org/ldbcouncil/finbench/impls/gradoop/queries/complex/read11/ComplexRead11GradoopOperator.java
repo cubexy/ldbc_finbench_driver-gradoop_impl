@@ -7,6 +7,7 @@ import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.gradoop.flink.model.api.operators.UnaryBaseGraphToValueOperator;
+import org.gradoop.flink.model.impl.functions.bool.True;
 import org.gradoop.flink.model.impl.functions.epgm.LabelIsIn;
 import org.gradoop.flink.model.impl.operators.aggregation.functions.count.Count;
 import org.gradoop.flink.model.impl.operators.aggregation.functions.sum.SumProperty;
@@ -83,7 +84,7 @@ class ComplexRead11GradoopOperator implements
                     )
             )
             .reduce(new ReduceCombination<>())
-            .subgraph(new LabelIsIn<>("Loan"), null)
+            .subgraph(new LabelIsIn<>("Loan"), new True<>())
             .callForGraph(
                 new KeyedGrouping<>(Collections.singletonList(GroupingKeys.label()),
                     Arrays.asList(new Count("count"), new SumProperty("loanAmount")),
