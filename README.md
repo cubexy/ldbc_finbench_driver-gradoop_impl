@@ -65,7 +65,7 @@ mvn clean package -DskipTests
 ```
 
 Fill the configuration properties as specified in the comments above the variables.
-Then execute the Driver class or run it inside of a Flink cluster..
+Then execute the Driver class.
 
 ## 3. Reference
 
