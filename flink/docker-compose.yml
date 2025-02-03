@@ -45,6 +45,7 @@ services:
         FLINK_PROPERTIES=
         jobmanager.rpc.address: jobmanager
         akka.ask.timeout: 5 min
+        heartbeat.timeout: 30 min
     command: jobmanager
     ports:
       - "8081:8081" # web ui
@@ -62,6 +63,7 @@ services:
         jobmanager.rpc.address: jobmanager
         taskmanager.numberOfTaskSlots: 2
         akka.ask.timeout: 5 min
+        heartbeat.timeout: 30 min
     command: taskmanager
     deploy:
       replicas: 4
