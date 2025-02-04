@@ -64,7 +64,16 @@ To get started, clone the repository and build it with Maven:
 mvn clean package -DskipTests
 ```
 
-Fill the configuration properties as specified in the comments above the variables.
+Start the Docker Compose environment located inside `/flink` with the pre-bundled SF0.01 dataset:
+
+```bash
+cd flink
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+Fill the configuration properties as specified in the comments above the variables. Set the `queries.parameters_dir` and the `queries.updates_dir` to the read_params and incremental folder of the SF0.01 dataset on your machine (not HDFS!).
+
 Then execute the Driver class.
 
 ## 3. Reference
