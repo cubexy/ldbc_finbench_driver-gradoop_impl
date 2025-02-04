@@ -118,7 +118,7 @@ public class GradoopImpl extends Db {
         }
 
         ExecutionEnvironment env =
-            ExecutionEnvironment.createRemoteEnvironment("localhost", 8081, 1,
+            ExecutionEnvironment.createRemoteEnvironment("localhost", 8081, parallelism,
                 "target/driver-0.2.0-alpha.jar"); // Set initial parallelism to 1 to allow the graph to load correctly
 
         TemporalGradoopConfig config = TemporalGradoopConfig.createConfig(env);
