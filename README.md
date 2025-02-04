@@ -76,6 +76,8 @@ Fill the configuration properties as specified in the comments above the variabl
 
 Then execute the Driver class.
 
+*If the run fails before starting, please restart it - the HDFS file system used in the cluster needs some time to start. Oddly, the third run always works.*
+
 ## 3. Reference
 
 - FinBench Specification: https://github.com/ldbc/ldbc_finbench_docs
