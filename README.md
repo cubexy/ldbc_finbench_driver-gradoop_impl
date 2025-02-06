@@ -72,11 +72,11 @@ docker-compose build --no-cache
 docker-compose up -d
 ```
 
-Fill the configuration properties as specified in the comments above the variables. Set the `queries.parameters_dir` and the `queries.updates_dir` to the read_params and incremental folder of the SF0.01 dataset on your machine (not HDFS!).
+Fill the configuration properties as specified in the comments above the variables. The parameters are pre-set for the bundled dataset.
 
 Then execute the Driver class.
 
-*If the run fails before starting, please restart it - the HDFS file system used in the cluster needs some time to start. Oddly, the third run always works.*
+*If the run fails before starting, please restart it - the HDFS file system used in the cluster needs some time to start. Oddly, the third run always works :D.*
 
 ## 3. Reference
 
