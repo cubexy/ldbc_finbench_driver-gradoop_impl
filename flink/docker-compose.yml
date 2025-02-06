@@ -67,10 +67,10 @@ services:
     command: taskmanager
     deploy:
       replicas: 4
-      resources:
-        limits:
-          cpus: '2.5'
-          memory: '4g'
+      #resources:
+        #limits:
+          #cpus: '2.5'
+          #memory: '4g'
     depends_on:
       - jobmanager
       - hdfs-namenode
